@@ -1,0 +1,1 @@
+povray model.pov -d +H1080 +W1920 +WT8 +KFF10

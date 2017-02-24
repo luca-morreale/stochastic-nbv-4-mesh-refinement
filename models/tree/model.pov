@@ -244,17 +244,20 @@ ambient_light 0.1
 #declare PdV1 = <550, 500, -300>; // +KFF10 with translate <-700*clock, 0, 0>
 #declare PdV2 = <550, 300, -100>; // +KFF10 with translate <-700*clock, 0, 0>
 #declare PdV3 = <550, 300, -100>; // +KFF7 with rotate <0, clock*130, 0>
-#declare PdV4 = <500, 100, 150>; // +KFF7 with rotate <0, clock*130, 0>
+#declare PdV4 = <500, 100, 150>; // +KFF10 with rotate <0, clock*130, 0>
+#declare PdV5 = <350, 150, 0>; // +KFF10 with rotate <0, clock*150, 0>
 
 #declare cam_to1 = <550, 300, 200>;
 #declare cam_to2 = <550, 300, 200>;
 #declare cam_to3 = <0, 150, 0>;
 #declare cam_to4 = <0, 150, 150>;
+#declare cam_to5 = <0, 150, 550>;
 
 camera{
- location PdV4
- look_at cam_to4
+ location PdV5
+ look_at 0
  angle 90
- rotate <0, clock*130, 0>
- //translate <-700*clock, 0, 0>
+ rotate <0, clock*150, 0>
+ look_at cam_to5
+ //translate <-600*clock, 0, 0>
 }

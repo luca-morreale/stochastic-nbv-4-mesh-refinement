@@ -4,21 +4,18 @@
 namespace meshac {
 
 
-CRTuplesGenerator::CRTuplesGenerator()
-{
-
-}
+CRTuplesGenerator::CRTuplesGenerator() { }
 
 CRTuplesGenerator::CRTuplesGenerator(SfMData *data)
 {
     this->data = data;
 }
 
-CRTuplesGenerator::~CRTuplesGenerator()
-{
+CRTuplesGenerator::~CRTuplesGenerator() { }
 
-}
-
+/**
+ * Getter and setter for SfMData.
+ */
 void CRTuplesGenerator::setSfMData(SfMData *data)
 {
     this->data = data;
@@ -29,25 +26,59 @@ SfMData *CRTuplesGenerator::getSfMData()
     return data;
 }
 
+/**
+ * Getter and setter for computed tuples.
+ */
+CrossRatioTupleSet CRTuplesGenerator::getComputedTuples()
+{
+    return this->tupleSet;
+}
 
-//Extracts quadruplets of collinear points for each image.
-ListCrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(SfMData *data)
+CrossRatioTupleSet CRTuplesGenerator::getComputedTuplesForCam(int camIndex)
+{
+    return this->tupleSetPerCam[camIndex];
+}
+
+void CRTuplesGenerator::setTuples(CrossRatioTupleSet tupleSet)
+{
+    this->tupleSet = tupleSet;
+}
+
+void CRTuplesGenerator::setTuplesPerCam(ListCrossRatioTupleSet tupleSetPerCam)
+{
+    this->tupleSetPerCam = tupleSetPerCam;
+}
+
+/**
+ * Extraction of quadruplets of collinear points for each image.
+ */
+CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(SfMData *data)
 {
     this->setSfMData(data);
     return this->determineTupleOfFourPoints();
 }
 
-ListCrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints()
+CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints()
 {
-    ListCrossRatioTupleSet listTupleSet;
+    ListCrossRatioTupleSet listTupleSet(data->numCameras_);
+
     for (int camIndex = 0; camIndex < data->numCameras_; camIndex++) {
-        listTupleSet.push_back(determineTupleOfFourPointsForCam(data, camIndex));
+        listTupleSet[camIndex] = determineTupleOfFourPointsForCam(data, camIndex);
     }
-    return listTupleSet;
+
+    tupleSet = this->collapseListSet(listTupleSet);
+
+    this->setTuplesPerCam(listTupleSet);
+    this->setTuples(tupleSet);
+
+    return tupleSet;
 }
 
 
-//Extracts quadruplets of collinear points for the image obtaine by the given camera.
+/**
+ * Extraction quadruplets of collinear points for the image obtained by the given camera.
+ */
+
 CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(SfMData *data, int camIndex)
 {
     this->setSfMData(data);
@@ -71,7 +102,9 @@ CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(int camIn
     return tuples;
 }
 
-
+/**
+ * Private methods
+ */
 CrossRatioTupleSet CRTuplesGenerator::createsTuples(IntArrayList &combos, IntList &pointSet, GLMList2DVec &points2D)
 {
     CrossRatioTupleSet tuples;
@@ -135,6 +168,19 @@ IntArrayList CRTuplesGenerator::generateCorrespondances(CVList2DVec &lines, GLML
 
     return correspondances;
 }
+
+
+CrossRatioTupleSet CRTuplesGenerator::collapseListSet(ListCrossRatioTupleSet tupleSetPerCam)
+{
+    CrossRatioTupleSet tupleSet;
+    for (CrossRatioTupleSet cameraSet : tupleSetPerCam) {
+        tupleSet.insert(cameraSet.begin(), cameraSet.end());
+    }
+
+    return tupleSet;
+}
+
+
 
 
 } // namespace meshac

@@ -5,7 +5,8 @@
 #include <manifoldReconstructor/SfMData.h>
 
 #include <CrossRatioTuple.hpp>
-#include <type_definition.hpp>
+#include <alias_definition.hpp>
+#include <meshac_type_definition.hpp>
 #include <utilities.hpp>
 
 namespace meshac {
@@ -18,24 +19,36 @@ namespace meshac {
 
 
         /*
-         * Extracts quadruplets of collinear points for each image.
-         */
-        ListCrossRatioTupleSet determineTupleOfFourPoints(SfMData *data);
-        ListCrossRatioTupleSet determineTupleOfFourPoints();
-
-        /*
-         * Extracts quadruplets of collinear points for the image obtaine by the given camera.
-         */
-        CrossRatioTupleSet determineTupleOfFourPointsForCam(SfMData *data, int camIndex);
-        CrossRatioTupleSet determineTupleOfFourPointsForCam(int camIndex);
-
-
-        /*
          * Setter and Getter for SfMData.
          */
         void setSfMData(SfMData *data);
         SfMData *getSfMData();
 
+
+        /**
+         * Getter for already computed CrossRatioTupleSet.
+         */
+        CrossRatioTupleSet getComputedTuples();
+        CrossRatioTupleSet getComputedTuplesForCam(int camIndex);
+
+
+        /*
+         * Extracts quadruplets of collinear points for each image.
+         */
+        virtual CrossRatioTupleSet determineTupleOfFourPoints(SfMData *data);
+        virtual CrossRatioTupleSet determineTupleOfFourPoints();
+
+        /*
+         * Extracts quadruplets of collinear points for the image obtained by the given camera.
+         */
+        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(SfMData *data, int camIndex);
+        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(int camIndex);
+
+
+        
+    protected:
+        void setTuples(CrossRatioTupleSet tupleSet);
+        void setTuplesPerCam(ListCrossRatioTupleSet tupleSetPerCam);
 
     private:
         CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMList2DVec &points2D);
@@ -43,7 +56,12 @@ namespace meshac {
         IntArrayList generateCorrespondances(CVList2DVec &lines, GLMList2DVec &points2D);
         void createFeatureImage(cv::Mat logicalImg, GLMList2DVec &points2D);
 
+        CrossRatioTupleSet collapseListSet(ListCrossRatioTupleSet tupleSetPerCam);
+
+
         SfMData *data;
+        ListCrossRatioTupleSet tupleSetPerCam;
+        CrossRatioTupleSet tupleSet;
 
     };
 

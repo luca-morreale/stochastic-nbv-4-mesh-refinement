@@ -11,6 +11,8 @@
 #include <glm/gtx/norm.hpp>
 
 
+
+
 #include <algorithm>
 #include <set>
 #include <string>
@@ -18,6 +20,8 @@
 
 #include <CrossRatioTuple.hpp>
 #include <CRTuplesGenerator.hpp>
+#include <alias_definition.hpp>
+#include <meshac_type_definition.hpp>
 
 
 
@@ -30,13 +34,11 @@ int main(int argc, char **argv) {
 
     meshac::CRTuplesGenerator crGenerator = meshac::CRTuplesGenerator(&points);
 
-    meshac::ListCrossRatioTupleSet listCRSet = crGenerator.determineTupleOfFourPoints();
+    meshac::CrossRatioTupleSet crossratioTupleSet = crGenerator.determineTupleOfFourPoints();
 
-    //for (auto tupleSet : listCRSet) {
-    //    for (auto point : tupleSet) {
-    //        point.crossRatio();
-    //    }
-    //}
+    
+    
+
 
     return 0;
 }

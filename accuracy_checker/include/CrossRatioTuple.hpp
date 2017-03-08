@@ -13,68 +13,59 @@
 #include <map>
 #include <vector>
 
-
-namespace glm {
-namespace detail {
-
-    static bool operator <(const glm::vec2 &vecA, const glm::vec2 &vecB)
-    {
-       const double epsilion = 0.0001;
-
-       return fabs(vecA[0] - vecB[0]) < epsilion;
-    }
-}
-}
+#include <alias_definition.hpp>
 
 namespace meshac {
 
-    struct CrossRatioTuple {
+    #define SENSIBILITY 0.1f    // or glm::epsilon<float>()
 
+    class CrossRatioTuple {
+    public:
+        /*
+         * Inserts a new point at the end of those in the array.
+         */
+        void append(glm::vec2 *point);
+
+        /* 
+         * Computes the cross ratio of the given four points.
+         */
+        double crossRatio();
+
+        /*
+         * Computes the jacobian of the quadruplets.
+         */
+        EigVector jacobian();
+
+        /*
+         * Returns the average distance between the points in the quadruplets.
+         */
+        double avgDistance();
+
+        /*
+         * Checks if the given point is contained in the tuple.
+         */
+        bool isInTuple(glm::vec2 point);
+
+        /*
+         * Overloading < operation for comparation.
+         */
+        bool operator<(const CrossRatioTuple &other) const;
+
+    private:
+        void precomputeDistancesBetweenPoints();
+
+        /*
+         * First point x, Second point y, Third point z, Fourth point t.
+         */
         std::vector<glm::vec2 *> points;
 
-        // Inserts a new point at the end of those in the array
-        void append(glm::vec2 *point) {
-            if (points.size() < 4) {
-                points.push_back(point);
-            } else {
-                std::sort(points.begin(), points.end());
-            }
-        }
+        /*
+         * Precomputed distances.
+         */
+        double xy, xz, xt, yz, yt, zt;
 
-        // Computes the cross ratio of the given four points
-        double crossRatio() {
-
-            double n1 = glm::distance2(*points[0], *points[3]);
-            double d1 = glm::distance2(*points[2], *points[3]);
-            double n2 = glm::distance2(*points[2], *points[4]);
-            double d2 = glm::distance2(*points[1], *points[4]);
-
-            return (n1 * n2) / (d1 * d2);
-        }
-
-        // Overloading < operation for comparation
-        bool operator<(const CrossRatioTuple &other) const
-        {
-            if (points.size() < other.points.size()) {
-                return true;
-            }
-
-            glm::vec2 eps = glm::vec2();
-            eps[0] = glm::epsilon<float>();
-            eps[1] = glm::epsilon<float>();
-
-            const glm::vec2 EPSILON = eps;
-
-            // find better compare
-            if (glm::epsilonEqual(*points[0], *(other.points[0]), EPSILON)[0] && 
-                glm::epsilonEqual(*points[1], *(other.points[1]), EPSILON)[0] && 
-                glm::epsilonEqual(*points[2], *(other.points[2]), EPSILON)[0] && 
-                glm::epsilonEqual(*points[3], *(other.points[3]), EPSILON)[0]) {
-                return true;
-            }
-            
-            return false;
-        }    
+        const glm::vec2 EPSILON = glm::vec2(SENSIBILITY);
+    
     };
     
 

@@ -3,20 +3,9 @@
 #include <manifoldReconstructor/SfMData.h>
 #include <manifoldReconstructor/types_reconstructor.hpp>
 
-#include <opencv/cv.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/opencv.hpp>
-
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 
-
-
-
-#include <algorithm>
-#include <set>
-#include <string>
-#include <vector>
 
 #include <CrossRatioTuple.hpp>
 #include <CRTuplesGenerator.hpp>
@@ -32,11 +21,13 @@ int main(int argc, char **argv) {
     
     SfMData points = op.getSfmData();
 
-    meshac::CRTuplesGenerator crGenerator = meshac::CRTuplesGenerator(&points);
+    meshac::CRTuplesGenerator crGenerator = meshac::CRTuplesGenerator(points.point2DoncamViewingPoint_, points.imageWidth_, points.imageHeight_);
 
     meshac::CrossRatioTupleSet crossratioTupleSet = crGenerator.determineTupleOfFourPoints();
+    //meshac::CrossRatioTupleSet crossratioTupleSet = crGenerator.determineTupleOfFourPointsForCam(1);
 
-    
+    // missing correspondance between 3D and 2D
+    // missing list to access cam from 2D point...
     
 
 

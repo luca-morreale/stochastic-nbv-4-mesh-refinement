@@ -13,9 +13,13 @@
 
 #include <CrossRatioTuple.hpp>
 
+
 namespace meshac {
+
     typedef std::set<CrossRatioTuple> CrossRatioTupleSet;
-    typedef std::vector<CrossRatioTupleSet> ListCrossRatioTupleSet;   
+    typedef std::vector<CrossRatioTupleSet> ListCrossRatioTupleSet; 
+
+
     
 } // namesace meshac
 

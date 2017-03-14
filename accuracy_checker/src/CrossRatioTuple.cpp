@@ -2,31 +2,14 @@
 #include <CrossRatioTuple.hpp>
 
 
-namespace glm {
-namespace detail {
-
-    static bool operator <(const glm::vec2 &vecA, const glm::vec2 &vecB)
-    {
-        const double epsilion = 0.1;
-
-        if (fabs(vecA[0] - vecB[0]) < epsilion) {
-            return fabs(vecA[1] - vecB[1]) < epsilion;
-        }
-
-        return fabs(vecA[0] - vecB[0]) < epsilion;
-    }
-}
-}
-
-
 namespace meshac {
     
-    void CrossRatioTuple::append(glm::vec2 *point) 
+    void CrossRatioTuple::append(GLMVec2 point) 
     {
         if (points.size() < 4) {
             points.push_back(point);
         } else {
-            std::sort(points.begin(), points.end());
+            std::sort(points.begin(), points.end(), point2DComparator);
             this->precomputeDistancesBetweenPoints();
         }
     }
@@ -55,10 +38,10 @@ namespace meshac {
         return (this->xy + this->yz + this->zt) / 3;
     }
 
-    bool CrossRatioTuple::isInTuple(glm::vec2 point)
+    bool CrossRatioTuple::isInTuple(GLMVec2 point)
     {
-        for (glm::vec2 *tuplePoint : points) {
-            if (glm::epsilonEqual(point, *(tuplePoint), EPSILON)[0]) {
+        for (GLMVec2 tuplePoint : points) {
+            if (glm::epsilonEqual(point, tuplePoint, EPSILON)[0]) {
                 return true;
             }
         }
@@ -68,14 +51,23 @@ namespace meshac {
 
     void CrossRatioTuple::precomputeDistancesBetweenPoints()
     {        
-        this->xy = glm::distance2(*points[0], *points[1]);
-        this->xz = glm::distance2(*points[0], *points[2]);
-        this->xt = glm::distance2(*points[0], *points[3]);
+        this->xy = glm::distance2(points[0], points[1]);
+        this->xz = glm::distance2(points[0], points[2]);
+        this->xt = glm::distance2(points[0], points[3]);
 
-        this->yz = glm::distance2(*points[1], *points[2]);
-        this->yt = glm::distance2(*points[1], *points[3]);
+        this->yz = glm::distance2(points[1], points[2]);
+        this->yt = glm::distance2(points[1], points[3]);
 
-        this->zt = glm::distance2(*points[2], *points[3]);
+        this->zt = glm::distance2(points[2], points[3]);
+    }
+
+    bool CrossRatioTuple::point2DComparator(const GLMVec2 &vecA, const GLMVec2 &vecB)
+    {
+        if (fabs(vecA[0] - vecB[0]) < SENSIBILITY) {
+            return fabs(vecA[1] - vecB[1]) < SENSIBILITY;
+        }
+
+        return fabs(vecA[0] - vecB[0]) < SENSIBILITY;
     }
     
     bool CrossRatioTuple::operator<(const CrossRatioTuple &other) const
@@ -85,10 +77,10 @@ namespace meshac {
         }
 
         // find better compare
-        if (glm::epsilonEqual(*points[0], *(other.points[0]), EPSILON)[0] && 
-            glm::epsilonEqual(*points[1], *(other.points[1]), EPSILON)[0] && 
-            glm::epsilonEqual(*points[2], *(other.points[2]), EPSILON)[0] && 
-            glm::epsilonEqual(*points[3], *(other.points[3]), EPSILON)[0]) {
+        if (glm::epsilonEqual(points[0], other.points[0], EPSILON)[0] && 
+                glm::epsilonEqual(points[1], other.points[1], EPSILON)[0] && 
+                glm::epsilonEqual(points[2], other.points[2], EPSILON)[0] && 
+                glm::epsilonEqual(points[3], other.points[3], EPSILON)[0]) {
             return true;
         }
         

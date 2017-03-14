@@ -6,7 +6,6 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/gtx/norm.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <algorithm>
 #include <list>
@@ -24,7 +23,7 @@ namespace meshac {
         /*
          * Inserts a new point at the end of those in the array.
          */
-        void append(glm::vec2 *point);
+        void append(GLMVec2 point);
 
         /* 
          * Computes the cross ratio of the given four points.
@@ -44,7 +43,7 @@ namespace meshac {
         /*
          * Checks if the given point is contained in the tuple.
          */
-        bool isInTuple(glm::vec2 point);
+        bool isInTuple(GLMVec2 point);
 
         /*
          * Overloading < operation for comparation.
@@ -54,19 +53,23 @@ namespace meshac {
     private:
         void precomputeDistancesBetweenPoints();
 
+        static bool point2DComparator(const GLMVec2 &vecA, const GLMVec2 &vecB);
+
         /*
          * First point x, Second point y, Third point z, Fourth point t.
          */
-        std::vector<glm::vec2 *> points;
+        std::vector<GLMVec2> points;
 
         /*
          * Precomputed distances.
          */
         double xy, xz, xt, yz, yt, zt;
 
-        const glm::vec2 EPSILON = glm::vec2(SENSIBILITY);
+        const GLMVec2 EPSILON = GLMVec2(SENSIBILITY);
     
     };
+
+    typedef CrossRatioTuple * CrossRatioTuplePtr;
     
 
 }   // namespace meshacac

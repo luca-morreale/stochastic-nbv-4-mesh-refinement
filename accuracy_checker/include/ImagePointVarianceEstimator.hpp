@@ -9,34 +9,38 @@ namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator();
-        ImagePointVarianceEstimator(CrossRatioTupleSet tupleSet);
+        ImagePointVarianceEstimator(ListCrossRatioTupleSet listTupleSet);
         ~ImagePointVarianceEstimator();
 
-        virtual EigMatrix estimateVarianceForTuple(CrossRatioTuple tuple);
-        virtual EigMatrix estimateVarianceForTuple(CrossRatioTupleSet tupleSet, CrossRatioTuple tuple);
 
-        virtual EigMatrix estimateVarianceForPoint(glm::vec2 point);
-        virtual EigMatrix estimateVarianceForTuple(CrossRatioTupleSet tupleSet, glm::vec2 point);
+        virtual EigMatrix4 estimateVarianceForTuple(ListCrossRatioTupleSet listTupleSet, CrossRatioTuple &tuple, int setIndex);
+        virtual EigMatrix4 estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex);
+        
+        virtual EigMatrix4 estimateVarianceForPoint(ListCrossRatioTupleSet listTupleSet, GLMVec2 &point, int setIndex);
+        virtual EigMatrix4 estimateVarianceForPoint(GLMVec2 &point, int setIndex);
+        
 
-        CrossRatioTupleSet getCrossRatioTupleSet();
-        void setCrossRatioTupleSet(CrossRatioTupleSet tupleSet);
+        ListCrossRatioTupleSet getCrossRatioTupleSetList();
+        void setCrossRatioTupleSetList(ListCrossRatioTupleSet listTupleSet);
+
+        void updateCrossRatioTupleSet(CrossRatioTupleSet tupleSet, int indexSet);
 
 
     protected:
-        double getVarianceCRTuple();
-        void setVarianceCRTuple(double variance);
+        double getVarianceSet(int setIndex);
+        void setVarianceSet(double variance, int setIndex);
 
-
-        double estimateVarianceCRTuple(); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
+    
+        double estimateVarianceTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
 
     private:
-        CrossRatioTupleSet crTupleSet;
+        ListCrossRatioTupleSet listTupleSet;
 
-        double varianceCRTuple = -1;
-
+        DoubleList variances;
 
     };
+
+    typedef ImagePointVarianceEstimator * ImagePointVarianceEstimatorPtr;
 
 } // namespace meshac
 

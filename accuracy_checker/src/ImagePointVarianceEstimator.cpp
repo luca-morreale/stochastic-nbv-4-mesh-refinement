@@ -3,115 +3,117 @@
 
 namespace meshac {
 
-/*
- * Constructor and Destructor.
- */
-ImagePointVarianceEstimator::ImagePointVarianceEstimator() { }
-
-ImagePointVarianceEstimator::ImagePointVarianceEstimator(CrossRatioTupleSet tupleSet)
-{
-    this->crTupleSet = tupleSet;
-}
-
-ImagePointVarianceEstimator::~ImagePointVarianceEstimator() { }
-
-/*
- * Getter and setter for CrossRatioTupleSet. 
- */
-CrossRatioTupleSet ImagePointVarianceEstimator::getCrossRatioTupleSet()
-{
-    return this->crTupleSet;
-}
-
-void ImagePointVarianceEstimator::setCrossRatioTupleSet(CrossRatioTupleSet tupleSet)
-{
-    this->crTupleSet = tupleSet;
-}
-
-
-/*
- * Getter and setter for cross ratio's variance of a single tuple.
- */
-double ImagePointVarianceEstimator::getVarianceCRTuple()
-{
-    if (this->varianceCRTuple < 0){
-        this->estimateVarianceCRTuple();
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(ListCrossRatioTupleSet listTupleSet)
+    {
+        this->listTupleSet = listTupleSet;
+        this->variances.assign(listTupleSet.size(), -1.0);
     }
-    return this->varianceCRTuple;
-}
 
-void ImagePointVarianceEstimator::setVarianceCRTuple(double variance)
-{
-    this->varianceCRTuple = variance;
-}
+    ImagePointVarianceEstimator::~ImagePointVarianceEstimator()
+    { /*    */ }
 
-/*
- * Variance estimation.
- */
-EigMatrix ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTupleSet tupleSet, CrossRatioTuple tuple)
-{
-    this->setCrossRatioTupleSet(tupleSet);
-    return this->estimateVarianceForTuple(tuple);
-}
+    /*
+     * Variance estimation.
+     */
+    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForTuple(ListCrossRatioTupleSet listTupleSet, CrossRatioTuple &tuple, int setIndex)
+    {
+        this->setCrossRatioTupleSetList(listTupleSet);
+        return this->estimateVarianceForTuple(tuple, setIndex);
+    }
 
-EigMatrix ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple tuple)
-{
-    double varianceCR = this->getVarianceCRTuple();
+    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex)
+    {
+        double varianceSet = this->getVarianceSet(setIndex);
 
-    auto jacobian = tuple.jacobian();
-    double lambda = tuple.avgDistance();
+        auto jacobian = tuple.jacobian();   // row vector 1x3
+        double lambda = tuple.avgDistance();
 
-    double jacobianNorm = jacobian.norm();
+        double jacobianNorm = jacobian.norm();
 
-    double varianceTuple = varianceCR * lambda / (jacobianNorm * jacobianNorm);
+        double varianceTuple = varianceSet * lambda / (jacobianNorm * jacobianNorm);
 
-    return varianceTuple * EigIdentity(4);
-}
+        return varianceTuple * EigIdentity(4);
+    }
 
+    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForPoint(ListCrossRatioTupleSet listTupleSet, GLMVec2 &point, int setIndex)
+    {
+        this->setCrossRatioTupleSetList(listTupleSet);
+        return this->estimateVarianceForPoint(point, setIndex);
+    }
 
-EigMatrix ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTupleSet tupleSet, glm::vec2 point)
-{
-    this->setCrossRatioTupleSet(tupleSet);
-    return this->estimateVarianceForPoint(point);
-}
+    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int setIndex)
+    {
+        int counterTuples = 0;
 
-EigMatrix ImagePointVarianceEstimator::estimateVarianceForPoint(glm::vec2 point)
-{
-    int counterTuples = 0;
+        EigMatrix4 variance = EigZeros(4);
 
-    auto variance = EigZeros(4);
-
-    for (auto tuple : crTupleSet) {
-        if (tuple.isInTuple(point)) {
-            variance += estimateVarianceForTuple(tuple);
-            ++counterTuples;
+        for (CrossRatioTuple tuple : listTupleSet[setIndex]) {
+            if (tuple.isInTuple(point)) {
+                variance += this->estimateVarianceForTuple(tuple, setIndex);
+                ++counterTuples;
+            }
         }
+
+        return variance / counterTuples;
     }
 
-    return variance / counterTuples;
-}
 
+    double ImagePointVarianceEstimator::estimateVarianceTupleSet(int setIndex)
+    {
+        double avg = 0;
+        int N = this->listTupleSet[setIndex].size();
 
+        EigVector crossRatioValues(N);
+        auto tuple = this->listTupleSet[setIndex].begin();
 
-double ImagePointVarianceEstimator::estimateVarianceCRTuple()
-{
-    double avg = 0;
-    int N = this->crTupleSet.size();
+        for (int i = 0; i < N; i++) {
+            crossRatioValues[i] = (*tuple).crossRatio();
+            avg += crossRatioValues[i];
 
-    EigVector crossRatioValues(N);
-    auto tuple = this->crTupleSet.begin();
+            std::advance(tuple, 1);
+        }
 
-    for (int i = 0; i < N; i++) {
-        crossRatioValues[i] = (*tuple).crossRatio();
-        avg += crossRatioValues[i];
+        EigVector summation = crossRatioValues - avg * EigVector::Ones(N) / N;
 
-        std::advance(tuple, 1);
+        this->setVarianceSet(summation.sum() / (N - 1), setIndex);
+        return this->getVarianceSet(setIndex);
     }
-    EigVector summation = crossRatioValues - avg * EigVector::Ones(N);
 
-    this->setVarianceCRTuple(summation.sum() / (N - 1));
-    return this->getVarianceCRTuple();
-}
+    /*
+     * Getter and setter for ListCrossRatioTupleSet. 
+     */
+    ListCrossRatioTupleSet ImagePointVarianceEstimator::getCrossRatioTupleSetList()
+    {
+        return this->listTupleSet;
+    }
+
+    void ImagePointVarianceEstimator::setCrossRatioTupleSetList(ListCrossRatioTupleSet listTupleSet)
+    {
+        this->listTupleSet = listTupleSet;
+        this->variances.assign(listTupleSet.size(), -1);
+    }
+
+    void ImagePointVarianceEstimator::updateCrossRatioTupleSet(CrossRatioTupleSet tupleSet, int indexSet)
+    {
+        this->listTupleSet[indexSet] = tupleSet;
+        this->variances[indexSet] = -1;
+    }
+
+    /*
+     * Getter and setter for cross ratio's variance of a single tuple.
+     */
+    double ImagePointVarianceEstimator::getVarianceSet(int setIndex)
+    {
+        if (this->variances[setIndex] < 0){
+            this->estimateVarianceTupleSet(setIndex);
+        }
+        return this->variances[setIndex];
+    }
+
+    void ImagePointVarianceEstimator::setVarianceSet(double variance, int setIndex)
+    {
+        this->variances[setIndex] = variance;
+    }
 
 
 } // namespace meshac

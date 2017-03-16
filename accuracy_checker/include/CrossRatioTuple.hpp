@@ -13,10 +13,9 @@
 #include <vector>
 
 #include <alias_definition.hpp>
+#include <meshac_type_definition.hpp>
 
 namespace meshac {
-
-    #define SENSIBILITY 0.1f    // or glm::epsilon<float>()
 
     class CrossRatioTuple {
     public:
@@ -70,7 +69,8 @@ namespace meshac {
     };
 
     typedef CrossRatioTuple * CrossRatioTuplePtr;
-    
+    typedef std::set<CrossRatioTuple> CrossRatioTupleSet;
+    typedef std::vector<CrossRatioTupleSet> ListCrossRatioTupleSet;
 
 }   // namespace meshacac
 

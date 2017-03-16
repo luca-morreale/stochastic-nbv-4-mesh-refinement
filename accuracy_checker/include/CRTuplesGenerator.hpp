@@ -13,17 +13,17 @@ namespace meshac {
 
     class CRTuplesGenerator {
     public:
-        CRTuplesGenerator(GLMListArray2DVec camObservations, int obsWidth, int obsHeight);
+        CRTuplesGenerator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight);
         ~CRTuplesGenerator();
 
 
         /*
          * Getter and setter for Cameras' Observations.
          */
-        GLMListArray2DVec getCamObservations();
-        void setCamObservations(GLMListArray2DVec camObservations);
-        void setCamObservations(GLMList2DVec list, int camIndex);
-        void updateCamObservations(GLMList2DVec list, int camIndex);
+        GLMListArrayVec2 getCamObservations();
+        void setCamObservations(GLMListArrayVec2 camObservations);
+        void setCamObservations(GLMListVec2 list, int camIndex);
+        void updateCamObservations(GLMListVec2 list, int camIndex);
 
 
         /*
@@ -45,13 +45,13 @@ namespace meshac {
         /*
          * Extracts quadruplets of collinear points for each image.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPoints(GLMListArray2DVec camObservations, int obsWidth, int obsHeight);
+        virtual CrossRatioTupleSet determineTupleOfFourPoints(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight);
         virtual CrossRatioTupleSet determineTupleOfFourPoints();
 
         /*
          * Extracts quadruplets of collinear points for the image obtained by the given camera.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(GLMListArray2DVec camObservations, int camIndex, int obsWidth, int obsHeight);
+        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(GLMListArrayVec2 camObservations, int camIndex, int obsWidth, int obsHeight);
         virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(int camIndex);
         virtual ListCrossRatioTupleSet determineTupleOfFourPointsForAllCam();
 
@@ -64,15 +64,15 @@ namespace meshac {
 
     private:
 
-        CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMList2DVec &points2D);
-        CVList2DVec createLinesFromPoints(int imgHeight, int imgWidth, GLMList2DVec &points2D);
-        IntArrayList generateCorrespondances(CVList2DVec &lines, GLMList2DVec &points2D);
-        void createFeatureImage(cv::Mat &logicalImg, GLMList2DVec &points2D);
+        CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMListVec2 &points2D);
+        CVListVec2 createLinesFromPoints(int imgHeight, int imgWidth, GLMListVec2 &points2D);
+        IntArrayList generateCorrespondances(CVListVec2 &lines, GLMListVec2 &points2D);
+        void createFeatureImage(CVMat &logicalImg, GLMListVec2 &points2D);
 
         CrossRatioTupleSet collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam);
 
 
-        GLMListArray2DVec camObservations;
+        GLMListArrayVec2 camObservations;
         int obsHeight, obsWidth;
 
         ListCrossRatioTupleSet tupleSetPerCam;

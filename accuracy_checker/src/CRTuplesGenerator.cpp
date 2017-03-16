@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    CRTuplesGenerator::CRTuplesGenerator(GLMListArray2DVec camObservations, int obsWidth, int obsHeight)
+    CRTuplesGenerator::CRTuplesGenerator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight)
     {
         this->camObservations = camObservations;
         this->obsHeight = obsHeight;
@@ -16,7 +16,7 @@ namespace meshac {
     /*
      * Extraction of quadruplets of collinear points for each image.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(GLMListArray2DVec camObservations, int obsWidth, int obsHeight)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight)
     {
         this->setCamObservations(camObservations);
         this->setObsSize(obsWidth, obsHeight);
@@ -45,7 +45,7 @@ namespace meshac {
     /*
      * Extraction quadruplets of collinear points for the image obtained by the given camera.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(GLMListArray2DVec camObservations, int camIndex, int obsWidth, int obsHeight)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(GLMListArrayVec2 camObservations, int camIndex, int obsWidth, int obsHeight)
     {
         this->setCamObservations(camObservations);
         this->setObsSize(obsWidth, obsHeight);
@@ -54,8 +54,8 @@ namespace meshac {
 
     CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(int camIndex)
     {
-        GLMList2DVec points2D = this->camObservations[camIndex];
-        CVList2DVec lines = createLinesFromPoints(this->obsWidth, this->obsHeight, points2D);
+        GLMListVec2 points2D = this->camObservations[camIndex];
+        CVListVec2 lines = createLinesFromPoints(this->obsWidth, this->obsHeight, points2D);
         
         IntArrayList correspondances = generateCorrespondances(lines, points2D);
         CrossRatioTupleSet tuples;
@@ -85,7 +85,7 @@ namespace meshac {
     /*
      * Private methods
      */
-    CrossRatioTupleSet CRTuplesGenerator::createsTuples(IntArrayList &combos, IntList &pointSet, GLMList2DVec &points2D)
+    CrossRatioTupleSet CRTuplesGenerator::createsTuples(IntArrayList &combos, IntList &pointSet, GLMListVec2 &points2D)
     {
         CrossRatioTupleSet tuples;
 
@@ -103,9 +103,9 @@ namespace meshac {
     }
 
 
-    CVList2DVec CRTuplesGenerator::createLinesFromPoints(int imgWidth, int imgHeight, GLMList2DVec &points2D)
+    CVListVec2 CRTuplesGenerator::createLinesFromPoints(int imgWidth, int imgHeight, GLMListVec2 &points2D)
     {
-        CVList2DVec lines;
+        CVListVec2 lines;
         
         cv::Mat logicalImg(imgHeight, imgWidth, CV_8U);
         createFeatureImage(logicalImg, points2D);
@@ -120,7 +120,7 @@ namespace meshac {
     }
 
 
-    void CRTuplesGenerator::createFeatureImage(cv::Mat &logicalImg, GLMList2DVec &points2D)
+    void CRTuplesGenerator::createFeatureImage(CVMat &logicalImg, GLMListVec2 &points2D)
     {
         for (GLMVec2 point : points2D) {
             logicalImg.at<uint>(point.x, point.y) += 1;
@@ -128,7 +128,7 @@ namespace meshac {
     }
 
 
-    IntArrayList CRTuplesGenerator::generateCorrespondances(CVList2DVec &lines, GLMList2DVec &points2D)
+    IntArrayList CRTuplesGenerator::generateCorrespondances(CVListVec2 &lines, GLMListVec2 &points2D)
     {
         cv::Vec<float, 1> zero;
         IntArrayList correspondances(lines.size());
@@ -198,24 +198,24 @@ namespace meshac {
     /*
      * Getter and setter for Camera's Observations.
      */
-    void CRTuplesGenerator::setCamObservations(GLMListArray2DVec camObservations)
+    void CRTuplesGenerator::setCamObservations(GLMListArrayVec2 camObservations)
     {
         this->camObservations = camObservations;
     }
 
-    void CRTuplesGenerator::setCamObservations(GLMList2DVec list, int camIndex)
+    void CRTuplesGenerator::setCamObservations(GLMListVec2 list, int camIndex)
     {
         this->camObservations[camIndex].clear();
         this->camObservations[camIndex].insert(camObservations[camIndex].begin(), list.begin(), list.end());
     }
 
-    void CRTuplesGenerator::updateCamObservations(GLMList2DVec list, int camIndex)
+    void CRTuplesGenerator::updateCamObservations(GLMListVec2 list, int camIndex)
     {
         this->camObservations[camIndex] = list;
         this->tupleSetPerCam[camIndex].clear();
     }
 
-    GLMListArray2DVec CRTuplesGenerator::getCamObservations()
+    GLMListArrayVec2 CRTuplesGenerator::getCamObservations()
     {
         return camObservations;
     }

@@ -3,10 +3,9 @@
 
 namespace meshac {
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(GLMList3DVec points3D, CameraMatrixList cameras, 
-                                GLMListArray2DVec camObservations, ListMappingGLM2DVec point3DTo2DThroughCam, int obsWidth, int obsHeight)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraMatrixList cameras, 
+                                GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight)
     {
-        this->points3D = points3D;
         this->cameras = cameras;
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
@@ -16,10 +15,9 @@ namespace meshac {
         this->initMembers();
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(GLMList3DVec points3D, CameraList cameras, 
-                                GLMListArray2DVec camObservations, ListMappingGLM2DVec point3DTo2DThroughCam, int obsWidth, int obsHeight)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraList cameras, 
+                                GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight)
     {
-        this->points3D = points3D;
         this->cameras = this->extractCameraMatrix(cameras);
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
@@ -31,7 +29,6 @@ namespace meshac {
 
     PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData data)
     {
-        this->points3D = data.points_;
         this->cameras = this->extractCameraMatrix(data.camerasList_);
         this->camObservations = data.camViewing2DPoint_;
         this->point3DTo2DThroughCam = data.point3DTo2DThroughCam_;
@@ -45,6 +42,10 @@ namespace meshac {
     {
         delete this->tuplesGenerator;
         delete this->varianceEstimator;
+
+        this->cameras.clear();
+        this->camObservations.clear();
+        this->point3DTo2DThroughCam.clear();
     }
 
 
@@ -147,22 +148,17 @@ namespace meshac {
     }
 
 
-    GLMList3DVec PhotogrammetristAccuracyModel::getPoints3D()
-    {
-        return points3D;
-    }
-
     CameraMatrixList PhotogrammetristAccuracyModel::getCamerasMatrix()
     {
         return cameras;
     }
 
-    GLMListArray2DVec PhotogrammetristAccuracyModel::getCamObservations()
+    GLMListArrayVec2 PhotogrammetristAccuracyModel::getCamObservations()
     {
         return camObservations;
     }
 
-    ListMappingGLM2DVec PhotogrammetristAccuracyModel::getMapping3DTo2DThroughCam()
+    ListMappingGLMVec2 PhotogrammetristAccuracyModel::getMapping3DTo2DThroughCam()
     {
         return point3DTo2DThroughCam;
     }
@@ -172,47 +168,38 @@ namespace meshac {
         return std::make_pair(obsWidth, obsHeight);
     }
 
-
-    void PhotogrammetristAccuracyModel::append3DPoint(GLMVec3 point3D)
-    {
-        this->points3D.push_back(point3D);
-        this->point3DTo2DThroughCam.push_back(std::map<int, GLMVec2>());
-    }
-
     void PhotogrammetristAccuracyModel::appendCamera(CameraMatrix cam)
     {
         this->cameras.push_back(cam);
-        this->camObservations.push_back(GLMList2DVec());
+        this->camObservations.push_back(GLMListVec2());
     }
 
-    // TO FIX
-    // improve reuse of code
-    void PhotogrammetristAccuracyModel::setCameraObservations(IntList camIndexs, GLMListArray2DVec newCamObservations)  
+    void PhotogrammetristAccuracyModel::setCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations)  
     {
         auto tmp = boost::bind(&CRTuplesGenerator::setCamObservations, tuplesGenerator, _1, _2);
         this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, tmp, "of camera to set the camera's observation.");
     }
 
-    void PhotogrammetristAccuracyModel::updateCameraObservations(IntList camIndexs, GLMListArray2DVec newCamObservations)  
+    void PhotogrammetristAccuracyModel::updateCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations)  
     {
         auto tmp = boost::bind(&CRTuplesGenerator::updateCamObservations, tuplesGenerator, _1, _2);
         this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, tmp, "of camera to updated the camera's observation.");
     }
 
-    void PhotogrammetristAccuracyModel::setMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLM2DVec indexCams)
+    void PhotogrammetristAccuracyModel::setMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLMVec2 indexCams)
     {
-        this->mappingGeneralUpdate(index3DPoints, indexCams, point3DTo2DThroughCam, "of 3D point to set mapping with 2D point.");
+        this->mappingGeneralUpdate(index3DPoints, indexCams, point3DTo2DThroughCam);
     }
 
-    void PhotogrammetristAccuracyModel::updateMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLM2DVec indexCams)
+    void PhotogrammetristAccuracyModel::updateMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLMVec2 indexCams)
     {
-        this->mappingGeneralUpdate(index3DPoints, indexCams, point3DTo2DThroughCam, "of 3D point to update mapping with 2D point.");
+        this->mappingGeneralUpdate(index3DPoints, indexCams, point3DTo2DThroughCam);
     }
 
     /*
      * Protected methods that provide a general way to update lists
      */
-    void PhotogrammetristAccuracyModel::camObservationGeneralUpdate(IntList &indexs, GLMListArray2DVec &list, GLMListArray2DVec &targetList, FunctionTarget tupleUpdater, std::string errorMsg)
+    void PhotogrammetristAccuracyModel::camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, FunctionTarget tupleUpdater, std::string errorMsg)
     {
         for (int i : indexs) {
             if (i > list.size()) {
@@ -224,11 +211,11 @@ namespace meshac {
         }
     }
 
-    void PhotogrammetristAccuracyModel::mappingGeneralUpdate(IntList &indexs, ListMappingGLM2DVec &list, ListMappingGLM2DVec &targetList, std::string errorMsg)
+    void PhotogrammetristAccuracyModel::mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList)
     {
         for (int i : indexs) {
             if (i > list.size()) {
-                throw InvalidUpdateException("Invalid index(" + std::to_string(i) + ") " + errorMsg);
+                targetList.push_back(std::map<int, GLMVec2>());
             } else {
                 targetList[i].insert(list[i].begin(), list[i].end());
             }
@@ -257,12 +244,12 @@ namespace meshac {
     {
         this->cameras = cameras;
     }
-    void PhotogrammetristAccuracyModel::setCamObservations(GLMListArray2DVec camObservations)
+    void PhotogrammetristAccuracyModel::setCamObservations(GLMListArrayVec2 camObservations)
     {
         this->camObservations = camObservations;
     }
 
-    void PhotogrammetristAccuracyModel::setVisibilityOfPoints(ListMappingGLM2DVec point3DTo2DThroughCam)
+    void PhotogrammetristAccuracyModel::setVisibilityOfPoints(ListMappingGLMVec2 point3DTo2DThroughCam)
     {
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
     }

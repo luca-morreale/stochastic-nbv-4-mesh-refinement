@@ -3,7 +3,7 @@
 #define MESH_ACCURACY_IMAGE_POINT_VARIANCE_ESTIMATOR_H
 
 #include <alias_definition.hpp>
-#include <meshac_type_definition.hpp>
+#include <CrossRatioTuple.hpp>
 
 namespace meshac {
 

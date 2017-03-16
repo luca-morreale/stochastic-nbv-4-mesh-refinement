@@ -14,11 +14,11 @@ namespace meshac {
     
     class PhotogrammetristAccuracyModel : public AccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(GLMList3DVec points3D, CameraMatrixList cameras, 
-                        GLMListArray2DVec camObservations, ListMappingGLM2DVec point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraMatrixList cameras, 
+                        GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight);
         
-        PhotogrammetristAccuracyModel(GLMList3DVec points3D, CameraList cameras, 
-                        GLMListArray2DVec camObservations, ListMappingGLM2DVec point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraList cameras, 
+                        GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight);
         
         PhotogrammetristAccuracyModel(SfMData data);
         
@@ -36,19 +36,17 @@ namespace meshac {
         virtual EigMatrixList getAccuracyForPoint(int index3DPoint);
 
 
-        GLMList3DVec getPoints3D();
         CameraMatrixList getCamerasMatrix();
-        GLMListArray2DVec getCamObservations();
-        ListMappingGLM2DVec getMapping3DTo2DThroughCam();
+        GLMListArrayVec2 getCamObservations();
+        ListMappingGLMVec2 getMapping3DTo2DThroughCam();
         std::pair<int, int> getObservationSize();
 
-        void append3DPoint(GLMVec3 point3D);
         void appendCamera(CameraMatrix cam);
 
-        void setCameraObservations(IntList camIndexs, GLMListArray2DVec newCamObservations);
-        void updateCameraObservations(IntList camIndexs, GLMListArray2DVec newCamObservations);
-        void updateMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLM2DVec indexCams);
-        void setMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLM2DVec indexCams);
+        void setCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations);
+        void updateCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations);
+        void updateMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLMVec2 indexCams);
+        void setMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLMVec2 indexCams);
 
 
     protected:
@@ -84,16 +82,16 @@ namespace meshac {
 
         typedef boost::_bi::bind_t<void, boost::_mfi::mf2<void, meshac::CRTuplesGenerator, std::vector<glm::tvec2<float, (glm::precision)0u> >, int>, boost::_bi::list3<boost::_bi::value<meshac::CRTuplesGenerator*>, boost::arg<1>, boost::arg<2> > > FunctionTarget;
 
-        virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArray2DVec &list, GLMListArray2DVec &targetList, FunctionTarget f, std::string errorMsg);
-        virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLM2DVec &list, ListMappingGLM2DVec &targetList, std::string errorMsg);
+        virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, FunctionTarget f, std::string errorMsg);
+        virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList);
 
 
         /*
          * 
          */
         void setCameras(CameraMatrixList cameras);
-        void setCamObservations(GLMListArray2DVec camObservations);
-        void setVisibilityOfPoints(ListMappingGLM2DVec point3DTo2DThroughCam);
+        void setCamObservations(GLMListArrayVec2 camObservations);
+        void setVisibilityOfPoints(ListMappingGLMVec2 point3DTo2DThroughCam);
 
         float getXh();
         float getYh();
@@ -106,10 +104,9 @@ namespace meshac {
         CrossRatioTupleSet crossratioTupleSet;
 
 
-        GLMList3DVec points3D;      // NOT REALLY NEEDED
         CameraMatrixList cameras;
-        GLMListArray2DVec camObservations;
-        ListMappingGLM2DVec point3DTo2DThroughCam;
+        GLMListArrayVec2 camObservations;
+        ListMappingGLMVec2 point3DTo2DThroughCam;
 
         int obsWidth;
         int obsHeight;

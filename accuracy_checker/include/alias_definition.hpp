@@ -18,15 +18,16 @@ typedef std::vector<int> IntList;
 typedef std::vector<double> DoubleList;
 typedef std::vector<IntList> IntArrayList;
 
-typedef std::vector<cv::Vec2f> CVList2DVec;
+typedef std::vector<cv::Vec2f> CVListVec2;
+typedef cv::Mat CVMat;
 
 typedef glm::vec3 GLMVec3;
 typedef glm::vec2 GLMVec2;
-typedef std::vector<GLMVec2> GLMList2DVec;
-typedef std::vector<std::vector<GLMVec2>> GLMListArray2DVec;
-typedef std::vector<GLMVec3> GLMList3DVec;
+typedef std::vector<GLMVec2> GLMListVec2;
+typedef std::vector<std::vector<GLMVec2>> GLMListArrayVec2;
+typedef std::vector<GLMVec3> GLMListVec3;
 
-typedef std::vector<std::map<int, glm::vec2>> ListMappingGLM2DVec;
+typedef std::vector<std::map<int, glm::vec2>> ListMappingGLMVec2;
 
 
 typedef Eigen::VectorXf EigVector;
@@ -55,13 +56,5 @@ typedef std::vector<CameraType> CameraList;
 typedef glm::mat4 CameraMatrix;
 typedef std::vector<CameraMatrix> CameraMatrixList;
 
-struct VisibilityInfo {
-    GLMList3DVec points;                                // list of 3D points
-    CameraMatrixList cameras;                           // list of cameras
-
-    GLMListArray2DVec camObservations;                  // list of 2D points for each cam
-    ListMappingGLM2DVec point3DTo2DThroughCam;     // list of points 3D to 2D through cam
-
-};
 
 #endif // MESH_ACCURACY_TYPE_DEFINITION_H

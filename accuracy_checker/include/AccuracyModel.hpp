@@ -10,11 +10,6 @@ namespace meshac {
     public:
         virtual EigMatrixList getAccuracyForPoint(int index3DPoint) = 0;
 
-    protected:
-        AccuracyModel() { }
-        ~AccuracyModel() { }
-
-
     };
 
 

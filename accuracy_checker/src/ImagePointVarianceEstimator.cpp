@@ -3,27 +3,60 @@
 
 namespace meshac {
 
-    ImagePointVarianceEstimator::ImagePointVarianceEstimator(ListCrossRatioTupleSet listTupleSet)
+
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight)
     {
-        this->listTupleSet = listTupleSet;
-        this->variances.assign(listTupleSet.size(), -1.0);
+        this->tuplesGenerator = new CRTuplesGenerator(camObservations, obsWidth, obsHeight);
     }
 
     ImagePointVarianceEstimator::~ImagePointVarianceEstimator()
-    { /*    */ }
-
-    /*
-     * Variance estimation.
-     */
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForTuple(ListCrossRatioTupleSet listTupleSet, CrossRatioTuple &tuple, int setIndex)
     {
-        this->setCrossRatioTupleSetList(listTupleSet);
-        return this->estimateVarianceForTuple(tuple, setIndex);
+        delete this->tuplesGenerator; 
     }
 
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex)
+    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 camObservations)
     {
-        double varianceSet = this->getVarianceSet(setIndex);
+        this->tuplesGenerator->setCamObservations(camObservations);
+    }
+
+    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 camObservations, IntList camIndexs)
+    {
+        for (int i = 0; i < camObservations.size(); i++) {
+            this->tuplesGenerator->setCamObservations(camObservations[i], i);
+        }
+    }
+
+    void ImagePointVarianceEstimator::updateCameraObservations(GLMListArrayVec2 camObservations, IntList indexs)
+    {
+        this->tuplesGenerator->updateCamObservations(camObservations, indexs);
+    }
+
+    GLMListArrayVec2 ImagePointVarianceEstimator::getCameraObeservations()
+    {
+        return this->tuplesGenerator->getCamObservations();
+    }
+
+
+    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int camIndex)
+    {
+        int counterTuples = 0;
+        EigMatrix4 variance = EigZeros(4);
+        CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
+
+        for (CrossRatioTuple tuple : tupleSet) {
+            if (tuple.isInTuple(point)) {
+                variance += this->estimateVarianceForTuple(tuple, camIndex);
+                ++counterTuples;
+            }
+        }
+
+        return variance / counterTuples;
+    }
+
+
+    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int camIndex)
+    {
+        double varianceSet = this->getVarianceSet(camIndex);
 
         auto jacobian = tuple.jacobian();   // row vector 1x3
         double lambda = tuple.avgDistance();
@@ -35,36 +68,17 @@ namespace meshac {
         return varianceTuple * EigIdentity(4);
     }
 
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForPoint(ListCrossRatioTupleSet listTupleSet, GLMVec2 &point, int setIndex)
+
+    double ImagePointVarianceEstimator::estimateVarianceTupleSet(int camIndex)
     {
-        this->setCrossRatioTupleSetList(listTupleSet);
-        return this->estimateVarianceForPoint(point, setIndex);
-    }
-
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int setIndex)
-    {
-        int counterTuples = 0;
-
-        EigMatrix4 variance = EigZeros(4);
-
-        for (CrossRatioTuple tuple : listTupleSet[setIndex]) {
-            if (tuple.isInTuple(point)) {
-                variance += this->estimateVarianceForTuple(tuple, setIndex);
-                ++counterTuples;
-            }
-        }
-
-        return variance / counterTuples;
-    }
-
-
-    double ImagePointVarianceEstimator::estimateVarianceTupleSet(int setIndex)
-    {
-        double avg = 0;
-        int N = this->listTupleSet[setIndex].size();
+        CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
+        CrossRatioTupleSet::iterator tuple = tupleSet.begin();
+        int N = tupleSet.size();
 
         EigVector crossRatioValues(N);
-        auto tuple = this->listTupleSet[setIndex].begin();
+
+        double avg = 0;
+        
 
         for (int i = 0; i < N; i++) {
             crossRatioValues[i] = (*tuple).crossRatio();
@@ -75,44 +89,24 @@ namespace meshac {
 
         EigVector summation = crossRatioValues - avg * EigVector::Ones(N) / N;
 
-        this->setVarianceSet(summation.sum() / (N - 1), setIndex);
-        return this->getVarianceSet(setIndex);
-    }
-
-    /*
-     * Getter and setter for ListCrossRatioTupleSet. 
-     */
-    ListCrossRatioTupleSet ImagePointVarianceEstimator::getCrossRatioTupleSetList()
-    {
-        return this->listTupleSet;
-    }
-
-    void ImagePointVarianceEstimator::setCrossRatioTupleSetList(ListCrossRatioTupleSet listTupleSet)
-    {
-        this->listTupleSet = listTupleSet;
-        this->variances.assign(listTupleSet.size(), -1);
-    }
-
-    void ImagePointVarianceEstimator::updateCrossRatioTupleSet(CrossRatioTupleSet tupleSet, int indexSet)
-    {
-        this->listTupleSet[indexSet] = tupleSet;
-        this->variances[indexSet] = -1;
+        this->setVarianceSet(summation.sum() / (N - 1), camIndex);
+        return this->getVarianceSet(camIndex);
     }
 
     /*
      * Getter and setter for cross ratio's variance of a single tuple.
      */
-    double ImagePointVarianceEstimator::getVarianceSet(int setIndex)
+    double ImagePointVarianceEstimator::getVarianceSet(int camIndex)
     {
-        if (this->variances[setIndex] < 0){
-            this->estimateVarianceTupleSet(setIndex);
+        if (this->variances[camIndex] < 0){
+            this->estimateVarianceTupleSet(camIndex);
         }
-        return this->variances[setIndex];
+        return this->variances[camIndex];
     }
 
-    void ImagePointVarianceEstimator::setVarianceSet(double variance, int setIndex)
+    void ImagePointVarianceEstimator::setVarianceSet(double variance, int camIndex)
     {
-        this->variances[setIndex] = variance;
+        this->variances[camIndex] = variance;
     }
 
 

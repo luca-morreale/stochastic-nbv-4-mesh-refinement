@@ -24,6 +24,7 @@ namespace meshac {
         void setCamObservations(GLMListArrayVec2 camObservations);
         void setCamObservations(GLMListVec2 list, int camIndex);
         void updateCamObservations(GLMListVec2 list, int camIndex);
+        void updateCamObservations(GLMListArrayVec2 camObservations, IntList camIndexs);
 
 
         /*

@@ -215,6 +215,13 @@ namespace meshac {
         this->tupleSetPerCam[camIndex].clear();
     }
 
+    void CRTuplesGenerator::updateCamObservations(GLMListArrayVec2 camObservations, IntList camIndexs)
+    {
+        for (int i = 0; i < camObservations.size(); i++) {
+            this->updateCamObservations(camObservations[i], camIndexs[i]);
+        }
+    }
+
     GLMListArrayVec2 CRTuplesGenerator::getCamObservations()
     {
         return camObservations;

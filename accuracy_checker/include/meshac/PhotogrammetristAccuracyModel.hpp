@@ -6,7 +6,6 @@
 
 #include <meshac/AccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
-#include <meshac/CRTuplesGenerator.hpp>
 #include <meshac/ImagePointVarianceEstimator.hpp>
 #include <meshac/InvalidUpdateException.hpp>
 
@@ -42,11 +41,11 @@ namespace meshac {
         std::pair<int, int> getObservationSize();
 
         void appendCamera(CameraMatrix cam);
-
-        void setCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations);
-        void updateCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations);
-        void updateMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLMVec2 indexCams);
-        void setMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLMVec2 indexCams);
+        void setCameraObservations(GLMListArrayVec2 newCamObservations);
+        void setCameraObservations(GLMListArrayVec2 newCamObservations, IntList camIndexs);
+        void updateCameraObservations(GLMListArrayVec2 newCamObservations, IntList camIndexs);
+        void updateMapping3DTo2DThroughCam(ListMappingGLMVec2 indexCams, IntList index3DPoints);
+        void setMapping3DTo2DThroughCam(ListMappingGLMVec2 indexCams, IntList index3DPoints);
 
 
     protected:
@@ -54,12 +53,6 @@ namespace meshac {
          * Initializes all members.
          */
         virtual void initMembers();
-
-        /*
-         * Computes the required cross ratio's tuples.
-         */
-        virtual void computeTuples();
-        virtual void computeTuples(int camIndex);
 
         /*
          * Evaluates the photogrammetrist's function in the given point with the given camera.
@@ -72,17 +65,10 @@ namespace meshac {
          */
         virtual EigMatrix computeJacobian(CameraMatrix &cam, GLMVec2 &point);
 
-        /*
-         * Getter and Setter for CrossRatio Tuples' Generator.
-         */
-        void setTupleGenerator(CRTuplesGeneratorPtr generator);
-        CRTuplesGeneratorPtr getTuplesGenerator();
 
 
 
-        typedef boost::_bi::bind_t<void, boost::_mfi::mf2<void, meshac::CRTuplesGenerator, std::vector<glm::tvec2<float, (glm::precision)0u> >, int>, boost::_bi::list3<boost::_bi::value<meshac::CRTuplesGenerator*>, boost::arg<1>, boost::arg<2> > > FunctionTarget;
-
-        virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, FunctionTarget f, std::string errorMsg);
+        virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, std::string errorMsg);
         virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList);
 
 
@@ -100,7 +86,6 @@ namespace meshac {
         CameraMatrixList extractCameraMatrix(CameraList &cameras);
 
         ImagePointVarianceEstimatorPtr varianceEstimator;
-        CRTuplesGeneratorPtr tuplesGenerator;
 
 
         CameraMatrixList cameras;

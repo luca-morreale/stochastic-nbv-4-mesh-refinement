@@ -4,37 +4,36 @@
 
 #include <meshac/alias_definition.hpp>
 #include <meshac/CrossRatioTuple.hpp>
+#include <meshac/CRTuplesGenerator.hpp>
 
 namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator(ListCrossRatioTupleSet listTupleSet);
+        ImagePointVarianceEstimator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight);
         ~ImagePointVarianceEstimator();
 
+        void setCameraObservations(GLMListArrayVec2 camObservations);
+        void setCameraObservations(GLMListArrayVec2 camObservations, IntList camIndexs);
+        void updateCameraObservations(GLMListArrayVec2 camObservations, IntList indexs);
+        GLMListArrayVec2 getCameraObeservations();
 
-        virtual EigMatrix4 estimateVarianceForTuple(ListCrossRatioTupleSet listTupleSet, CrossRatioTuple &tuple, int setIndex);
-        virtual EigMatrix4 estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex);
-        
-        virtual EigMatrix4 estimateVarianceForPoint(ListCrossRatioTupleSet listTupleSet, GLMVec2 &point, int setIndex);
-        virtual EigMatrix4 estimateVarianceForPoint(GLMVec2 &point, int setIndex);
-        
+        virtual EigMatrix4 estimateVarianceForPoint(GLMVec2 &point, int camIndex);
 
-        ListCrossRatioTupleSet getCrossRatioTupleSetList();
-        void setCrossRatioTupleSetList(ListCrossRatioTupleSet listTupleSet);
-
-        void updateCrossRatioTupleSet(CrossRatioTupleSet tupleSet, int indexSet);
 
 
     protected:
         double getVarianceSet(int setIndex);
         void setVarianceSet(double variance, int setIndex);
 
-    
-        double estimateVarianceTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
+        virtual EigMatrix4 estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex);
+
+        virtual double estimateVarianceTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
 
     private:
-        ListCrossRatioTupleSet listTupleSet;
+        //ListCrossRatioTupleSet listTupleSet;
+
+        CRTuplesGeneratorPtr tuplesGenerator;
 
         DoubleList variances;
 

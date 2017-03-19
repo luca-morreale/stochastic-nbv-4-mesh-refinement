@@ -12,7 +12,7 @@ namespace meshac {
 
     class WorstTraceVarianceEstimator : public Point3DVarianceEstimator {
     public:
-        WorstTraceVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 points);
+        WorstTraceVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points);
         ~WorstTraceVarianceEstimator();
 
     protected:

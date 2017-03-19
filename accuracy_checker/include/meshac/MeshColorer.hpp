@@ -11,7 +11,7 @@ namespace meshac {
 
     class MeshColorer {
     public:
-        MeshColorer(std::string confiFileName);
+        MeshColorer(std::string &confiFileName);
         ~MeshColorer();
 
         std::string printVertexColor(GLMVec3 &point, double &accuracy);
@@ -20,7 +20,7 @@ namespace meshac {
         void encodeVertexToStream(std::stringstream &stream, GLMListVec3 &points, DoubleList &accuracies);
 
         std::string getConfigFileName();
-        void setConfigFilename(std::string confiFileName);
+        void setConfigFilename(std::string &confiFileName);
 
     protected:
         virtual void readColors();

@@ -1,4 +1,3 @@
-
 #ifndef MESH_ACCURACY_COMPUTER_VISION_ACCURACY_MODEL_H
 #define MESH_ACCURACY_COMPUTER_VISION_ACCURACY_MODEL_H
 
@@ -11,13 +10,13 @@ namespace meshac {
     class ComputerVisionAccuracyModel : public PhotogrammetristAccuracyModel {
     public:
 
-        ComputerVisionAccuracyModel(GLMListVec3 points3D, CameraMatrixList cameras, GLMListArrayVec2 camObservations, 
-                                                ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        ComputerVisionAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations, 
+                                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
         
-        ComputerVisionAccuracyModel(GLMListVec3 points3D, CameraList cameras, GLMListArrayVec2 camObservations, 
-                                                ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        ComputerVisionAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations,
+                                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
 
-        ComputerVisionAccuracyModel(SfMData data);
+        ComputerVisionAccuracyModel(SfMData &data);
         
         ~ComputerVisionAccuracyModel() { };
 

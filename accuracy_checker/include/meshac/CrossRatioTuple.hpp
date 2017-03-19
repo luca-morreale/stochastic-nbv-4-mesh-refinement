@@ -1,4 +1,3 @@
-
 #ifndef MESH_ACCURACY_CROSS_RATIO_TUPLE_H
 #define MESH_ACCURACY_CROSS_RATIO_TUPLE_H
 
@@ -22,7 +21,7 @@ namespace meshac {
         /*
          * Inserts a new point at the end of those in the array.
          */
-        void append(GLMVec2 point);
+        void append(GLMVec2 &point);
 
         /* 
          * Computes the cross ratio of the given four points.
@@ -42,7 +41,7 @@ namespace meshac {
         /*
          * Checks if the given point is contained in the tuple.
          */
-        bool isInTuple(GLMVec2 point);
+        bool isInTuple(GLMVec2 &point);
 
         /*
          * Overloading < operation for comparation.

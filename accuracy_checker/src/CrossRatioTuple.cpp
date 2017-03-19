@@ -4,7 +4,7 @@
 
 namespace meshac {
     
-    void CrossRatioTuple::append(GLMVec2 point) 
+    void CrossRatioTuple::append(GLMVec2 &point) 
     {
         if (points.size() < 4) {
             points.push_back(point);
@@ -38,7 +38,7 @@ namespace meshac {
         return (this->xy + this->yz + this->zt) / 3;
     }
 
-    bool CrossRatioTuple::isInTuple(GLMVec2 point)
+    bool CrossRatioTuple::isInTuple(GLMVec2 &point)
     {
         for (GLMVec2 tuplePoint : points) {
             if (glm::epsilonEqual(point, tuplePoint, EPSILON)[0]) {

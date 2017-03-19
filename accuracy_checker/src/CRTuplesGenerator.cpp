@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    CRTuplesGenerator::CRTuplesGenerator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight)
+    CRTuplesGenerator::CRTuplesGenerator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
     {
         this->camObservations = camObservations;
         this->obsHeight = obsHeight;
@@ -16,7 +16,7 @@ namespace meshac {
     /*
      * Extraction of quadruplets of collinear points for each image.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
     {
         this->setCamObservations(camObservations);
         this->setObsSize(obsWidth, obsHeight);
@@ -45,7 +45,7 @@ namespace meshac {
     /*
      * Extraction quadruplets of collinear points for the image obtained by the given camera.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(GLMListArrayVec2 camObservations, int camIndex, int obsWidth, int obsHeight)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(GLMListArrayVec2 &camObservations, int camIndex, int obsWidth, int obsHeight)
     {
         this->setCamObservations(camObservations);
         this->setObsSize(obsWidth, obsHeight);
@@ -180,17 +180,17 @@ namespace meshac {
         return this->tupleSetPerCam;
     }
 
-    void CRTuplesGenerator::setTuples(CrossRatioTupleSet tupleSet)
+    void CRTuplesGenerator::setTuples(CrossRatioTupleSet &tupleSet)
     {
         this->tupleSet = tupleSet;
     }
 
-    void CRTuplesGenerator::setTuplesPerCam(ListCrossRatioTupleSet tupleSetPerCam)
+    void CRTuplesGenerator::setTuplesPerCam(ListCrossRatioTupleSet &tupleSetPerCam)
     {
         this->tupleSetPerCam = tupleSetPerCam;
     }
 
-    void CRTuplesGenerator::setTuplesPerCam(CrossRatioTupleSet tupleSet, int camIndex)
+    void CRTuplesGenerator::setTuplesPerCam(CrossRatioTupleSet &tupleSet, int camIndex)
     {
         this->tupleSetPerCam[camIndex] = tupleSet;
     }
@@ -198,24 +198,24 @@ namespace meshac {
     /*
      * Getter and setter for Camera's Observations.
      */
-    void CRTuplesGenerator::setCamObservations(GLMListArrayVec2 camObservations)
+    void CRTuplesGenerator::setCamObservations(GLMListArrayVec2 &camObservations)
     {
         this->camObservations = camObservations;
     }
 
-    void CRTuplesGenerator::setCamObservations(GLMListVec2 list, int camIndex)
+    void CRTuplesGenerator::setCamObservations(GLMListVec2 &list, int camIndex)
     {
         this->camObservations[camIndex].clear();
         this->camObservations[camIndex].insert(camObservations[camIndex].begin(), list.begin(), list.end());
     }
 
-    void CRTuplesGenerator::updateCamObservations(GLMListVec2 list, int camIndex)
+    void CRTuplesGenerator::updateCamObservations(GLMListVec2 &list, int camIndex)
     {
         this->camObservations[camIndex] = list;
         this->tupleSetPerCam[camIndex].clear();
     }
 
-    void CRTuplesGenerator::updateCamObservations(GLMListArrayVec2 camObservations, IntList camIndexs)
+    void CRTuplesGenerator::updateCamObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs)
     {
         for (int i = 0; i < camObservations.size(); i++) {
             this->updateCamObservations(camObservations[i], camIndexs[i]);

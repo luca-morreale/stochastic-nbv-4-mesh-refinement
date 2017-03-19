@@ -1,4 +1,3 @@
-
 #ifndef MESH_ACCURACY_CR_TUPLES_GENERATOR_H
 #define MESH_ACCURACY_CR_TUPLES_GENERATOR_H
 
@@ -13,7 +12,7 @@ namespace meshac {
 
     class CRTuplesGenerator {
     public:
-        CRTuplesGenerator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight);
+        CRTuplesGenerator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
         ~CRTuplesGenerator();
 
 
@@ -21,10 +20,10 @@ namespace meshac {
          * Getter and setter for Cameras' Observations.
          */
         GLMListArrayVec2 getCamObservations();
-        void setCamObservations(GLMListArrayVec2 camObservations);
-        void setCamObservations(GLMListVec2 list, int camIndex);
-        void updateCamObservations(GLMListVec2 list, int camIndex);
-        void updateCamObservations(GLMListArrayVec2 camObservations, IntList camIndexs);
+        void setCamObservations(GLMListArrayVec2 &camObservations);
+        void setCamObservations(GLMListVec2 &list, int camIndex);
+        void updateCamObservations(GLMListVec2 &list, int camIndex);
+        void updateCamObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs);
 
 
         /*
@@ -46,22 +45,22 @@ namespace meshac {
         /*
          * Extracts quadruplets of collinear points for each image.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPoints(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight);
+        virtual CrossRatioTupleSet determineTupleOfFourPoints(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
         virtual CrossRatioTupleSet determineTupleOfFourPoints();
 
         /*
          * Extracts quadruplets of collinear points for the image obtained by the given camera.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(GLMListArrayVec2 camObservations, int camIndex, int obsWidth, int obsHeight);
+        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(GLMListArrayVec2 &camObservations, int camIndex, int obsWidth, int obsHeight);
         virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(int camIndex);
         virtual ListCrossRatioTupleSet determineTupleOfFourPointsForAllCam();
 
 
         
     protected:
-        void setTuples(CrossRatioTupleSet tupleSet);
-        void setTuplesPerCam(ListCrossRatioTupleSet tupleSetPerCam);
-        void setTuplesPerCam(CrossRatioTupleSet tupleSet, int camIndex);
+        void setTuples(CrossRatioTupleSet &tupleSet);
+        void setTuplesPerCam(ListCrossRatioTupleSet &tupleSetPerCam);
+        void setTuplesPerCam(CrossRatioTupleSet &tupleSet, int camIndex);
 
     private:
 

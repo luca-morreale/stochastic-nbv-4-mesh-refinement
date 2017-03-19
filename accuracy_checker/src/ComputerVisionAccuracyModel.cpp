@@ -3,17 +3,17 @@
 
 namespace meshac {
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(GLMListVec3 points3D, CameraMatrixList cameras, 
-                                GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight) 
-                                : PhotogrammetristAccuracyModel(points3D, cameras, camObservations, point3DTo2DThroughCam, obsWidth, obsHeight)
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight) 
+                                            : PhotogrammetristAccuracyModel(cameras, camObservations, point3DTo2DThroughCam, obsWidth, obsHeight)
     { /*    */ }
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(GLMListVec3 points3D, CameraList cameras, 
-                                GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight)
-                                : PhotogrammetristAccuracyModel(points3D, cameras, camObservations, point3DTo2DThroughCam, obsWidth, obsHeight)
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations, 
+                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight)
+                                            : PhotogrammetristAccuracyModel(cameras, camObservations, point3DTo2DThroughCam, obsWidth, obsHeight)
     { /*    */ }
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData data) : PhotogrammetristAccuracyModel(data) 
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data) : PhotogrammetristAccuracyModel(data) 
     { /*    */ }
 
     /*

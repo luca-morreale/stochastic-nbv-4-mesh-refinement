@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    MeshColorer::MeshColorer(std::string confiFileName)
+    MeshColorer::MeshColorer(std::string &confiFileName)
     {
         this->fileName = confiFileName;
         this->colors = new ThresholdColor();
@@ -63,7 +63,7 @@ namespace meshac {
         return this->fileName;
     }
 
-    void MeshColorer::setConfigFilename(std::string confiFileName)
+    void MeshColorer::setConfigFilename(std::string &confiFileName)
     {
         this->fileName = confiFileName;
         this->readColors();

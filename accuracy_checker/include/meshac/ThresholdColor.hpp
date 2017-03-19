@@ -4,27 +4,18 @@
 #include <algorithm>
 #include <vector>
 
+#include <meshac/alias_definition.hpp>
+#include <meshac/Color.hpp>
 
 namespace meshac {
-    
-    struct Color {
-        float r = 0;
-        float g = 0;
-        float b = 0;
-        float a = 0;
-
-        Color(float r, float g, float b, float a);
-
-        std::string string();
-    };
 
     class ThresholdColor {
     public:
         ThresholdColor();
-        ThresholdColor(std::vector<double> thresholds, std::vector<Color> colors);
+        ThresholdColor(DoubleList &thresholds, ColorList &colors);
         ~ThresholdColor();
 
-        void addColor(double threshold, Color color);
+        void addColor(double threshold, Color &color);
         Color getColorFor(double targetAccuracy);
         void clearColors();
 

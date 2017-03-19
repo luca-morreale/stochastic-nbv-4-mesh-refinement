@@ -3,8 +3,8 @@
 
 namespace meshac {
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraMatrixList cameras, 
-                                GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+                                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight)
     {
         this->cameras = cameras;
         this->camObservations = camObservations;
@@ -15,8 +15,8 @@ namespace meshac {
         this->initMembers();
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraList cameras, 
-                                GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations, 
+                                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight)
     {
         this->cameras = this->extractCameraMatrix(cameras);
         this->camObservations = camObservations;
@@ -27,7 +27,7 @@ namespace meshac {
         this->initMembers();
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData data)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data)
     {
         this->cameras = this->extractCameraMatrix(data.camerasList_);
         this->camObservations = data.camViewing2DPoint_;
@@ -153,37 +153,47 @@ namespace meshac {
         return std::make_pair(obsWidth, obsHeight);
     }
 
-    void PhotogrammetristAccuracyModel::appendCamera(CameraMatrix cam)
+    void PhotogrammetristAccuracyModel::setCameras(CameraMatrixList &cameras)
+    {
+        this->cameras = cameras;
+    }
+
+    void PhotogrammetristAccuracyModel::setCameras(CameraList &cameras)
+    {
+        this->cameras = this->extractCameraMatrix(cameras);
+    }    
+
+    void PhotogrammetristAccuracyModel::appendCamera(CameraMatrix &cam)
     {
         this->cameras.push_back(cam);
         this->camObservations.push_back(GLMListVec2());
     }
 
-    void PhotogrammetristAccuracyModel::setCameraObservations(GLMListArrayVec2 newCamObservations)  
+    void PhotogrammetristAccuracyModel::setCameraObservations(GLMListArrayVec2 &newCamObservations)  
     {
         this->camObservations = newCamObservations;
         this->varianceEstimator->setCameraObservations(newCamObservations);
     }
 
-    void PhotogrammetristAccuracyModel::setCameraObservations(GLMListArrayVec2 newCamObservations, IntList camIndexs)  
+    void PhotogrammetristAccuracyModel::setCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs)  
     {
         this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, "of camera to set the camera's observation.");
         this->varianceEstimator->setCameraObservations(newCamObservations, camIndexs);
     }
 
-    void PhotogrammetristAccuracyModel::updateCameraObservations(GLMListArrayVec2 newCamObservations, IntList camIndexs)  
+    void PhotogrammetristAccuracyModel::updateCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs)  
     {
         this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, "of camera to updated the camera's observation.");
         this->varianceEstimator->updateCameraObservations(newCamObservations, camIndexs);
     }
 
 
-    void PhotogrammetristAccuracyModel::setMapping3DTo2DThroughCam(ListMappingGLMVec2 indexCams, IntList index3DPoints)
+    void PhotogrammetristAccuracyModel::setMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints)
     {
         this->mappingGeneralUpdate(index3DPoints, indexCams, point3DTo2DThroughCam);
     }
 
-    void PhotogrammetristAccuracyModel::updateMapping3DTo2DThroughCam(ListMappingGLMVec2 indexCams, IntList index3DPoints)
+    void PhotogrammetristAccuracyModel::updateMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints)
     {
         this->mappingGeneralUpdate(index3DPoints, indexCams, point3DTo2DThroughCam);
     }
@@ -212,22 +222,6 @@ namespace meshac {
         }
     }
 
-    /*
-     * Setters for the information of the different cameras and views.
-     */
-    void PhotogrammetristAccuracyModel::setCameras(CameraMatrixList cameras)
-    {
-        this->cameras = cameras;
-    }
-    void PhotogrammetristAccuracyModel::setCamObservations(GLMListArrayVec2 camObservations)
-    {
-        this->camObservations = camObservations;
-    }
-
-    void PhotogrammetristAccuracyModel::setVisibilityOfPoints(ListMappingGLMVec2 point3DTo2DThroughCam)
-    {
-        this->point3DTo2DThroughCam = point3DTo2DThroughCam;
-    }
 
     float PhotogrammetristAccuracyModel::getXh()
     {

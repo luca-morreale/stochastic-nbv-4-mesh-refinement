@@ -1,4 +1,3 @@
-
 #ifndef MESH_ACCURACY_IMAGE_POINT_VARIANCE_ESTIMATOR_H
 #define MESH_ACCURACY_IMAGE_POINT_VARIANCE_ESTIMATOR_H
 
@@ -10,12 +9,12 @@ namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight);
+        ImagePointVarianceEstimator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
         ~ImagePointVarianceEstimator();
 
-        void setCameraObservations(GLMListArrayVec2 camObservations);
-        void setCameraObservations(GLMListArrayVec2 camObservations, IntList camIndexs);
-        void updateCameraObservations(GLMListArrayVec2 camObservations, IntList indexs);
+        void setCameraObservations(GLMListArrayVec2 &camObservations);
+        void setCameraObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs);
+        void updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs);
         GLMListArrayVec2 getCameraObeservations();
 
         virtual EigMatrix4 estimateVarianceForPoint(GLMVec2 &point, int camIndex);

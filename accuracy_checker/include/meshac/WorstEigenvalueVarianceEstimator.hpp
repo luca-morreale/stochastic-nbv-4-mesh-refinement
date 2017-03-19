@@ -12,7 +12,7 @@ namespace meshac {
 
     class WorstEigenvalueVarianceEstimator : public Point3DVarianceEstimator {
     public:
-        WorstEigenvalueVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 points);
+        WorstEigenvalueVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points);
         ~WorstEigenvalueVarianceEstimator();
 
     protected:

@@ -1,4 +1,3 @@
-
 #ifndef MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 #define MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 
@@ -13,13 +12,13 @@ namespace meshac {
     
     class PhotogrammetristAccuracyModel : public AccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraMatrixList cameras, 
-                        GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations, 
+                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
         
-        PhotogrammetristAccuracyModel(GLMListVec3 points3D, CameraList cameras, 
-                        GLMListArrayVec2 camObservations, ListMappingGLMVec2 point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations,
+                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
         
-        PhotogrammetristAccuracyModel(SfMData data);
+        PhotogrammetristAccuracyModel(SfMData &data);
         
         ~PhotogrammetristAccuracyModel();
         
@@ -40,12 +39,14 @@ namespace meshac {
         ListMappingGLMVec2 getMapping3DTo2DThroughCam();
         std::pair<int, int> getObservationSize();
 
-        void appendCamera(CameraMatrix cam);
-        void setCameraObservations(GLMListArrayVec2 newCamObservations);
-        void setCameraObservations(GLMListArrayVec2 newCamObservations, IntList camIndexs);
-        void updateCameraObservations(GLMListArrayVec2 newCamObservations, IntList camIndexs);
-        void updateMapping3DTo2DThroughCam(ListMappingGLMVec2 indexCams, IntList index3DPoints);
-        void setMapping3DTo2DThroughCam(ListMappingGLMVec2 indexCams, IntList index3DPoints);
+        void setCameras(CameraMatrixList &cameras);
+        void setCameras(CameraList &cameras);
+        void appendCamera(CameraMatrix &cam);
+        void setCameraObservations(GLMListArrayVec2 &newCamObservations);
+        void setCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs);
+        void updateCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs);
+        void updateMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
+        void setMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
 
 
     protected:
@@ -75,10 +76,6 @@ namespace meshac {
         /*
          * 
          */
-        void setCameras(CameraMatrixList cameras);
-        void setCamObservations(GLMListArrayVec2 camObservations);
-        void setVisibilityOfPoints(ListMappingGLMVec2 point3DTo2DThroughCam);
-
         float getXh();
         float getYh();
 
@@ -105,4 +102,3 @@ namespace meshac {
 
 
 #endif // MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
-

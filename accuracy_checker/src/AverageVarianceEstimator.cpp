@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    AverageVarianceEstimator::AverageVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 points) : Point3DVarianceEstimator(accuracyModel, points)
+    AverageVarianceEstimator::AverageVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points) : Point3DVarianceEstimator(accuracyModel, points)
     { /*    */ }
     
     AverageVarianceEstimator::~AverageVarianceEstimator()

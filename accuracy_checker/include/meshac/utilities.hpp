@@ -1,4 +1,3 @@
-
 #ifndef MESH_ACCURACY_UTILITIES_H
 #define MESH_ACCURACY_UTILITIES_H
 
@@ -13,4 +12,3 @@ namespace meshac {
 } // namespace meshac
 
 #endif // MESH_ACCURACY_UTILITIES_H
-

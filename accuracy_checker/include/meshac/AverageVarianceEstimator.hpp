@@ -1,4 +1,3 @@
-
 #ifndef MESH_ACCURACY_AVERAGE_VARIANCE_ESTIMATOR_H
 #define MESH_ACCURACY_AVERAGE_VARIANCE_ESTIMATOR_H
 
@@ -13,7 +12,7 @@ namespace meshac {
 
     class AverageVarianceEstimator : public Point3DVarianceEstimator {
     public:
-        AverageVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 points);
+        AverageVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points);
         ~AverageVarianceEstimator();
 
     protected:

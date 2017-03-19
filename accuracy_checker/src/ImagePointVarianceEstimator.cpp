@@ -4,7 +4,7 @@
 namespace meshac {
 
 
-    ImagePointVarianceEstimator::ImagePointVarianceEstimator(GLMListArrayVec2 camObservations, int obsWidth, int obsHeight)
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
     {
         this->tuplesGenerator = new CRTuplesGenerator(camObservations, obsWidth, obsHeight);
     }
@@ -14,19 +14,19 @@ namespace meshac {
         delete this->tuplesGenerator; 
     }
 
-    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 camObservations)
+    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations)
     {
         this->tuplesGenerator->setCamObservations(camObservations);
     }
 
-    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 camObservations, IntList camIndexs)
+    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs)
     {
         for (int i = 0; i < camObservations.size(); i++) {
             this->tuplesGenerator->setCamObservations(camObservations[i], i);
         }
     }
 
-    void ImagePointVarianceEstimator::updateCameraObservations(GLMListArrayVec2 camObservations, IntList indexs)
+    void ImagePointVarianceEstimator::updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs)
     {
         this->tuplesGenerator->updateCamObservations(camObservations, indexs);
     }

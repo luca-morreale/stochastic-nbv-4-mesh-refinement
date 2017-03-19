@@ -2,26 +2,11 @@
 #include <meshac/ThresholdColor.hpp>
 
 namespace meshac {
-
-    Color::Color(float r, float g, float b, float a)
-    {
-        this->r = r;
-        this->g = g;
-        this->b = b;
-        this->a = a;
-    }
-
-    std::string Color::string()
-    {
-        return std::to_string(this->r) + " " + std::to_string(this->g) + " " + std::to_string(this->b) + " " + std::to_string(this->a);
-    }
-
-
     
     ThresholdColor::ThresholdColor()
     { /*    */ }
 
-    ThresholdColor::ThresholdColor(std::vector<double> thresholds, std::vector<Color> colors)
+    ThresholdColor::ThresholdColor(DoubleList &thresholds, ColorList &colors)
     {
         for (int i = 0; i < thresholds.size(); i++) {
             this->colors.push_back(std::make_pair(thresholds[i], colors[i]));
@@ -36,7 +21,7 @@ namespace meshac {
     }
         
 
-    void ThresholdColor::addColor(double threshold, Color color)
+    void ThresholdColor::addColor(double threshold, Color &color)
     {
         // insert in position in order
     }

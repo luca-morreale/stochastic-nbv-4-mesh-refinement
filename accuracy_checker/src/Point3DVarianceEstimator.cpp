@@ -1,5 +1,5 @@
 
-#include <Point3DVarianceEstimator.hpp>
+#include <meshac/Point3DVarianceEstimator.hpp>
 
 namespace meshac {
 

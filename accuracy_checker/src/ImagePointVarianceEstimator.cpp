@@ -1,5 +1,5 @@
 
-#include <ImagePointVarianceEstimator.hpp>
+#include <meshac/ImagePointVarianceEstimator.hpp>
 
 namespace meshac {
 

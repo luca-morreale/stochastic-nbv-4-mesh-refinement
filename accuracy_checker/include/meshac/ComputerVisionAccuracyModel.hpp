@@ -3,8 +3,8 @@
 #define MESH_ACCURACY_COMPUTER_VISION_ACCURACY_MODEL_H
 
 
-#include <PhotogrammetristAccuracyModel.hpp>
-#include <alias_definition.hpp>
+#include <meshac/alias_definition.hpp>
+#include <meshac/PhotogrammetristAccuracyModel.hpp>
 
 namespace meshac {
     

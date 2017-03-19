@@ -1,5 +1,5 @@
 
-#include <ComputerVisionAccuracyModel.hpp>
+#include <meshac/ComputerVisionAccuracyModel.hpp>
 
 namespace meshac {
 

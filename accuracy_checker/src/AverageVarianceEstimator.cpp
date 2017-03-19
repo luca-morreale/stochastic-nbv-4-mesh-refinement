@@ -1,5 +1,5 @@
 
-#include <AverageVarianceEstimator.hpp>
+#include <meshac/AverageVarianceEstimator.hpp>
 
 namespace meshac {
 

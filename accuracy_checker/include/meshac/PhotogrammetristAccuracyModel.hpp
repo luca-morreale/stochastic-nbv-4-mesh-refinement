@@ -4,11 +4,11 @@
 
 #include <boost/bind.hpp>
 
-#include <AccuracyModel.hpp>
-#include <alias_definition.hpp>
-#include <CRTuplesGenerator.hpp>
-#include <ImagePointVarianceEstimator.hpp>
-#include <InvalidUpdateException.hpp>
+#include <meshac/AccuracyModel.hpp>
+#include <meshac/alias_definition.hpp>
+#include <meshac/CRTuplesGenerator.hpp>
+#include <meshac/ImagePointVarianceEstimator.hpp>
+#include <meshac/InvalidUpdateException.hpp>
 
 namespace meshac {
     
@@ -101,7 +101,6 @@ namespace meshac {
 
         ImagePointVarianceEstimatorPtr varianceEstimator;
         CRTuplesGeneratorPtr tuplesGenerator;
-        CrossRatioTupleSet crossratioTupleSet;
 
 
         CameraMatrixList cameras;

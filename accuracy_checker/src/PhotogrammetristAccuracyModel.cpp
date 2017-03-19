@@ -1,5 +1,5 @@
 
-#include <PhotogrammetristAccuracyModel.hpp>
+#include <meshac/PhotogrammetristAccuracyModel.hpp>
 
 namespace meshac {
 
@@ -69,12 +69,12 @@ namespace meshac {
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
             GLMVec2 point2D = cameraObsPair.second;
-            EigMatrix4 pointVariance = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first); // FIX
+            EigMatrix4 pointVariance = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first);
 
             EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
 
             #pragma omp critical
-            uncertaintyMatrix.push_back(jacobian.transpose() * pointVariance * jacobian);   // FIX
+            uncertaintyMatrix.push_back(jacobian.transpose() * pointVariance * jacobian);
         }
 
         return uncertaintyMatrix;
@@ -129,12 +129,14 @@ namespace meshac {
      */
     void PhotogrammetristAccuracyModel::computeTuples()
     {
-        this->crossratioTupleSet = this->tuplesGenerator->determineTupleOfFourPoints();
+        ListCrossRatioTupleSet crossratioTupleSet = this->tuplesGenerator->determineTupleOfFourPointsForAllCam();
+        this->varianceEstimator->setCrossRatioTupleSetList(crossratioTupleSet);
     }
 
     void PhotogrammetristAccuracyModel::computeTuples(int camIndex)
     {
-        this->crossratioTupleSet = this->tuplesGenerator->determineTupleOfFourPointsForCam(camIndex);
+        CrossRatioTupleSet crossratioTupleSet = this->tuplesGenerator->determineTupleOfFourPointsForCam(camIndex);
+        this->varianceEstimator->updateCrossRatioTupleSet(crossratioTupleSet, camIndex);
     }
 
 
@@ -174,17 +176,23 @@ namespace meshac {
         this->camObservations.push_back(GLMListVec2());
     }
 
+    // maybe is better to call a function that do all the update.
     void PhotogrammetristAccuracyModel::setCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations)  
     {
-        auto tmp = boost::bind(&CRTuplesGenerator::setCamObservations, tuplesGenerator, _1, _2);
-        this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, tmp, "of camera to set the camera's observation.");
+        auto functionToCall = boost::bind(&CRTuplesGenerator::setCamObservations, tuplesGenerator, _1, _2);
+        this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, functionToCall, "of camera to set the camera's observation.");
+        this->computeTuples();
     }
 
     void PhotogrammetristAccuracyModel::updateCameraObservations(IntList camIndexs, GLMListArrayVec2 newCamObservations)  
     {
-        auto tmp = boost::bind(&CRTuplesGenerator::updateCamObservations, tuplesGenerator, _1, _2);
-        this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, tmp, "of camera to updated the camera's observation.");
+        auto functionToCall = boost::bind(&CRTuplesGenerator::updateCamObservations, tuplesGenerator, _1, _2);
+        this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, functionToCall, "of camera to updated the camera's observation.");
+        //add compute tuple     FIX
     }
+
+
+
 
     void PhotogrammetristAccuracyModel::setMapping3DTo2DThroughCam(IntList index3DPoints, ListMappingGLMVec2 indexCams)
     {

@@ -2,7 +2,7 @@
 #ifndef MESH_ACCURACY_UTILITIES_H
 #define MESH_ACCURACY_UTILITIES_H
 
-#include <alias_definition.hpp>
+#include <meshac/alias_definition.hpp>
 
 namespace meshac {
 

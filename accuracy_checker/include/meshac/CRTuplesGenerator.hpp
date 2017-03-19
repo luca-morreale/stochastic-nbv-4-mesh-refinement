@@ -4,10 +4,10 @@
 
 #include <manifoldReconstructor/SfMData.h>
 
-#include <CrossRatioTuple.hpp>
-#include <alias_definition.hpp>
-#include <meshac_type_definition.hpp>
-#include <utilities.hpp>
+#include <meshac/alias_definition.hpp>
+#include <meshac/CrossRatioTuple.hpp>
+#include <meshac/meshac_type_definition.hpp>
+#include <meshac/utilities.hpp>
 
 namespace meshac {
 

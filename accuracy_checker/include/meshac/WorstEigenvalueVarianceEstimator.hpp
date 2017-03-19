@@ -1,8 +1,8 @@
 #ifndef MESH_ACCURACY_WORST_EIGENVALUE_VARIANCE_ESTIMATOR_H
 #define MESH_ACCURACY_WORST_EIGENVALUE_VARIANCE_ESTIMATOR_H
 
-#include <alias_definition.hpp>
-#include <Point3DVarianceEstimator.hpp>
+#include <meshac/alias_definition.hpp>
+#include <meshac/Point3DVarianceEstimator.hpp>
 
 
 namespace meshac {

@@ -1,5 +1,5 @@
 
-#include <WorstEigenvalueVarianceEstimator.hpp>
+#include <meshac/WorstEigenvalueVarianceEstimator.hpp>
 
 namespace meshac {
 

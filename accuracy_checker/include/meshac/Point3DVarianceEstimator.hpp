@@ -4,9 +4,9 @@
 
 #include <glm/gtc/epsilon.hpp>
 
-#include <alias_definition.hpp>
-#include <AccuracyModel.hpp>
-#include <meshac_type_definition.hpp>
+#include <meshac/alias_definition.hpp>
+#include <meshac/AccuracyModel.hpp>
+#include <meshac/meshac_type_definition.hpp>
 
 
 namespace meshac {

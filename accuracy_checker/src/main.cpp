@@ -3,14 +3,11 @@
 #include <manifoldReconstructor/SfMData.h>
 #include <manifoldReconstructor/types_reconstructor.hpp>
 
-#include <glm/glm.hpp>
-#include <glm/gtx/norm.hpp>
 
-
-#include <CrossRatioTuple.hpp>
-#include <CRTuplesGenerator.hpp>
-#include <alias_definition.hpp>
-#include <meshac_type_definition.hpp>
+//#include <meshac/CrossRatioTuple.hpp>
+//#include <meshac/CRTuplesGenerator.hpp>
+//#include <meshac/alias_definition.hpp>
+//#include <meshac/meshac_type_definition.hpp>
 
 
 
@@ -21,9 +18,9 @@ int main(int argc, char **argv) {
     
     SfMData points = op.getSfmData();
 
-    meshac::CRTuplesGenerator crGenerator = meshac::CRTuplesGenerator(points.point2DoncamViewingPoint_, points.imageWidth_, points.imageHeight_);
+//    meshac::CRTuplesGenerator crGenerator = meshac::CRTuplesGenerator(points.point2DoncamViewingPoint_, points.imageWidth_, points.imageHeight_);
 
-    meshac::CrossRatioTupleSet crossratioTupleSet = crGenerator.determineTupleOfFourPoints();
+//    meshac::CrossRatioTupleSet crossratioTupleSet = crGenerator.determineTupleOfFourPoints();
 
 
     return 0;

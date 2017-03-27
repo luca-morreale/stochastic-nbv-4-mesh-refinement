@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    CRTuplesGenerator::CRTuplesGenerator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
+    CRTuplesGenerator::CRTuplesGenerator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
     {
         this->camObservations = camObservations;
         this->obsHeight = obsHeight;
@@ -55,7 +55,10 @@ namespace meshac {
     CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(int camIndex)
     {
         GLMListVec2 points2D = this->camObservations[camIndex];
-        CVListVec2 lines = createLinesFromPoints(this->obsWidth, this->obsHeight, points2D);
+
+        CVMat edges;
+        computeEdges(camIndex, edges);
+        CVListVec2 lines = createLinesFromPoints(edges);
         
         IntArrayList correspondances = generateCorrespondances(lines, points2D);
         CrossRatioTupleSet tuples;
@@ -102,29 +105,35 @@ namespace meshac {
         }
     }
 
+    void CRTuplesGenerator::computeEdges(int camIndex, CVMat &edges)
+    {
+        std::string imagePath = this->fileMap[camIndex];
+        CVMat img = cv::imread(imagePath);
+        cvtColor(img, img, CV_BGR2GRAY);
 
-    CVListVec2 CRTuplesGenerator::createLinesFromPoints(int imgWidth, int imgHeight, GLMListVec2 &points2D)
+        edges.create(src.size(), src.type());
+
+        blur(gray_image, edges, Size(3,3) );
+        /// Canny detector
+        Canny( edges, edges, lowThreshold, lowThreshold*ratio, kernel_size );
+
+        /// Using Canny's output as a mask, we display our result
+        //dst = Scalar::all(0);
+        //src.copyTo( edges, edges);
+    }
+
+
+    CVListVec2 CRTuplesGenerator::createLinesFromPoints(CVMat edges)
     {
         CVListVec2 lines;
         
-        cv::Mat logicalImg(imgHeight, imgWidth, CV_8U);
-        createFeatureImage(logicalImg, points2D);
-
         // discretization rho 1
         // discretization angle CV_PI/180
         // at least 4 votes
         //cv::HoughLines(logicalImg, lines, 1, CV_PI/180, 4, 0, 0 );
-        cv::HoughLinesP(logicalImg, lines, 1, CV_PI/180, 4, 0, 0);
+        cv::HoughLinesP(edges, lines, 1, CV_PI/180, 4, 0, 0);
         
         return lines;
-    }
-
-
-    void CRTuplesGenerator::createFeatureImage(CVMat &logicalImg, GLMListVec2 &points2D)
-    {
-        for (GLMVec2 point : points2D) {
-            logicalImg.at<uint>(point.x, point.y) += 1;
-        }
     }
 
 
@@ -239,6 +248,16 @@ namespace meshac {
     std::pair<int,int> CRTuplesGenerator::getObsSize()
     {
         return std::make_pair(this->obsWidth, this->obsHeight);
+    }
+
+    void CRTuplesGenerator::setImageFileMapping(ImageFileMap &fileMap)
+    {
+        this->fileMap = fileMap;
+    }
+
+    ImageFileMap CRTuplesGenerator::getImageFileMapping()
+    {
+        return this->fileMap;
     }
 
 } // namespace meshac

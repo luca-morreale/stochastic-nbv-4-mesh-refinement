@@ -12,7 +12,7 @@ namespace meshac {
 
     class CRTuplesGenerator {
     public:
-        CRTuplesGenerator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
+        CRTuplesGenerator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
         ~CRTuplesGenerator();
 
 
@@ -32,6 +32,8 @@ namespace meshac {
         void setObsSize(int obsWidth, int obsHeight);
         std::pair<int,int> getObsSize();
 
+        void setImageFileMapping(ImageFileMap &fileMap);
+        ImageFileMap getImageFileMapping();
 
 
         /*
@@ -71,7 +73,7 @@ namespace meshac {
 
         CrossRatioTupleSet collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam);
 
-
+        ImageFileMap fileMap;
         GLMListArrayVec2 camObservations;
         int obsHeight, obsWidth;
 

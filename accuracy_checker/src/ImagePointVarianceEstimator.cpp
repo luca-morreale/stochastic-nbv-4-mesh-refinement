@@ -4,14 +4,16 @@
 namespace meshac {
 
 
-    ImagePointVarianceEstimator::ImagePointVarianceEstimator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations)
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations)
     {
-        this->tuplesGenerator = new CRTuplesGenerator(fileMap, camObservations);
+        this->tuplesGenerator = new CRTuplesGenerator(fileList, camObservations);
     }
 
     ImagePointVarianceEstimator::~ImagePointVarianceEstimator()
     {
-        delete this->tuplesGenerator; 
+        delete this->tuplesGenerator;
+
+        this->variances.clear();
     }
 
     void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations)

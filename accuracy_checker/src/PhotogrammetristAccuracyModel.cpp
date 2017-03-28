@@ -3,10 +3,10 @@
 
 namespace meshac {
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(ImageFileMap &fileMap, CameraMatrixList &cameras, 
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, 
                                                             GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam)
     {
-        this->fileMap = fileMap;
+        this->fileList = fileList;
         this->cameras = cameras;
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
@@ -14,10 +14,10 @@ namespace meshac {
         this->initMembers();
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(ImageFileMap &fileMap, CameraList &cameras, 
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, 
                                                             GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam)
     {
-        this->fileMap = fileMap;
+        this->fileList = fileList;
         this->cameras = this->extractCameraMatrix(cameras);
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
@@ -27,7 +27,7 @@ namespace meshac {
 
     PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data)
     {
-        // this->fileMap = fileMap; // TO FIX
+        this->fileList = data.camerasPaths_;
         this->cameras = this->extractCameraMatrix(data.camerasList_);
         this->camObservations = data.camViewing2DPoint_;
         this->point3DTo2DThroughCam = data.point3DTo2DThroughCam_;
@@ -39,6 +39,7 @@ namespace meshac {
     {
         delete this->varianceEstimator;
 
+        this->fileList.clear();
         this->cameras.clear();
         this->camObservations.clear();
         this->point3DTo2DThroughCam.clear();
@@ -50,7 +51,7 @@ namespace meshac {
      */
     void PhotogrammetristAccuracyModel::initMembers()
     {
-        this->varianceEstimator = new ImagePointVarianceEstimator(this->fileMap, this->camObservations);
+        this->varianceEstimator = new ImagePointVarianceEstimator(this->fileList, this->camObservations);
     }
 
     /*

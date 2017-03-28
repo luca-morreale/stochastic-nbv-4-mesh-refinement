@@ -12,10 +12,10 @@ namespace meshac {
     
     class PhotogrammetristAccuracyModel : public AccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(ImageFileMap &fileMap, CameraMatrixList &cameras, 
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, 
                                 GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
         
-        PhotogrammetristAccuracyModel(ImageFileMap &fileMap, CameraList &cameras, 
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, 
                                 GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
         
         PhotogrammetristAccuracyModel(SfMData &data);
@@ -76,7 +76,7 @@ namespace meshac {
 
         ImagePointVarianceEstimatorPtr varianceEstimator;
 
-        ImageFileMap fileMap;
+        StringList fileList;
         CameraMatrixList cameras;
         GLMListArrayVec2 camObservations;
         ListMappingGLMVec2 point3DTo2DThroughCam;

@@ -16,7 +16,7 @@ namespace meshac {
 
     class CRTuplesGenerator {
     public:
-        CRTuplesGenerator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations);
+        CRTuplesGenerator(StringList &fileList, GLMListArrayVec2 &camObservations);
         ~CRTuplesGenerator();
 
 
@@ -31,8 +31,8 @@ namespace meshac {
 
 
         
-        void setImageFileMapping(ImageFileMap &fileMap);
-        ImageFileMap getImageFileMapping();
+        void setFileList(StringList &fileList);
+        StringList getFileList();
 
 
         /*
@@ -46,13 +46,13 @@ namespace meshac {
         /*
          * Extracts quadruplets of collinear points for each image.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPoints(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations);
+        virtual CrossRatioTupleSet determineTupleOfFourPoints(StringList &fileList, GLMListArrayVec2 &camObservations);
         virtual CrossRatioTupleSet determineTupleOfFourPoints();
 
         /*
          * Extracts quadruplets of collinear points for the image obtained by the given camera.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations, int camIndex);
+        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(StringList &fileList, GLMListArrayVec2 &camObservations, int camIndex);
         virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(int camIndex);
         virtual ListCrossRatioTupleSet determineTupleOfFourPointsForAllCam();
 
@@ -69,10 +69,9 @@ namespace meshac {
         void computeEdges(int camIndex, CVMat &edges);
         CVListVec2 createLinesFromPoints(CVMat &edges);
         IntArrayList generateCorrespondances(CVListVec2 &lines, GLMListVec2 &points2D);
-
         CrossRatioTupleSet collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam);
 
-        ImageFileMap fileMap;
+        StringList fileList;
         GLMListArrayVec2 camObservations;
 
         ListCrossRatioTupleSet tupleSetPerCam;

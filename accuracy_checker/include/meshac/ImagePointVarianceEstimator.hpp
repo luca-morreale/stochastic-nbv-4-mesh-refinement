@@ -9,7 +9,7 @@ namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations);
+        ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations);
         ~ImagePointVarianceEstimator();
 
         void setCameraObservations(GLMListArrayVec2 &camObservations);

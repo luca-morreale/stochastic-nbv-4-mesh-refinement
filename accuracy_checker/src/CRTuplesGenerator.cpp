@@ -3,20 +3,27 @@
 
 namespace meshac {
 
-    CRTuplesGenerator::CRTuplesGenerator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations)
+    CRTuplesGenerator::CRTuplesGenerator(StringList &fileList, GLMListArrayVec2 &camObservations)
     {
+        this->fileList = fileList;
         this->camObservations = camObservations;
     }
 
-    CRTuplesGenerator::~CRTuplesGenerator() { }
+    CRTuplesGenerator::~CRTuplesGenerator() 
+    {
+        this->fileList.clear();
+        this->camObservations.clear();
+        this->tupleSetPerCam.clear();
+        this->tupleSet.clear(); 
+    }
 
 
     /*
      * Extraction of quadruplets of collinear points for each image.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(StringList &fileList, GLMListArrayVec2 &camObservations)
     {
-        this->setImageFileMapping(fileMap);
+        this->setFileList(fileList);
         this->setCamObservations(camObservations);
         return this->determineTupleOfFourPoints();
     }
@@ -43,9 +50,9 @@ namespace meshac {
     /*
      * Extraction quadruplets of collinear points for the image obtained by the given camera.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations, int camIndex)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(StringList &fileList, GLMListArrayVec2 &camObservations, int camIndex)
     {
-        this->setImageFileMapping(fileMap);
+        this->setFileList(fileList);
         this->setCamObservations(camObservations);
         return this->determineTupleOfFourPointsForCam(camIndex);
     }
@@ -105,7 +112,7 @@ namespace meshac {
 
     void CRTuplesGenerator::computeEdges(int camIndex, CVMat &edges)
     {
-        std::string imagePath = this->fileMap[camIndex];
+        std::string imagePath = this->fileList[camIndex];
         CVMat img = cv::imread(imagePath);
         cvtColor(img, img, CV_BGR2GRAY);
 
@@ -235,14 +242,14 @@ namespace meshac {
     }
 
     
-    void CRTuplesGenerator::setImageFileMapping(ImageFileMap &fileMap)
+    void CRTuplesGenerator::setFileList(StringList &fileList)
     {
-        this->fileMap = fileMap;
+        this->fileList = fileList;
     }
 
-    ImageFileMap CRTuplesGenerator::getImageFileMapping()
+    StringList CRTuplesGenerator::getFileList()
     {
-        return this->fileMap;
+        return this->fileList;
     }
 
 } // namespace meshac

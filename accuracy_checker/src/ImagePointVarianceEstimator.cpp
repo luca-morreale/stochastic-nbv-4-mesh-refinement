@@ -4,9 +4,9 @@
 namespace meshac {
 
 
-    ImagePointVarianceEstimator::ImagePointVarianceEstimator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations)
     {
-        this->tuplesGenerator = new CRTuplesGenerator(camObservations, obsWidth, obsHeight);
+        this->tuplesGenerator = new CRTuplesGenerator(fileMap, camObservations);
     }
 
     ImagePointVarianceEstimator::~ImagePointVarianceEstimator()
@@ -37,35 +37,39 @@ namespace meshac {
     }
 
 
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int camIndex)
+    EigMatrix ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int camIndex)
     {
-        int counterTuples = 0;
-        EigMatrix4 variance = EigZeros(4);
+        int rows = 2;
+        EigMatrix covariancePoint = EigZeros(2);
         CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
 
         for (CrossRatioTuple tuple : tupleSet) {
             if (tuple.isInTuple(point)) {
-                variance += this->estimateVarianceForTuple(tuple, camIndex);
-                ++counterTuples;
+                rows = covariancePoint.rows();
+                covariancePoint.block(rows-2, rows-2, rows-1, rows-1) = this->estimateVarianceForTuple(tuple, camIndex);
+                //covariancePoint += this->estimateVarianceForTuple(tuple, camIndex);
+                covariancePoint.conservativeResize(rows+2, rows+2);
             }
         }
 
-        return variance / counterTuples;
+        covariancePoint.conservativeResize(rows, rows);
+
+        return covariancePoint;
     }
 
 
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int camIndex)
+    EigMatrix ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int camIndex)
     {
         double varianceSet = this->getVarianceSet(camIndex);
 
-        auto jacobian = tuple.jacobian();   // row vector 1x3
+        auto jacobian = tuple.jacobian();   // row vector 1x4
         double lambda = tuple.avgDistance();
 
         double jacobianNorm = jacobian.norm();
 
         double varianceTuple = varianceSet * lambda / (jacobianNorm * jacobianNorm);
 
-        return varianceTuple * EigIdentity(4);
+        return varianceTuple * EigIdentity(2);
     }
 
 

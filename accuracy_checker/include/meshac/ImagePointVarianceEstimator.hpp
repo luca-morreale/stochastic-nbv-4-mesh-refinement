@@ -9,7 +9,7 @@ namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
+        ImagePointVarianceEstimator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations);
         ~ImagePointVarianceEstimator();
 
         void setCameraObservations(GLMListArrayVec2 &camObservations);
@@ -17,7 +17,7 @@ namespace meshac {
         void updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs);
         GLMListArrayVec2 getCameraObeservations();
 
-        virtual EigMatrix4 estimateVarianceForPoint(GLMVec2 &point, int camIndex);
+        virtual EigMatrix estimateVarianceForPoint(GLMVec2 &point, int camIndex);
 
 
 
@@ -25,7 +25,7 @@ namespace meshac {
         double getVarianceSet(int setIndex);
         void setVarianceSet(double variance, int setIndex);
 
-        virtual EigMatrix4 estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex);
+        virtual EigMatrix estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex);
 
         virtual double estimateVarianceTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
 

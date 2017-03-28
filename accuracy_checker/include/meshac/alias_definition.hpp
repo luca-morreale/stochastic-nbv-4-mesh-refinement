@@ -18,7 +18,7 @@
 typedef std::vector<int> IntList;
 typedef std::vector<double> DoubleList;
 typedef std::vector<IntList> IntArrayList;
-typedef std::map<int, std::string> ImageFileMap;
+typedef std::vector<std::string> StringList;
 
 /* Shortcuts for OpenCV types */
 typedef std::vector<cv::Vec2f> CVListVec2;

@@ -12,11 +12,11 @@ namespace meshac {
     
     class PhotogrammetristAccuracyModel : public AccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations, 
-                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(ImageFileMap &fileMap, CameraMatrixList &cameras, 
+                                GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
         
-        PhotogrammetristAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations,
-                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(ImageFileMap &fileMap, CameraList &cameras, 
+                                GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
         
         PhotogrammetristAccuracyModel(SfMData &data);
         
@@ -32,12 +32,12 @@ namespace meshac {
          * a 3x3 matrix for each correspongind 2D point representative of the uncertainty.
          */
         virtual EigMatrixList getAccuracyForPoint(int index3DPoint);
+        virtual EigMatrix getCompleteAccuracyForPoint(int index3DPoint);
 
 
         CameraMatrixList getCamerasMatrix();
         GLMListArrayVec2 getCamObservations();
         ListMappingGLMVec2 getMapping3DTo2DThroughCam();
-        std::pair<int, int> getObservationSize();
 
         void setCameras(CameraMatrixList &cameras);
         void setCameras(CameraList &cameras);
@@ -67,33 +67,19 @@ namespace meshac {
         virtual EigMatrix computeJacobian(CameraMatrix &cam, GLMVec2 &point);
 
 
-
-
         virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, std::string errorMsg);
         virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList);
 
-
-        /*
-         * 
-         */
-        float getXh();
-        float getYh();
 
     private:
         CameraMatrixList extractCameraMatrix(CameraList &cameras);
 
         ImagePointVarianceEstimatorPtr varianceEstimator;
 
-
+        ImageFileMap fileMap;
         CameraMatrixList cameras;
         GLMListArrayVec2 camObservations;
         ListMappingGLMVec2 point3DTo2DThroughCam;
-
-        int obsWidth;
-        int obsHeight;
-
-        const float xh = 0.01;
-        const float yh = 0.01;
 
     };
 

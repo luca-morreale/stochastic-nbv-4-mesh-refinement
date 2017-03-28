@@ -3,14 +3,14 @@
 
 namespace meshac {
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
-                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight) 
-                                            : PhotogrammetristAccuracyModel(cameras, camObservations, point3DTo2DThroughCam, obsWidth, obsHeight)
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(ImageFileMap &fileMap, CameraMatrixList &cameras, 
+                                    GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam) 
+                                    : PhotogrammetristAccuracyModel(fileMap, cameras, camObservations, point3DTo2DThroughCam)
     { /*    */ }
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations, 
-                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight)
-                                            : PhotogrammetristAccuracyModel(cameras, camObservations, point3DTo2DThroughCam, obsWidth, obsHeight)
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(ImageFileMap &fileMap, CameraList &cameras, 
+                                    GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam)
+                                    : PhotogrammetristAccuracyModel(fileMap, cameras, camObservations, point3DTo2DThroughCam)
     { /*    */ }
 
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data) : PhotogrammetristAccuracyModel(data) 

@@ -47,13 +47,11 @@ namespace meshac {
             if (tuple.isInTuple(point)) {
                 rows = covariancePoint.rows();
                 covariancePoint.block(rows-2, rows-2, rows-1, rows-1) = this->estimateVarianceForTuple(tuple, camIndex);
-                //covariancePoint += this->estimateVarianceForTuple(tuple, camIndex);
                 covariancePoint.conservativeResize(rows+2, rows+2);
             }
         }
 
         covariancePoint.conservativeResize(rows, rows);
-
         return covariancePoint;
     }
 

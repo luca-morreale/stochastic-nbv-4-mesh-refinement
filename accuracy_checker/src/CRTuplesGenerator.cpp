@@ -3,11 +3,9 @@
 
 namespace meshac {
 
-    CRTuplesGenerator::CRTuplesGenerator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
+    CRTuplesGenerator::CRTuplesGenerator(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations)
     {
         this->camObservations = camObservations;
-        this->obsHeight = obsHeight;
-        this->obsWidth = obsWidth;
     }
 
     CRTuplesGenerator::~CRTuplesGenerator() { }
@@ -16,14 +14,14 @@ namespace meshac {
     /*
      * Extraction of quadruplets of collinear points for each image.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations)
     {
+        this->setImageFileMapping(fileMap);
         this->setCamObservations(camObservations);
-        this->setObsSize(obsWidth, obsHeight);
         return this->determineTupleOfFourPoints();
     }
 
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints()
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints()  // FIX missing subsampling
     {
         int N = this->camObservations.size();
         ListCrossRatioTupleSet listTupleSet(N);
@@ -45,10 +43,10 @@ namespace meshac {
     /*
      * Extraction quadruplets of collinear points for the image obtained by the given camera.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(GLMListArrayVec2 &camObservations, int camIndex, int obsWidth, int obsHeight)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(ImageFileMap &fileMap, GLMListArrayVec2 &camObservations, int camIndex)
     {
+        this->setImageFileMapping(fileMap);
         this->setCamObservations(camObservations);
-        this->setObsSize(obsWidth, obsHeight);
         return this->determineTupleOfFourPointsForCam(camIndex);
     }
 
@@ -111,19 +109,19 @@ namespace meshac {
         CVMat img = cv::imread(imagePath);
         cvtColor(img, img, CV_BGR2GRAY);
 
-        edges.create(src.size(), src.type());
+        edges.create(img.size(), img.type());
 
-        blur(gray_image, edges, Size(3,3) );
+        blur(img, edges, cv::Size(3,3) );
         /// Canny detector
-        Canny( edges, edges, lowThreshold, lowThreshold*ratio, kernel_size );
+        Canny(edges, edges, CANNY_LOW_THRESHOLD, CANNY_LOW_THRESHOLD * CANNY_RATIO, CANNY_KERNEL_SIZE);
 
         /// Using Canny's output as a mask, we display our result
         //dst = Scalar::all(0);
-        //src.copyTo( edges, edges);
+        //img.copyTo( edges, edges);
     }
 
 
-    CVListVec2 CRTuplesGenerator::createLinesFromPoints(CVMat edges)
+    CVListVec2 CRTuplesGenerator::createLinesFromPoints(CVMat &edges)
     {
         CVListVec2 lines;
         
@@ -236,20 +234,7 @@ namespace meshac {
         return camObservations;
     }
 
-    /*
-     * Getter and setter for Size of Camera's Observations.
-     */
-    void CRTuplesGenerator::setObsSize(int obsWidth, int obsHeight)
-    {
-        this->obsWidth = obsWidth;
-        this->obsHeight = obsHeight;
-    }
-
-    std::pair<int,int> CRTuplesGenerator::getObsSize()
-    {
-        return std::make_pair(this->obsWidth, this->obsHeight);
-    }
-
+    
     void CRTuplesGenerator::setImageFileMapping(ImageFileMap &fileMap)
     {
         this->fileMap = fileMap;

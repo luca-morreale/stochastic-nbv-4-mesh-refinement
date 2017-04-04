@@ -1,6 +1,7 @@
 #ifndef MESH_ACCURACY_COMPUTER_VISION_ACCURACY_MODEL_H
 #define MESH_ACCURACY_COMPUTER_VISION_ACCURACY_MODEL_H
 
+#include <manifoldReconstructor/SfMData.h>
 
 #include <meshac/alias_definition.hpp>
 #include <meshac/PhotogrammetristAccuracyModel.hpp>
@@ -17,6 +18,7 @@ namespace meshac {
                                 GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
 
         ComputerVisionAccuracyModel(SfMData &data);
+        ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix);
         
         ~ComputerVisionAccuracyModel() { };
 
@@ -24,7 +26,7 @@ namespace meshac {
         /*
          * 
          */
-        virtual EigVector4 evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);   
+        virtual EigVector evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);   
         
     };
 

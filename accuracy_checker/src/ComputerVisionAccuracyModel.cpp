@@ -16,10 +16,13 @@ namespace meshac {
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data) : PhotogrammetristAccuracyModel(data) 
     { /*    */ }
 
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix) : PhotogrammetristAccuracyModel(data, pathPrefix) 
+    { /*    */ }
+    
     /*
      * Evaluates the photogrammetrist's function in the given point with the given camera.
      */
-    EigVector4 ComputerVisionAccuracyModel::evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point)
+    EigVector ComputerVisionAccuracyModel::evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point)
     {
         EigCameraMatrix A = EigZeros(3, 4); // A = [x*P31-P11  x*P32-P12  x*P33-P13 -P14; y*P31-P21  y*P32-P22  y*P33-P23 -P24; 0 0 0 1];
         EigVector3 b = EigOnes(3, 1); // b = [-x*P34; -y*P34; 1];

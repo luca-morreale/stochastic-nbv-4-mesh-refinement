@@ -11,6 +11,7 @@ namespace meshac {
 
     IntArrayList combination(int N, int K);
     IntArrayList combination(int N, int K, double skipProbability);
+    IntArrayList fixedSizeCombination(int N, int K, double skipProbability, const int MAX_SIZE);
 
     IntArrayList subsample(IntArrayList samples, int sampleSize);
     IntArrayList subsample(IntArrayList samples);   // extract a quarter of the samples

@@ -10,6 +10,11 @@ namespace meshac {
 
     IntArrayList combination(int N, int K, double skipProbability)
     {
+        return fixedSizeCombination(N, K, skipProbability, N);
+    }
+
+    IntArrayList fixedSizeCombination(int N, int K, double skipProbability, const int MAX_SIZE)
+    {
         if (N < K) {
             return IntArrayList();
         }
@@ -21,7 +26,7 @@ namespace meshac {
 
         // should make it parallel but with sequential iteration on bitmask
         while (std::prev_permutation(bitmask.begin(), bitmask.end())) {
-            if ((double)std::rand() < skipProbability * (double)RAND_MAX) {
+            if ((double)std::rand() < skipProbability * (double)RAND_MAX) {     // probabilistic selection
                 continue;
             }
 
@@ -33,10 +38,14 @@ namespace meshac {
             }
 
             combo.push_back(tmp);
+            if(combo.size() > MAX_SIZE) {
+                return combo;
+            }
         }
 
         return combo;
     }
+
 
     // should add check to have taken 1 sample for each point at least
     IntArrayList subsample(IntArrayList samples, int sampleSize)

@@ -77,21 +77,17 @@ namespace meshac {
     {
         EigMatrixList uncertaintyMatrix;
         
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
             GLMVec2 point2D = cameraObsPair.second;
-            EigMatrix pointVariance = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first);
+            EigMatrix pointVarianceMatrix = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first);
 
-            EigMatrix jacobian = EigMatrix(3, pointVariance.rows());
             EigMatrix singleJacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
-
-            for (int i = 0; i < pointVariance.rows(); i+=2) {
-                jacobian << singleJacobian;
-            }
+            EigMatrix jacobian = singleJacobian.replicate(1, (int)pointVarianceMatrix.cols()/2);
 
             #pragma omp critical
-            uncertaintyMatrix.push_back(jacobian.transpose() * pointVariance * jacobian);
+            uncertaintyMatrix.push_back(jacobian * pointVarianceMatrix * jacobian.transpose());
         }
 
         return uncertaintyMatrix;
@@ -104,6 +100,7 @@ namespace meshac {
 
         int size = 0;
 
+        #pragma omp parallel for
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
             GLMVec2 point2D = cameraObsPair.second;
@@ -112,8 +109,11 @@ namespace meshac {
             EigMatrix singleJacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
 
             size += currentVariance.rows();
-            appendMatrixDiagonalToVector(currentVariance, variances);
-            jacobianList.push_back(singleJacobian.replicate(1, (int)currentVariance.rows()/2));
+            #pragma omp critical 
+            {
+                appendMatrixDiagonalToVector(currentVariance, variances);
+                jacobianList.push_back(singleJacobian.replicate(1, (int)currentVariance.rows()/2));
+            }
         }
 
         EigMatrix jacobian = juxtaposeMatrixs(jacobianList, size);

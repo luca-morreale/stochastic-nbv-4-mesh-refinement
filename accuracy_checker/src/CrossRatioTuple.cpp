@@ -69,6 +69,16 @@ namespace meshac {
 
         return fabs(vecA[0] - vecB[0]) < SENSIBILITY;
     }
+
+    std::string CrossRatioTuple::to_string()
+    {
+        std::string out;
+        std::string letters[] = {"a", "b", "c", "d"};
+        for (int i = 0; i < points.size(); i++) {
+            out += letters[i] + ": [" + std::to_string(points[i].x) + "," + std::to_string(points[i].y) + "] ";
+        }
+        return out;
+    }
     
     bool CrossRatioTuple::operator<(const CrossRatioTuple &other) const
     {

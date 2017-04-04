@@ -43,6 +43,8 @@ namespace meshac {
          */
         bool isInTuple(GLMVec2 &point);
 
+        std::string to_string();
+
         /*
          * Overloading < operation for comparation.
          */

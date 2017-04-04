@@ -4,27 +4,29 @@
 #include <manifoldReconstructor/types_reconstructor.hpp>
 
 
-//#include <meshac/CrossRatioTuple.hpp>
-//#include <meshac/CRTuplesGenerator.hpp>
-//#include <meshac/alias_definition.hpp>
-//#include <meshac/meshac_type_definition.hpp>
+#include <meshac/PhotogrammetristAccuracyModel.hpp>
+#include <meshac/ComputerVisionAccuracyModel.hpp>
 
-
+#define POINT 1
 
 int main(int argc, char **argv) {
-  
+    std::srand(0);
+    
+    std::string cloudPath = argv[1];
     OpenMvgParser op(argv[1]);
     op.parse();
     
     SfMData points = op.getSfmData();
 
-//    meshac::CRTuplesGenerator crGenerator = meshac::CRTuplesGenerator(points.point2DoncamViewingPoint_, points.imageWidth_, points.imageHeight_);
+    cloudPath = cloudPath.substr(0, cloudPath.find_last_of("/"));
+    std::string pathPrefix = cloudPath.substr(0, cloudPath.find_last_of("/")+1);
 
-//    meshac::CrossRatioTupleSet crossratioTupleSet = crGenerator.determineTupleOfFourPoints();
+    meshac::PhotogrammetristAccuracyModel model(points, pathPrefix);
+    //meshac::ComputerVisionAccuracyModel model(points, pathPrefix);
 
+    std::cout << points.points_[POINT][0] << " " << points.points_[POINT][1] << " " << points.points_[POINT][2] << std::endl;
+    model.getCompleteAccuracyForPoint(POINT);
 
     return 0;
 }
-
-
 

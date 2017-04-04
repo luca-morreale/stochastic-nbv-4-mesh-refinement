@@ -1,7 +1,7 @@
 #ifndef MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 #define MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 
-#include <boost/bind.hpp>
+#include <manifoldReconstructor/SfMData.h>
 
 #include <meshac/AccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
@@ -19,6 +19,7 @@ namespace meshac {
                                 GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
         
         PhotogrammetristAccuracyModel(SfMData &data);
+        PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix);
         
         ~PhotogrammetristAccuracyModel();
         
@@ -54,11 +55,12 @@ namespace meshac {
          * Initializes all members.
          */
         virtual void initMembers();
+        virtual void fixImagesPath(std::string &pathPrefix);
 
         /*
          * Evaluates the photogrammetrist's function in the given point with the given camera.
          */
-        virtual EigVector4 evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);
+        virtual EigVector evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);
 
         /*
          * 

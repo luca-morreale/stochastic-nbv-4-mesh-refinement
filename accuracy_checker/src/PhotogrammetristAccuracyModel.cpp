@@ -34,6 +34,17 @@ namespace meshac {
 
         this->initMembers();
     }
+
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix)
+    {
+        this->fileList = data.camerasPaths_;
+        this->cameras = this->extractCameraMatrix(data.camerasList_);
+        this->camObservations = data.camViewing2DPoint_;
+        this->point3DTo2DThroughCam = data.point3DTo2DThroughCam_;
+
+        this->fixImagesPath(pathPrefix);
+        this->initMembers();
+    }
     
     PhotogrammetristAccuracyModel::~PhotogrammetristAccuracyModel() 
     {
@@ -52,6 +63,11 @@ namespace meshac {
     void PhotogrammetristAccuracyModel::initMembers()
     {
         this->varianceEstimator = new ImagePointVarianceEstimator(this->fileList, this->camObservations);
+    }
+
+    void PhotogrammetristAccuracyModel::fixImagesPath(std::string &pathPrefix)
+    {
+        std::for_each(this->fileList.begin(), this->fileList.end(), [pathPrefix](std::string &path) { path.insert(0, pathPrefix); } );
     }
 
     /*
@@ -81,28 +97,28 @@ namespace meshac {
         return uncertaintyMatrix;
     }
 
-    EigMatrix PhotogrammetristAccuracyModel::getCompleteAccuracyForPoint(int index3DPoint) 
+    EigMatrix PhotogrammetristAccuracyModel::getCompleteAccuracyForPoint(int index3DPoint)      // TO FIX error
     {
-        EigMatrix jacobian = EigMatrix(3, 0);
-        EigMatrix pointVariance = EigMatrix(0, 0);
-        
+        DoubleList variances;
+        EigMatrixList jacobianList;
+
+        int size = 0;
+
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
             GLMVec2 point2D = cameraObsPair.second;
+
             EigMatrix currentVariance = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first);
-            EigMatrix singleJacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
+            EigMatrix singleJacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
 
-            pointVariance.conservativeResize(pointVariance.rows() + currentVariance.rows(), pointVariance.cols() + currentVariance.cols());
-            pointVariance << currentVariance; 
-
-            jacobian.conservativeResize(3, jacobian.cols() + pointVariance.rows());
-            
-            for (int i = 0; i < pointVariance.rows(); i+=2) {
-                jacobian << singleJacobian;
-            }
+            size += currentVariance.rows();
+            appendMatrixDiagonalToVector(currentVariance, variances);
+            jacobianList.push_back(singleJacobian.replicate(1, (int)currentVariance.rows()/2));
         }
 
-        return jacobian.transpose() * pointVariance * jacobian;
+        EigMatrix jacobian = juxtaposeMatrixs(jacobianList, size);
+
+        return jacobian * generateDiagonalMatrix(variances) * jacobian.transpose();
     }
 
     /*
@@ -113,14 +129,14 @@ namespace meshac {
         GLMVec2 pointXh = point + GLMVec2(1.0f, 0.f);
         GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
 
-        EigVector4 original = evaluateFunctionIn(cam, point);
-        EigVector4 originalXh = evaluateFunctionIn(cam, pointXh);
-        EigVector4 originalYh = evaluateFunctionIn(cam, pointYh);
+        EigVector original = this->evaluateFunctionIn(cam, point);
+        EigVector xh = this->evaluateFunctionIn(cam, pointXh);
+        EigVector yh = this->evaluateFunctionIn(cam, pointYh);
 
-        EigVector4 Jx = originalXh - original;
-        EigVector4 Jy = originalYh - original;
+        EigVector Jx = xh - original;
+        EigVector Jy = yh - original;
 
-        EigMatrix jacobian;
+        EigMatrix jacobian(Jx.rows(), 2);
         jacobian << Jx, Jy;
 
         return jacobian;
@@ -129,16 +145,16 @@ namespace meshac {
     /*
      * Evaluates the photogrammetrist's function in the given point with the given camera.
      */
-    EigVector4 PhotogrammetristAccuracyModel::evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point)
+    EigVector PhotogrammetristAccuracyModel::evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point)
     {
-        EigCameraMatrix A = EigZeros(2, 3); // A = [x*P31-P11  x*P32-P12  x*P33-P13; y*P31-P21  y*P32-P22  y*P33-P23];
-        EigVector3 b = EigOnes(2, 1); // b = [P14-x*P34; P24-y*P34];
+        EigMatrix A = EigZeros(2, 3); // A = [x*P31-P11  x*P32-P12  x*P33-P13; y*P31-P21  y*P32-P22  y*P33-P23];
+        EigVector2 b = EigOnes(2, 1); // b = [P14-x*P34; P24-y*P34];
         
-        A(0,0) = cam[2][1] * point[0] - cam[0][0];
+        A(0,0) = cam[2][0] * point[0] - cam[0][0];
         A(0,1) = cam[2][1] * point[0] - cam[0][1];
         A(0,2) = cam[2][2] * point[0] - cam[0][2];
         
-        A(1,0) = cam[2][1] * point[1] - cam[1][0];
+        A(1,0) = cam[2][0] * point[1] - cam[1][0];
         A(1,1) = cam[2][1] * point[1] - cam[1][1];
         A(1,2) = cam[2][2] * point[1] - cam[1][2];
         
@@ -147,6 +163,7 @@ namespace meshac {
         b(1) = cam[1][3] - point[1] * cam[2][3];
         
         return A.transpose() * (A * A.transpose()).inverse() * b;    // in reality this is a column vector
+        //return EigVector4();
     }
 
 

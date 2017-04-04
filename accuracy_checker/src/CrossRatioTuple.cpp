@@ -82,18 +82,11 @@ namespace meshac {
     
     bool CrossRatioTuple::operator<(const CrossRatioTuple &other) const
     {
-        if (points.size() < other.points.size()) {
-            return true;
+        for (int i = 0; i < points.size(); i++) {
+            if (glm::any(glm::lessThan(points[i], other.points[i]))) {
+                return true;
+            }
         }
-
-        // find better compare
-        if (glm::epsilonEqual(points[0], other.points[0], EPSILON)[0] && 
-                glm::epsilonEqual(points[1], other.points[1], EPSILON)[0] && 
-                glm::epsilonEqual(points[2], other.points[2], EPSILON)[0] && 
-                glm::epsilonEqual(points[3], other.points[3], EPSILON)[0]) {
-            return true;
-        }
-        
         return false;
     }
 

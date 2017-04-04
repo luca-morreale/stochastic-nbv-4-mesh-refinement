@@ -16,6 +16,8 @@
 
 namespace meshac {
 
+    extern const float SENSIBILITY;
+
     class CrossRatioTuple {
     public:
         /*

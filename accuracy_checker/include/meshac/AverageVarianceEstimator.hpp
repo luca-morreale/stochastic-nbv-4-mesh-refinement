@@ -7,8 +7,6 @@
 
 namespace meshac {
 
-    extern const float SENSIBILITY;
-
 
     class AverageVarianceEstimator : public Point3DVarianceEstimator {
     public:

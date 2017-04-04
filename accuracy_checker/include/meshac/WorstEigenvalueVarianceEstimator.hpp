@@ -6,9 +6,7 @@
 
 
 namespace meshac {
-
-    extern const float SENSIBILITY;
-
+    
 
     class WorstEigenvalueVarianceEstimator : public Point3DVarianceEstimator {
     public:

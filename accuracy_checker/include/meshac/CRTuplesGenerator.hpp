@@ -1,7 +1,8 @@
 #ifndef MESH_ACCURACY_CR_TUPLES_GENERATOR_H
 #define MESH_ACCURACY_CR_TUPLES_GENERATOR_H
 
-#include <manifoldReconstructor/SfMData.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <meshac/alias_definition.hpp>
 #include <meshac/CrossRatioTuple.hpp>
@@ -13,12 +14,12 @@ namespace meshac {
     #define CANNY_RATIO 3
     #define CANNY_LOW_THRESHOLD 100
     #define CANNY_KERNEL_SIZE 3
+    #define SKIP_RATE 0.8
 
     class CRTuplesGenerator {
     public:
         CRTuplesGenerator(StringList &fileList, GLMListArrayVec2 &camObservations);
         ~CRTuplesGenerator();
-
 
         /*
          * Getter and setter for Cameras' Observations.
@@ -55,8 +56,6 @@ namespace meshac {
         virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(StringList &fileList, GLMListArrayVec2 &camObservations, int camIndex);
         virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(int camIndex);
         virtual ListCrossRatioTupleSet determineTupleOfFourPointsForAllCam();
-
-
         
     protected:
         void setTuples(CrossRatioTupleSet &tupleSet);
@@ -67,8 +66,8 @@ namespace meshac {
 
         CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMListVec2 &points2D);
         void computeEdges(int camIndex, CVMat &edges);
-        CVListVec2 createLinesFromPoints(CVMat &edges);
-        IntArrayList generateCorrespondances(CVListVec2 &lines, GLMListVec2 &points2D);
+        EigVector3List createLinesFromEdges(CVMat &edges);
+        IntArrayList generateCorrespondances(std::vector<EigVector3> &lines, GLMListVec2 &points2D);
         CrossRatioTupleSet collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam);
 
         StringList fileList;

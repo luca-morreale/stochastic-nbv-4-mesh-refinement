@@ -1,12 +1,14 @@
 
 #include <meshac/CRTuplesGenerator.hpp>
 
+
 namespace meshac {
 
     CRTuplesGenerator::CRTuplesGenerator(StringList &fileList, GLMListArrayVec2 &camObservations)
     {
         this->fileList = fileList;
         this->camObservations = camObservations;
+        this->tupleSetPerCam.assign(this->camObservations.size(), CrossRatioTupleSet());
     }
 
     CRTuplesGenerator::~CRTuplesGenerator() 
@@ -45,7 +47,7 @@ namespace meshac {
 
         return tupleSet;
     }
-
+    
 
     /*
      * Extraction quadruplets of collinear points for the image obtained by the given camera.
@@ -59,20 +61,22 @@ namespace meshac {
 
     CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(int camIndex)
     {
-        GLMListVec2 points2D = this->camObservations[camIndex];
-
         CVMat edges;
-        computeEdges(camIndex, edges);
-        CVListVec2 lines = createLinesFromPoints(edges);
-        
-        IntArrayList correspondances = generateCorrespondances(lines, points2D);
         CrossRatioTupleSet tuples;
-
+        GLMListVec2 points2D = this->camObservations[camIndex];
+        
+        this->computeEdges(camIndex, edges);
+        
+        EigVector3List lines = this->createLinesFromEdges(edges);
+        
+        IntArrayList correspondances = this->generateCorrespondances(lines, points2D);
+        
         #pragma omp parallel for
         for (IntList pointSet : correspondances) {
-            IntArrayList combos = combination(pointSet.size(), 4);
-            auto tmp = createsTuples(combos, pointSet, points2D);
-
+            IntArrayList combos = combination(pointSet.size(), 4, SKIP_RATE);
+            
+            auto tmp = this->createsTuples(combos, pointSet, points2D);
+            
             #pragma omp critical
             tuples.insert(tmp.begin(), tmp.end());
         }
@@ -81,7 +85,7 @@ namespace meshac {
 
         return tuples;
     }
-
+    
     ListCrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForAllCam()
     {
         for (int i = 0; i < camObservations.size(); i++) {
@@ -93,7 +97,7 @@ namespace meshac {
     /*
      * Private methods
      */
-    CrossRatioTupleSet CRTuplesGenerator::createsTuples(IntArrayList &combos, IntList &pointSet, GLMListVec2 &points2D)
+    CrossRatioTupleSet CRTuplesGenerator::createsTuples(IntArrayList &combos, IntList &pointSet, GLMListVec2 &points2D) 
     {
         CrossRatioTupleSet tuples;
 
@@ -108,53 +112,61 @@ namespace meshac {
             #pragma omp critical
             tuples.insert(tmp);
         }
+
+        return tuples;
     }
 
     void CRTuplesGenerator::computeEdges(int camIndex, CVMat &edges)
     {
         std::string imagePath = this->fileList[camIndex];
-        CVMat img = cv::imread(imagePath);
-        cvtColor(img, img, CV_BGR2GRAY);
-
-        edges.create(img.size(), img.type());
-
-        blur(img, edges, cv::Size(3,3) );
-        /// Canny detector
-        Canny(edges, edges, CANNY_LOW_THRESHOLD, CANNY_LOW_THRESHOLD * CANNY_RATIO, CANNY_KERNEL_SIZE);
-
-        /// Using Canny's output as a mask, we display our result
-        //dst = Scalar::all(0);
-        //img.copyTo( edges, edges);
+        cv::Mat src = cv::imread(imagePath, 0);
+    
+        cv::Canny(src, edges, CANNY_LOW_THRESHOLD, CANNY_LOW_THRESHOLD * CANNY_RATIO, CANNY_KERNEL_SIZE);
     }
 
-
-    CVListVec2 CRTuplesGenerator::createLinesFromPoints(CVMat &edges)
+    std::vector<EigVector3> CRTuplesGenerator::createLinesFromEdges(CVMat &edges)
     {
-        CVListVec2 lines;
+        CVListVec2 polarLines;
+        std::vector<EigVector3> lines;
         
         // discretization rho 1
         // discretization angle CV_PI/180
-        // at least 4 votes
+        // at least 100 votes
         //cv::HoughLines(logicalImg, lines, 1, CV_PI/180, 4, 0, 0 );
-        cv::HoughLinesP(edges, lines, 1, CV_PI/180, 4, 0, 0);
-        
+        // votes must be fixed! maybe with threshold, or check to not take close lines
+        cv::HoughLines(edges, polarLines, 1, CV_PI/180, 90, 0, 0);  // this just gives rho and theta not the line!!!
+
+
+        for( size_t i = 0; i < polarLines.size(); i++ ) {
+            float rho = polarLines[i][0];
+            float theta = polarLines[i][1];
+            double a = cos(theta), b = sin(theta);
+            double x0 = a*rho, y0 = b*rho;
+            EigVector3 pt1(cvRound(x0 + 1000*(-b)), cvRound(y0 + 1000*(a)), 1);
+            EigVector3 pt2(cvRound(x0 - 1000*(-b)), cvRound(y0 - 1000*(a)), 1);
+            EigVector3 line = pt1.cross(pt2);
+            line /= line[2];
+            lines.push_back(line);
+        }
+
         return lines;
     }
 
 
-    IntArrayList CRTuplesGenerator::generateCorrespondances(CVListVec2 &lines, GLMListVec2 &points2D)
+    IntArrayList CRTuplesGenerator::generateCorrespondances(std::vector<EigVector3> &lines, GLMListVec2 &points2D)
     {
-        cv::Vec<float, 1> zero;
-        IntArrayList correspondances(lines.size());
+        EigVector3 line;
+        EigVector3 point;
+        IntArrayList correspondances;
+        correspondances.assign(lines.size(), IntList());
 
         #pragma omp parallel for collapse(2)
         for (unsigned int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
-            cv::Vec2f line = lines[lineIndex];
-            
-            for (unsigned int pointIndex = 0; pointIndex < points2D.size(); pointIndex++) {
-                cv::Vec2f point(points2D[pointIndex].x, points2D[pointIndex].y);
-                if (line.t() * point == zero) {
+            line << lines[lineIndex];
 
+            for (unsigned int pointIndex = 0; pointIndex < points2D.size(); pointIndex++) {
+                point << points2D[pointIndex].x, points2D[pointIndex].y, 1;
+                if (std::abs(line.transpose() * point) < 1 ) {
                     #pragma omp critical
                     correspondances[lineIndex].push_back(pointIndex);
                 }
@@ -163,7 +175,6 @@ namespace meshac {
 
         return correspondances;
     }
-
 
     CrossRatioTupleSet CRTuplesGenerator::collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam)
     {
@@ -175,7 +186,6 @@ namespace meshac {
         return tupleSet;
     }
 
-
     /*
      * Getter and setter for computed tuples.
      */
@@ -186,6 +196,9 @@ namespace meshac {
 
     CrossRatioTupleSet CRTuplesGenerator::getComputedTuplesForCam(int camIndex)
     {
+        if(this->tupleSetPerCam[camIndex].size() < 1) {
+            this->determineTupleOfFourPointsForCam(camIndex);            
+        }
         return this->tupleSetPerCam[camIndex];
     }
 

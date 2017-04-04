@@ -7,6 +7,7 @@ namespace meshac {
     ImagePointVarianceEstimator::ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations)
     {
         this->tuplesGenerator = new CRTuplesGenerator(fileList, camObservations);
+        this->variances.assign(camObservations.size(), -1);
     }
 
     ImagePointVarianceEstimator::~ImagePointVarianceEstimator()
@@ -19,6 +20,7 @@ namespace meshac {
     void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations)
     {
         this->tuplesGenerator->setCamObservations(camObservations);
+        this->variances.assign(camObservations.size(), -1);
     }
 
     void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs)
@@ -26,11 +28,15 @@ namespace meshac {
         for (int i = 0; i < camObservations.size(); i++) {
             this->tuplesGenerator->setCamObservations(camObservations[i], i);
         }
+        this->variances.assign(camObservations.size(), -1);
     }
 
     void ImagePointVarianceEstimator::updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs)
     {
         this->tuplesGenerator->updateCamObservations(camObservations, indexs);
+        for (auto obsInd : indexs) {
+            this->variances[obsInd] = -1;
+        }
     }
 
     GLMListArrayVec2 ImagePointVarianceEstimator::getCameraObeservations()
@@ -41,34 +47,31 @@ namespace meshac {
 
     EigMatrix ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int camIndex)
     {
-        int rows = 2;
-        EigMatrix covariancePoint = EigZeros(2);
-        CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
+        DoubleList covariancePointMatrix;
+        CrossRatioTupleSet completeTupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
 
-        for (CrossRatioTuple tuple : tupleSet) {
+        for (CrossRatioTuple tuple : completeTupleSet) {
             if (tuple.isInTuple(point)) {
-                rows = covariancePoint.rows();
-                covariancePoint.block(rows-2, rows-2, rows-1, rows-1) = this->estimateVarianceForTuple(tuple, camIndex);
-                covariancePoint.conservativeResize(rows+2, rows+2);
+                EigMatrix mat = this->estimateVarianceForTuple(tuple, camIndex);
+                appendMatrixDiagonalToVector(mat, covariancePointMatrix);
             }
         }
-
-        covariancePoint.conservativeResize(rows, rows);
-        return covariancePoint;
+        return generateDiagonalMatrix(covariancePointMatrix);
     }
 
 
     EigMatrix ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int camIndex)
     {
         double varianceSet = this->getVarianceSet(camIndex);
-
+        
         auto jacobian = tuple.jacobian();   // row vector 1x4
+        
         double lambda = tuple.avgDistance();
-
+        
         double jacobianNorm = jacobian.norm();
-
+        
         double varianceTuple = varianceSet * lambda / (jacobianNorm * jacobianNorm);
-
+        
         return varianceTuple * EigIdentity(2);
     }
 
@@ -79,11 +82,13 @@ namespace meshac {
         CrossRatioTupleSet::iterator tuple = tupleSet.begin();
         int N = tupleSet.size();
 
-        EigVector crossRatioValues(N);
+        if (N == 1) {
+            return 0;
+        }
 
         double avg = 0;
+        EigVector crossRatioValues(N);
         
-
         for (int i = 0; i < N; i++) {
             crossRatioValues[i] = (*tuple).crossRatio();
             avg += crossRatioValues[i];
@@ -102,7 +107,8 @@ namespace meshac {
      */
     double ImagePointVarianceEstimator::getVarianceSet(int camIndex)
     {
-        if (this->variances[camIndex] < 0){
+        if (this->variances[camIndex] < 0) {
+
             this->estimateVarianceTupleSet(camIndex);
         }
         return this->variances[camIndex];

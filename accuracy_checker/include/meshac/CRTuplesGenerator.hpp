@@ -15,6 +15,7 @@ namespace meshac {
     #define CANNY_LOW_THRESHOLD 100
     #define CANNY_KERNEL_SIZE 3
     #define SKIP_RATE 0.8
+    #define MAX_SIZE 100
 
     class CRTuplesGenerator {
     public:

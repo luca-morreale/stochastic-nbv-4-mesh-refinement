@@ -24,8 +24,11 @@ int main(int argc, char **argv) {
     meshac::PhotogrammetristAccuracyModel model(points, pathPrefix);
     //meshac::ComputerVisionAccuracyModel model(points, pathPrefix);
 
-    std::cout << points.points_[POINT][0] << " " << points.points_[POINT][1] << " " << points.points_[POINT][2] << std::endl;
-    model.getCompleteAccuracyForPoint(POINT);
+    //std::cout << points.points_[POINT][0] << " " << points.points_[POINT][1] << " " << points.points_[POINT][2] << std::endl;
+    auto acc = model.getCompleteAccuracyForPoint(POINT);
+    //auto acc = model.getAccuracyForPoint(POINT);
+
+    std::cout << acc << std::endl;
 
     return 0;
 }

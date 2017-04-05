@@ -77,7 +77,6 @@ namespace meshac {
             IntArrayList combos = fixedSizeCombination(pointSet.size(), 4, SKIP_RATE, MAX_SIZE);
             
             CrossRatioTupleSet tmp = this->createsTuples(combos, pointSet, points2D);
-
             #pragma omp critical
             for (auto el : tmp) {       // why this works and the one below do not??
                 tuples.insert(el);
@@ -111,9 +110,6 @@ namespace meshac {
             for (int i=0; i < 4; i++) {
                 int index = pointSet[combo[i]];
                 tmp.append(points2D[index]);
-            }
-            if (combos.size() < 100) {
-                std::cout << tmp.to_string() << std::endl;
             }
             
             #pragma omp critical

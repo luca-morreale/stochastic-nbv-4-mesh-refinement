@@ -95,8 +95,9 @@ namespace meshac {
 
             std::advance(tuple, 1);
         }
-
-        EigVector summation = crossRatioValues - avg * EigVector::Ones(N) / N;
+        avg /= N;
+        EigVector summation = crossRatioValues - avg * EigVector::Ones(N);
+        summation = summation.array().square();
 
         this->setVarianceSet(summation.sum() / (N - 1), camIndex);
         return this->getVarianceSet(camIndex);

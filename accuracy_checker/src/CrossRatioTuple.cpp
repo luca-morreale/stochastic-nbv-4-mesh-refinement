@@ -30,7 +30,7 @@ namespace meshac {
         jacobian[2] = (this->yt * this->xy) / (this->xt * this->yz * this->yz);
         jacobian[3] = -(this->xz * this->xy) / (this->xt * this->xt * this->yz);
 
-        return jacobian;
+        return jacobian.transpose();
     }
 
 

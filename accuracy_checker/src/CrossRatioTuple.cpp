@@ -8,7 +8,8 @@ namespace meshac {
     {
         if (points.size() < 4) {
             points.push_back(point);
-        } else {
+        } 
+        if (points.size() < 4) {
             std::sort(points.begin(), points.end(), point2DComparator);
             this->precomputeDistancesBetweenPoints();
         }

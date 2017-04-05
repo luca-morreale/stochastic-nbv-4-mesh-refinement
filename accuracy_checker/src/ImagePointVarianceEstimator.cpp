@@ -49,13 +49,14 @@ namespace meshac {
     {
         DoubleList covariancePointMatrix;
         CrossRatioTupleSet completeTupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
-
+        
         for (CrossRatioTuple tuple : completeTupleSet) {
             if (tuple.isInTuple(point)) {
                 EigMatrix mat = this->estimateVarianceForTuple(tuple, camIndex);
                 appendMatrixDiagonalToVector(mat, covariancePointMatrix);
             }
         }
+        
         return generateDiagonalMatrix(covariancePointMatrix);
     }
 
@@ -109,7 +110,6 @@ namespace meshac {
     double ImagePointVarianceEstimator::getVarianceSet(int camIndex)
     {
         if (this->variances[camIndex] < 0) {
-
             this->estimateVarianceTupleSet(camIndex);
         }
         return this->variances[camIndex];

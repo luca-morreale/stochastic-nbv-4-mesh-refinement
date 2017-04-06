@@ -52,7 +52,7 @@ namespace meshac {
         
         for (CrossRatioTuple tuple : completeTupleSet) {
             if (tuple.isInTuple(point)) {
-                EigMatrix mat = this->estimateVarianceForTuple(tuple, camIndex);
+                EigMatrix mat = this->estimateSTDForTuple(tuple, camIndex);
                 appendMatrixDiagonalToVector(mat, covariancePointMatrix);
             }
         }
@@ -61,7 +61,7 @@ namespace meshac {
     }
 
 
-    EigMatrix ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int camIndex)
+    EigMatrix ImagePointVarianceEstimator::estimateSTDForTuple(CrossRatioTuple &tuple, int camIndex)
     {
         double varianceSet = this->getVarianceSet(camIndex);
         
@@ -77,7 +77,7 @@ namespace meshac {
     }
 
 
-    double ImagePointVarianceEstimator::estimateVarianceTupleSet(int camIndex)
+    double ImagePointVarianceEstimator::estimateSTDTupleSet(int camIndex)
     {
         CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
         CrossRatioTupleSet::iterator tuple = tupleSet.begin();
@@ -110,7 +110,7 @@ namespace meshac {
     double ImagePointVarianceEstimator::getVarianceSet(int camIndex)
     {
         if (this->variances[camIndex] < 0) {
-            this->estimateVarianceTupleSet(camIndex);
+            this->estimateSTDTupleSet(camIndex);
         }
         return this->variances[camIndex];
     }

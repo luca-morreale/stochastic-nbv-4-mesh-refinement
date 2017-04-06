@@ -9,16 +9,11 @@ namespace meshac {
     WorstEigenvalueVarianceEstimator::~WorstEigenvalueVarianceEstimator()
     { /*    */ }
 
-    EigMatrix WorstEigenvalueVarianceEstimator::selectVarianceMatrix(EigMatrixList &mat)
+    double WorstEigenvalueVarianceEstimator::computeVarianceFromMatrix(EigMatrix &varianceMatrix)
     {
-        EigMatrix worst = mat[0];
-        for (EigMatrix matrix : mat) {
-            if (matrix(matrix.rows(), matrix.cols()) > worst(worst.rows(), worst.cols())) {
-                worst = matrix;
-            }
-        }
-        
-        return worst;
+        EigVector eivals = varianceMatrix.eigenvalues().real();
+        return eivals.maxCoeff();
+
     }
 
 } // namespace meshac

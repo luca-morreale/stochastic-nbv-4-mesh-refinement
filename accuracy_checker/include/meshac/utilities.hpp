@@ -8,15 +8,31 @@
 
 namespace meshac {
 
-
+    /*
+     * Computes combinations.
+     */
     IntArrayList combination(int N, int K);
+
+    /*
+     * Computes combination probabilistically dropping some combination.
+     */
     IntArrayList combination(int N, int K, double skipProbability);
+
+    /*
+     * Computes a fixed number of combination.
+     */
     IntArrayList fixedSizeCombination(int N, int K, double skipProbability, const int MAX_SIZE);
 
+    /*
+     * Subsample the data given.
+     */
     IntArrayList subsample(IntArrayList samples, int sampleSize);
     IntArrayList subsample(IntArrayList samples);   // extract a quarter of the samples
 
-    // Fisher–Yates_shuffle
+    /* 
+     * Fisher–Yates shuffle
+     * Generate a random permutation of elements.
+     */
     std::vector<int> FisherYatesShuffle(size_t sampleSize, size_t batchSize);
     
     // methods to make std::vector interacts with eigen::matrix

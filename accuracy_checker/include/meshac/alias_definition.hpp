@@ -48,6 +48,7 @@ typedef Eigen::Matrix<double, 3, 2> EigJacobianMatrix;
 typedef std::vector<EigVector3> EigVector3List;
 typedef std::vector<EigVector> EigVectorList;
 typedef std::vector<EigMatrix> EigMatrixList;
+typedef Eigen::JacobiSVD<EigMatrix> EigSVD;
 
 inline EigMatrix EigIdentity(int n) { return Eigen::MatrixXd::Identity(n, n); };
 

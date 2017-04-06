@@ -33,9 +33,16 @@ namespace meshac {
          * a 3x3 matrix for each correspongind 2D point representative of the uncertainty.
          */
         virtual EigMatrixList getAccuracyForPoint(int index3DPoint);
+
+        /*
+         * Computes the matrix representing the uncertainty of the 3D point.
+         * It takes into account all the observation of that point.
+         */
         virtual EigMatrix getCompleteAccuracyForPoint(int index3DPoint);
 
-
+        /*
+         * Getter and setter of all the private variables.
+         */
         CameraMatrixList getCamerasMatrix();
         GLMListArrayVec2 getCamObservations();
         ListMappingGLMVec2 getMapping3DTo2DThroughCam();
@@ -49,7 +56,6 @@ namespace meshac {
         void updateMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
         void setMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
 
-
     protected:
         /*
          * Initializes all members.
@@ -59,19 +65,20 @@ namespace meshac {
 
         /*
          * Evaluates the photogrammetrist's function in the given point with the given camera.
+         * This function does not use homogeneous coordinates.
          */
         virtual EigVector evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);
 
         /*
-         * 
-         * 
+         * Computes the jacobian of the function.
          */
         virtual EigMatrix computeJacobian(CameraMatrix &cam, GLMVec2 &point);
 
-
+        /*
+         * Generalized method to update the lists.
+         */
         virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, std::string errorMsg);
         virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList);
-
 
     private:
         CameraMatrixList extractCameraMatrix(CameraList &cameras);

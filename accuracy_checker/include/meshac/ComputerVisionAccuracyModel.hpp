@@ -24,7 +24,7 @@ namespace meshac {
 
     protected:
         /*
-         * 
+         * Evaluates the function using homogeneous coordinates.
          */
         virtual EigVector evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);   
         

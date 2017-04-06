@@ -32,7 +32,9 @@ namespace meshac {
         void updateCamObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs);
 
 
-        
+        /*
+         * Getter and setter for list of images path.
+         */
         void setFileList(StringList &fileList);
         StringList getFileList();
 

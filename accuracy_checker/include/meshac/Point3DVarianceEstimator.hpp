@@ -17,10 +17,13 @@ namespace meshac {
         ~Point3DVarianceEstimator();
 
         virtual EigMatrix getVariaceMatrixForPoint(GLMVec3 &point);
+        virtual EigMatrix getVariaceMatrixForPoint(int pointIndex);
+
         /*
          * Computes the uncertainity measure for the given point.
          */
         virtual double computeVarianceForPoint(GLMVec3 &point);
+        virtual double computeVarianceForPoint(int pointIndex);
 
         /*
          * Setter and getter for the accuracy model used.
@@ -50,6 +53,8 @@ namespace meshac {
         const GLMVec3 EPSILON = GLMVec3(SENSIBILITY);
 
     };
+
+    typedef Point3DVarianceEstimator* Point3DVarianceEstimatorPtr;
     
 } // namespace meshac
 

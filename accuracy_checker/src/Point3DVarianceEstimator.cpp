@@ -40,12 +40,18 @@ namespace meshac {
 
         for (int i = 0; i<points.size(); i++) {
             if (glm::all(glm::epsilonEqual(points[i], point, EPSILON))) {
-                EigMatrix variance = this->accuracyModel->getCompleteAccuracyForPoint(i);
-
-                return this->computeVarianceFromMatrix(variance);
+                return this->computeVarianceForPoint(i);
             }
         }
+        return -1.0;
     }
+
+    double Point3DVarianceEstimator::computeVarianceForPoint(int pointIndex)
+    {
+        EigMatrix variance = this->accuracyModel->getCompleteAccuracyForPoint(pointIndex);
+        return this->computeVarianceFromMatrix(variance);
+    }
+
 
     void Point3DVarianceEstimator::setAccuracyModel(AccuracyModelPtr accuracyModel)
     {

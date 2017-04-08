@@ -3,40 +3,52 @@
 
 namespace meshac {
 
-    MeshColorer::MeshColorer(std::string &confiFileName)
+    MeshColorer::MeshColorer(std::string &confiFileName, Point3DVarianceEstimatorPtr uncertantyEstimator)
     {
         this->fileName = confiFileName;
+        this->uncertantyEstimator = uncertantyEstimator;
         this->colors = new ThresholdColor();
         this->readColors();
     }
 
     MeshColorer::~MeshColorer()
     {
+        delete this->uncertantyEstimator;
         delete this->colors;
     }
 
-    std::string MeshColorer::printVertexColor(GLMVec3 &point, double &accuracy)
+    Color MeshColorer::getColorForPoint(GLMVec3 &point)
     {
-        Color color = this->colors->getColorFor(accuracy);
-        return " " + color.string();
+        double accuracy = this->uncertantyEstimator->computeVarianceForPoint(point);
+        return this->colors->getColorFor(accuracy);
     }
 
-    std::string MeshColorer::printVertex(GLMVec3 &point, double &accuracy)
+    Color MeshColorer::getColorForPoint(int pointIndex)
     {
-        std::string out = std::to_string(point[0]) + " " + std::to_string(point[1]) + " " + std::to_string(point[2]);
-        return out + " " + printVertexColor(point, accuracy);
+        double accuracy = this->uncertantyEstimator->computeVarianceForPoint(pointIndex);
+        return this->colors->getColorFor(accuracy);
     }
 
-    void MeshColorer::printVertex(std::stringstream &stream, GLMVec3 &point, double &accuracy)
+    std::string MeshColorer::printVertexColor(GLMVec3 &point)
     {
-        stream << this->printVertex(point, accuracy);
+        Color color = this->getColorForPoint(point);
+        return color.string();
     }
 
-    void MeshColorer::encodeVertexToStream(std::stringstream &stream, GLMListVec3 &points, DoubleList &accuracies)
+    std::string MeshColorer::printVertexColor(int pointIndex)
     {
-        for (int i = 0; i < points.size(); i++) {
-            stream << this->printVertex(points[i], accuracies[i]) << std::endl;
-        }
+        Color color = this->getColorForPoint(pointIndex);
+        return color.string();
+    }
+
+    void MeshColorer::printVertex(std::stringstream &stream, GLMVec3 &point)
+    {
+        stream << this->printVertexColor(point);
+    }
+
+    void MeshColorer::printVertex(std::stringstream &stream, int pointIndex)
+    {
+        stream << this->printVertexColor(pointIndex);
     }
 
     void MeshColorer::readColors()

@@ -5,19 +5,23 @@
 #include <sstream>
 
 #include <meshac/alias_definition.hpp>
+#include <meshac/Point3DVarianceEstimator.hpp>
 #include <meshac/ThresholdColor.hpp>
 
 namespace meshac {
 
     class MeshColorer {
     public:
-        MeshColorer(std::string &confiFileName);
+        MeshColorer(std::string &confiFileName, Point3DVarianceEstimatorPtr uncertantyEstimator);
         ~MeshColorer();
 
-        std::string printVertexColor(GLMVec3 &point, double &accuracy);
-        std::string printVertex(GLMVec3 &point, double &accuracy);
-        void printVertex(std::stringstream &stream, GLMVec3 &point, double &accuracy);
-        void encodeVertexToStream(std::stringstream &stream, GLMListVec3 &points, DoubleList &accuracies);
+        virtual Color getColorForPoint(GLMVec3 &point);
+        virtual std::string printVertexColor(GLMVec3 &point);
+        virtual void printVertex(std::stringstream &stream, GLMVec3 &point);
+
+        virtual Color getColorForPoint(int pointIndex);
+        virtual std::string printVertexColor(int pointIndex);
+        virtual void printVertex(std::stringstream &stream, int pointIndex);
 
         std::string getConfigFileName();
         void setConfigFilename(std::string &confiFileName);
@@ -27,6 +31,8 @@ namespace meshac {
 
     private:
         std::string fileName;
+
+        Point3DVarianceEstimatorPtr uncertantyEstimator;
 
         ThresholdColorPtr colors;
     };

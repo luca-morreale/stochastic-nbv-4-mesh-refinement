@@ -7,7 +7,7 @@
 #include <meshac/PhotogrammetristAccuracyModel.hpp>
 #include <meshac/ComputerVisionAccuracyModel.hpp>
 
-#define POINT 1
+const int POINTS[] = {90, 62, 16, 160, 13, 123, 37, 43};
 
 int main(int argc, char **argv) {
     std::srand(0);
@@ -21,15 +21,17 @@ int main(int argc, char **argv) {
     cloudPath = cloudPath.substr(0, cloudPath.find_last_of("/"));
     std::string pathPrefix = cloudPath.substr(0, cloudPath.find_last_of("/")+1);
 
-    meshac::PhotogrammetristAccuracyModel model(points, pathPrefix);
-    //meshac::ComputerVisionAccuracyModel model(points, pathPrefix);
+    //meshac::PhotogrammetristAccuracyModel model(points, pathPrefix);
+    meshac::ComputerVisionAccuracyModel model(points, pathPrefix);
 
     //std::cout << points.points_[POINT][0] << " " << points.points_[POINT][1] << " " << points.points_[POINT][2] << std::endl;
-    auto acc = model.getCompleteAccuracyForPoint(POINT);
+    //auto acc = model.getCompleteAccuracyForPoint(POINT);
     //auto acc = model.getAccuracyForPoint(POINT);
 
-    std::cout << acc << std::endl;
+    for (int p : POINTS) {
+        auto acc = model.getCompleteAccuracyForPoint(p);
+        std::cout << acc << std::endl << std::endl;
+    }
 
     return 0;
 }
-

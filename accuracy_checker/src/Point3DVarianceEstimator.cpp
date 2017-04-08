@@ -15,6 +15,25 @@ namespace meshac {
         points.clear();
     }
 
+    EigMatrix Point3DVarianceEstimator::getVariaceMatrixForPoint(GLMVec3 &point) 
+    { 
+        GLMListVec3 points = this->get3DPoints(); 
+        EigMatrixList variances; 
+         
+        for (int i = 0; i<points.size(); i++) {
+            if (glm::epsilonEqual(points[i], point, EPSILON)[0]) {
+                return this->getVariaceMatrixForPoint(i);
+            }
+        }
+        return EigMatrix(); 
+    }
+
+    EigMatrix Point3DVarianceEstimator::getVariaceMatrixForPoint(int pointIndex)
+    {
+        EigMatrixList variances = this->getAccuracyModel()->getAccuracyForPoint(pointIndex);
+        return selectVarianceMatrix(variances);
+    }    
+
     double Point3DVarianceEstimator::computeVarianceForPoint(GLMVec3 &point)
     {
         GLMListVec3 points = this->get3DPoints();

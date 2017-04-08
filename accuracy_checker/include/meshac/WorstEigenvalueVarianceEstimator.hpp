@@ -14,6 +14,7 @@ namespace meshac {
         ~WorstEigenvalueVarianceEstimator();
 
     protected:
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat); 
         /*
          * Computes the variance as the biggest eigenvalue of the matrix.
          */

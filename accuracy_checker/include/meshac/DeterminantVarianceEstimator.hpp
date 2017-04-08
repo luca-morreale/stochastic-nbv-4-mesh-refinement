@@ -14,6 +14,7 @@ namespace meshac {
         ~DeterminantVarianceEstimator();
 
     protected:
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat); 
         /*
          * Computes the variance of the point as determinat of the given matrix.
          */

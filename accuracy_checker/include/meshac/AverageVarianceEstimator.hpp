@@ -14,6 +14,7 @@ namespace meshac {
         ~AverageVarianceEstimator();
 
     protected:
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat); 
         /*
          * Computes the variance as the average of the elements in the matrix.
          */

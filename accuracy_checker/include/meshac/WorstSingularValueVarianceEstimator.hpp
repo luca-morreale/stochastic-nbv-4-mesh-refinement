@@ -14,6 +14,7 @@ namespace meshac {
         ~WorstSingularValueVarianceEstimator();
 
     protected:
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat); 
         /*
          * Computes the variance as the maximum singular value of the matrix.
          */

@@ -14,6 +14,7 @@ namespace meshac {
         ~WorstTraceVarianceEstimator();
 
     protected:
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat); 
         /*
          * Computes the variance as the maximum trace of the matrix.
          */

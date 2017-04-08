@@ -16,6 +16,7 @@ namespace meshac {
         Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points);
         ~Point3DVarianceEstimator();
 
+        virtual EigMatrix getVariaceMatrixForPoint(GLMVec3 &point);
         /*
          * Computes the uncertainity measure for the given point.
          */
@@ -36,6 +37,7 @@ namespace meshac {
         void append3DPoints(GLMVec3 &points);
 
     protected:
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat) = 0; 
         /*
          * Abstract method to compute the variance given the matrix.
          */

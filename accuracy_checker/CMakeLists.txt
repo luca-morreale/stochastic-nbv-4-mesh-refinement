@@ -29,18 +29,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 # ------------------------ BUILD -------------------------------
 
-file(GLOB main_SOURCE src/*.cpp)
+file(GLOB meshac_SOURCE src/*.cpp)
 
-add_executable(accuracyDetector ${main_SOURCE})
-target_link_libraries(accuracyDetector ${OpenCV_LIBS} 
-                                  ${OpenCV2_LIBS} 
-                                  ${GMPXX_LIBRARIES}
-                                  ${GMP_LIBRARIES}
-                                  ${LAPACK_LIBRARIES}
-                                  ${CGAL_LIBRARY}
-                                  ${Boost_LIBRARIES}
-                                  ${ASSIMP_LIBRARIES}
-                                  ${MANIFOLD_LIB}
-                                  ${GMP_LIBRARY} )
+add_library(meshac SHARED ${meshac_SOURCE})
+
+# ------------------------ INSTALLATION ------------------------
+
+install(TARGETS meshac DESTINATION lib)
+install(DIRECTORY include/meshac/ DESTINATION include/meshac)
 
 # --------------------------------------------------------------

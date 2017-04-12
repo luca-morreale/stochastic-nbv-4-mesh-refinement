@@ -18,7 +18,7 @@ namespace meshac {
         /*
          * Computes the variance of the point as determinat of the given matrix.
          */
-        double computeVarianceFromMatrix(EigMatrix &varianceMatrix);
+        virtual double computeVarianceFromMatrix(EigMatrix &varianceMatrix);
 
     };
 

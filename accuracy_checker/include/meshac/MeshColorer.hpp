@@ -4,7 +4,10 @@
 #include <fstream>
 #include <sstream>
 
+#include <rapidjson/document.h>
+
 #include <meshac/alias_definition.hpp>
+#include <meshac/InvalidJsonFileException.hpp>
 #include <meshac/Point3DVarianceEstimator.hpp>
 #include <meshac/ThresholdColor.hpp>
 
@@ -29,12 +32,19 @@ namespace meshac {
     protected:
         virtual void readColors();
 
+        virtual bool hasCorrectMembers(const rapidjson::Value& color);
+        virtual Color buildColor(const rapidjson::Value& color);
+
+        virtual void extractColors(const rapidjson::Value& colors);
+
+    
+
     private:
         std::string fileName;
-
         Point3DVarianceEstimatorPtr uncertantyEstimator;
-
         ThresholdColorPtr colors;
+
+        rapidjson::Document getJsonDocument();
     };
 
     typedef MeshColorer * MeshColorerPtr;

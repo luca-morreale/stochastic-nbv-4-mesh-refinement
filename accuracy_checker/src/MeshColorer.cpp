@@ -53,22 +53,51 @@ namespace meshac {
 
     void MeshColorer::readColors()
     {
+        rapidjson::Document document = this->getJsonDocument();
+
         this->colors->clearColors();
+        
+        if (!document.IsObject()) throw InvalidJsonFileException("Invalid format for color file. \nRoot element is not an object.");
+        if (!document.HasMember("colors")) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' does not exists.");
+        
+        const rapidjson::Value& colors = document["colors"];
 
-        std::ifstream cin(this->fileName);
+        if (!colors.IsArray()) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' is not an array.");
 
-        float threshold = 0;
-        float r = 0, g = 0, b = 0;
-        float a = 0;
+        
+        this->extractColors(colors);
+    }
 
-        while (!cin.eof()) {
-            cin >> threshold >> r >> g >> b >> a;
-            Color c = {r, g, b, a};
-            
-            this->colors->addColor(threshold, c);
+    void MeshColorer::extractColors(const rapidjson::Value& colors)
+    {
+        for (rapidjson::SizeType i = 0; i < colors.Size(); i++) {  // Uses SizeType instead of size_t
+            if (this->hasCorrectMembers(colors[i])) {
+                Color c = this->buildColor(colors[i]);
+                this->colors->addColor(colors[i]["threshold"].GetFloat(), c);
+            }
         }
     }
 
+    rapidjson::Document MeshColorer::getJsonDocument()
+    {
+        std::ifstream jsonStream(this->fileName);
+        std::string str((std::istreambuf_iterator<char>(jsonStream)), std::istreambuf_iterator<char>());
+
+        rapidjson::Document document;
+        document.Parse(str.c_str());
+        return document;
+    }
+
+    bool MeshColorer::hasCorrectMembers(const rapidjson::Value& color)
+    {
+        return color.HasMember("threshold") && color.HasMember("r") && 
+                color.HasMember("g") && color.HasMember("b") && color.HasMember("a");
+    }
+
+    Color MeshColorer::buildColor(const rapidjson::Value& color)
+    {
+        return {(byte)color["r"].GetInt(), (byte)color["g"].GetInt(), (byte)color["b"].GetInt(), color["a"].GetFloat()};
+    }
 
     std::string MeshColorer::getConfigFileName()
     {

@@ -64,8 +64,8 @@ void OpenMvgParser::parseViews(const std::map<int, glm::mat3> & intrinsics, cons
       std::string local(camerasJson[curCam]["value"]["ptr_wrapper"]["data"]["local_path"].GetString());
       std::string filename(camerasJson[curCam]["value"]["ptr_wrapper"]["data"]["filename"].GetString());
 
-      sfm_data_.camerasList_[curCam].pathImage = basePath + local + filename;
-      sfm_data_.camerasPaths_[curCam] = basePath + local + filename;
+      sfm_data_.camerasList_[curCam].pathImage = basePath + ((basePath.size() > 0)?"/":"") + local + ((local.size() > 0)?"/":"") + filename;
+      sfm_data_.camerasPaths_[curCam] = sfm_data_.camerasList_[curCam].pathImage;
 
       sfm_data_.camerasList_[curCam].imageWidth = camerasJson[curCam]["value"]["ptr_wrapper"]["data"]["width"].GetInt();
       sfm_data_.camerasList_[curCam].imageHeight = camerasJson[curCam]["value"]["ptr_wrapper"]["data"]["height"].GetInt();
@@ -141,6 +141,11 @@ void OpenMvgParser::parsePoints() {
     sfm_data_.point2DoncamViewingPoint_.assign(sfm_data_.numPoints_, std::vector<glm::vec2>());
     sfm_data_.pointsVisibleFromCamN_.assign(sfm_data_.numCameras_, std::vector<int>());
     sfm_data_.points_.assign(sfm_data_.numPoints_, glm::vec3());
+
+    // custom modification
+    sfm_data_.point3DTo2DThroughCam_.assign(sfm_data_.numPoints_, std::map<int, glm::vec2>());
+    sfm_data_.camViewing2DPoint_.assign(sfm_data_.numCameras_, std::vector<glm::vec2>());
+    
     if (!structure.IsArray())
       throw JsonAccessException("JsonAccessException--> error while querying structure.IsArray()");
 
@@ -202,6 +207,10 @@ void OpenMvgParser::parsePoints() {
 
         const rapidjson::Value& pt2D = observations[curId]["value"]["x"];
         sfm_data_.point2DoncamViewingPoint_[curPoint].push_back(glm::vec2(pt2D[0].GetDouble(), pt2D[1].GetDouble()));
+
+        // custom modification
+        sfm_data_.camViewing2DPoint_[curCam].push_back(glm::vec2(pt2D[0].GetDouble(), pt2D[1].GetDouble()));
+        sfm_data_.point3DTo2DThroughCam_[curPoint].insert(std::make_pair(curCam, glm::vec2(pt2D[0].GetDouble(), pt2D[1].GetDouble())));
       }
     }
   } catch (JsonAccessException& e) {

@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    Color::Color(float r, float g, float b, float a)
+    Color::Color(byte r, byte g, byte b, float a)
     {
         this->r = r;
         this->g = g;
@@ -13,7 +13,8 @@ namespace meshac {
 
     std::string Color::string()
     {
-        return std::to_string(this->r) + " " + std::to_string(this->g) + " " + std::to_string(this->b) + " " + std::to_string(this->a);
+        return std::to_string(this->r) + " " + std::to_string(this->g) + \
+                " " + std::to_string(this->b) + " " + std::to_string(this->a);
     }
 
 } // namespace meshac

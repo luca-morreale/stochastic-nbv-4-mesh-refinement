@@ -5,14 +5,16 @@
 #include <vector>
 
 namespace meshac {
+
+    typedef unsigned char byte;
     
     struct Color {
-        float r = 0;
-        float g = 0;
-        float b = 0;
+        byte r = 0;
+        byte g = 0;
+        byte b = 0;
         float a = 0;
 
-        Color(float r, float g, float b, float a);
+        Color(byte r, byte g, byte b, float a);
 
         std::string string();
     };

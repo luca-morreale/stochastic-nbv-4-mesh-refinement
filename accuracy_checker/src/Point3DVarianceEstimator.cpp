@@ -48,7 +48,7 @@ namespace meshac {
 
     double Point3DVarianceEstimator::computeVarianceForPoint(int pointIndex)
     {
-        EigMatrix variance = this->accuracyModel->getCompleteAccuracyForPoint(pointIndex);
+        EigMatrix variance = this->getAccuracyModel()->getCompleteAccuracyForPoint(pointIndex);
         return this->computeVarianceFromMatrix(variance);
     }
 

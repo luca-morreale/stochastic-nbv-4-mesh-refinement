@@ -1,7 +1,7 @@
 #ifndef MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 #define MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 
-#include <manifoldReconstructor/SfMData.h>
+#include <realtimeMR/SfMData.h>
 
 #include <meshac/AccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>

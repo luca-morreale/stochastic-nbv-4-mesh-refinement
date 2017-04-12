@@ -13,6 +13,8 @@
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 
+#include <omp.h>
+
 #include <realtimeMR/CameraPointsCollection.h>
 #include <realtimeMR/utilities/Chronometer.h>
 #include <realtimeMR/utilities/Logger.h>
@@ -33,8 +35,11 @@
 #include <meshac/AccuracyModel.hpp>
 #include <meshac/PhotogrammetristAccuracyModel.hpp>
 #include <meshac/Color.hpp>
-#include <meshac/WorstTraceVarianceEstimator.hpp>
+#include <meshac/DeterminantVarianceEstimator.hpp>
+#include <meshac/WorstEigenvalueVarianceEstimator.hpp>
 #include <meshac/MeshColorer.hpp>
+
+#define OMP_THREADS 8
 
 #define COLOR
 #define USE_SFM
@@ -211,6 +216,7 @@ void outlierFiltering(std::vector<bool>& inliers, const float outlierThreshold) 
 }
 
 int main(int argc, char **argv) {
+
     utilities::Logger log;
     std::ofstream statsFile, visiblePointsFile;
     ManifoldReconstructionConfig confManif;
@@ -238,9 +244,9 @@ int main(int argc, char **argv) {
         std::cout << "max_iterations not set" << std::endl << std::endl;
     } else if (argc == 2) {
         input_file = argv[1];
-        color_file = "res/config/color.txt";
+        color_file = "res/config/colors.json";
         config_file = "res/config/default.json";
-        std::cout << "Using default color configuration res/config/color.txt" << std::endl;
+        std::cout << "Using default color configuration res/config/colors.json" << std::endl;
         std::cout << "Using default configuration res/config/default.json" << std::endl;
         std::cout << "max_iterations not set" << std::endl << std::endl;
     } else {
@@ -271,9 +277,8 @@ int main(int argc, char **argv) {
 //  log.endEventAndPrint("\t\t\t\t\t\t", true);
 //  return 0;
 
-
-    
     std::cout << "parsing" << std::endl;
+
     CameraPointsCollection incData;
     OpenMvgParser op_openmvg(input_file);
     op_openmvg.parse();
@@ -282,8 +287,10 @@ int main(int argc, char **argv) {
 
     ReconstructFromSLAMData m(confManif);
 
-    meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, input_file);
-    meshColorer = new meshac::MeshColorer(color_file, new meshac::WorstTraceVarianceEstimator(&accuracyModel, sfm_data_.points_));
+    std::string pathPrefix = input_file.substr(0, input_file.find_last_of("/"));
+    pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
+    meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, pathPrefix);
+    meshColorer = new meshac::MeshColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
 
     m.setExpectedTotalIterationsNumber((maxIterations_) ? maxIterations_ + 1 : sfm_data_.numCameras_);
 
@@ -309,15 +316,24 @@ int main(int argc, char **argv) {
             point->position = sfm_data_.points_[pointIndex];
 
 #ifdef COLOR
+            // this is already after the outlier filtering, thus no outlier are computed??mkdi
             meshac::Color color = meshColorer->getColorForPoint(pointIndex);
+            std::cout << color.string() << std::endl;
             point->r = color.r;
             point->g = color.g;
             point->b = color.b;
             point->a = color.a;
+            /*
+            point->r = 255;
+            point->g = 255;
+            point->b = 0;
+            point->a = 1;
+            */
 #endif
             incData.addPoint(point);
         }
     }
+    //delete(meshColorer);
 
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
 
@@ -372,10 +388,10 @@ int main(int argc, char **argv) {
         
         if (m.iterationCount > confManif.initialTriangulationUpdateSkip && !(m.iterationCount % confManif.triangulationUpdateEvery)) m.integrityCheck();
 
-        if (m.iterationCount && !(m.iterationCount % confManif.saveMeshEvery)) m.saveMesh("output/from_gen_config/", "current");
+        if (m.iterationCount && !(m.iterationCount % confManif.saveMeshEvery)) m.saveMesh("output/from_gen_config/", "current", true);
         //if (m.iterationCount && !(m.iterationCount % confManif.save_manifold_every)) m.saveManifold("output/partial/", std::to_string(m.iterationCount));
 
-//      if (m.iterationCount && !(m.iterationCount % confManif.saveMeshEvery)) m.getOutputManager()->writeMeshToOff("output/from_gen_config/current_from_OutputManager.off");
+        //if (m.iterationCount && !(m.iterationCount % confManif.saveMeshEvery)) m.getOutputManager()->writeMeshToOff("output/from_gen_config/current_from_OutputManager.off");
 
         log.endEventAndPrint("main loop\t\t\t\t\t\t", true);
         std::cout << std::endl;
@@ -386,7 +402,7 @@ int main(int argc, char **argv) {
     // Do a last manifold update in case op.numCameras() isn't a multiple of confManif.manifold_update_every
     if (m.iterationCount > confManif.initialTriangulationUpdateSkip) m.update();
 
-    m.saveMesh("output/from_gen_config/", "final");
+    m.saveMesh("output/from_gen_config/", "final", true);
 
     log.endEventAndPrint("main\t\t\t\t\t\t", true);
 
@@ -444,12 +460,12 @@ int main(int argc, char **argv) {
             else m.saveMesh(confManif.outputFolder, ssnm.str());
         }
 
-        log.endEventAndPrint("main loop\t\t\t\t\t\t", true);
+        log.endEventAndPrint("main loop\t\t\t\t\t\t");
         std::cout << std::endl;
 
         if (!updatingCamera && m.iterationCount > confManif.initialTriangulationUpdateSkip && !(m.iterationCount % confManif.triangulationUpdateEvery)) m.insertStatValue(log.getLastDelta());
 
-#ifdef PRODUCE_STATS
+#ifdef PRODUCE_STATS 
         statsFile.open("output/stats/stats.txt", std::ios_base::app);
         statsFile << std::endl << std::endl << "Iteration " << m.iterationCount << std::endl;
         statsFile << op.getStats();
@@ -465,7 +481,7 @@ int main(int argc, char **argv) {
     // Do a last manifold update in case op.numCameras() isn't a multiple of confManif.manifold_update_every
     if (m.iterationCount > confManif.initialTriangulationUpdateSkip) m.update();
 
-    m.saveMesh(confManif.outputFolder, confManif.statsId);
+    m.saveMesh(confManif.outputFolder, confManif.statsId, true);
 
     log.endEventAndPrint("main\t\t\t\t\t\t", true);
 

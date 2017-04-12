@@ -67,7 +67,7 @@ namespace meshac {
          */
         double xy, xz, xt, yz, yt, zt;
 
-        const GLMVec2 EPSILON = GLMVec2(SENSIBILITY);
+        const GLMVec2 EPSILON = GLMVec2(1.0f, 1.0f);
     
     };
 

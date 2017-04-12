@@ -12,7 +12,7 @@
 #include <set>
 #include <vector>
 
-#include <manifoldReconstructor/types_reconstructor.hpp>
+#include <realtimeMR/types_reconstructor.hpp>
 
 
 typedef std::vector<int> IntList;
@@ -22,7 +22,9 @@ typedef std::vector<std::string> StringList;
 
 /* Shortcuts for OpenCV types */
 typedef cv::Vec2f CVVector2;
+typedef cv::Vec4f CVVector4;
 typedef std::vector<cv::Vec2f> CVListVec2;
+typedef std::vector<cv::Vec4f> CVListVec4;
 typedef cv::Mat CVMat;
 
 /* Shortcuts for GLM types */

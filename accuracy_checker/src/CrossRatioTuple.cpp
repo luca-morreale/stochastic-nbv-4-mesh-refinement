@@ -42,7 +42,7 @@ namespace meshac {
     bool CrossRatioTuple::isInTuple(GLMVec2 &point)
     {
         for (GLMVec2 tuplePoint : points) {
-            if (glm::epsilonEqual(point, tuplePoint, EPSILON)[0]) {
+            if (glm::all(glm::epsilonEqual(point, tuplePoint, EPSILON))) {
                 return true;
             }
         }

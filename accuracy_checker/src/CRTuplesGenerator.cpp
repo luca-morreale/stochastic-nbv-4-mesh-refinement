@@ -71,22 +71,18 @@ namespace meshac {
         
         IntArrayList correspondances = this->generateCorrespondances(lines, points2D);
         
-        #pragma omp parallel for
         for (IntList pointSet : correspondances) {
             
-            IntArrayList combos = fixedSizeCombination(pointSet.size(), 4, SKIP_RATE, MAX_SIZE);
+            IntArrayList combos = fixedSizeCombination(pointSet.size(), 4, SKIP_TUPLE_RATE, MAX_SAMPLE_SIZE);
             
             CrossRatioTupleSet tmp = this->createsTuples(combos, pointSet, points2D);
-            #pragma omp critical
             for (auto el : tmp) {       // why this works and the one below do not??
                 tuples.insert(el);
             }
             //tuples.insert(tmp.begin(), tmp.end());
         }
 
-        this->setTuplesPerCam(tuples, camIndex);
-
-        return tuples;
+        return subsample(tuples, MAX_SAMPLE_SIZE);  // sampling
     }
     
     ListCrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForAllCam()

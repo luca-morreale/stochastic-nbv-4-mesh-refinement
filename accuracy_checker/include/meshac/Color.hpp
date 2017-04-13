@@ -16,7 +16,7 @@ namespace meshac {
 
         Color(byte r, byte g, byte b, float a);
 
-        std::string string();
+        std::string to_string();
     };
 
     typedef Color * ColorPtr;

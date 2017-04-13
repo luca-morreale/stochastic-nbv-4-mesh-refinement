@@ -11,7 +11,7 @@ namespace meshac {
         this->a = a;
     }
 
-    std::string Color::string()
+    std::string Color::to_string()
     {
         return std::to_string(this->r) + " " + std::to_string(this->g) + \
                 " " + std::to_string(this->b) + " " + std::to_string(this->a);

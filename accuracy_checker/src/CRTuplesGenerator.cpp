@@ -35,7 +35,6 @@ namespace meshac {
         int N = this->camObservations.size();
         ListCrossRatioTupleSet listTupleSet(N);
 
-        #pragma omp parallel for
         for (int camIndex = 0; camIndex < N; camIndex++) {
             listTupleSet[camIndex] = determineTupleOfFourPointsForCam(camIndex);
         }
@@ -64,6 +63,10 @@ namespace meshac {
         CVMat edges;
         CrossRatioTupleSet tuples;
         GLMListVec2 points2D = this->camObservations[camIndex];
+        if (points2D.size() < 10) {
+            //std::cout << "not enough" << std::endl;
+            return CrossRatioTupleSet();
+        }
         
         this->computeEdges(camIndex, edges);
         
@@ -100,7 +103,6 @@ namespace meshac {
     {
         CrossRatioTupleSet tuples;
 
-        #pragma omp parallel for
         for (auto combo : combos) {
             CrossRatioTuple tmp;
             for (int i=0; i < 4; i++) {
@@ -108,7 +110,6 @@ namespace meshac {
                 tmp.append(points2D[index]);
             }
             
-            #pragma omp critical
             tuples.insert(tmp);
         }
 
@@ -125,7 +126,7 @@ namespace meshac {
 
     std::vector<EigVector3> CRTuplesGenerator::createLinesFromEdges(CVMat &edges)
     {
-        CVListVec2 polarLines;
+        CVListVec4 polarLines;
         std::vector<EigVector3> lines;
         
         // discretization rho 1
@@ -133,16 +134,14 @@ namespace meshac {
         // at least 100 votes
         //cv::HoughLines(logicalImg, lines, 1, CV_PI/180, 4, 0, 0 );
         // votes must be fixed! maybe with threshold, or check to not take close lines
-        cv::HoughLines(edges, polarLines, 1, CV_PI/180, 90, 0, 0);  // this just gives rho and theta not the line!!!
+        cv::HoughLinesP(edges, polarLines, 1, CV_PI/180, 90, 0, 0);  // this just gives rho and theta not the line!!!
 
 
         for( size_t i = 0; i < polarLines.size(); i++ ) {
-            float rho = polarLines[i][0];
-            float theta = polarLines[i][1];
-            double a = cos(theta), b = sin(theta);
-            double x0 = a*rho, y0 = b*rho;
-            EigVector3 pt1(cvRound(x0 + 1000*(-b)), cvRound(y0 + 1000*(a)), 1);
-            EigVector3 pt2(cvRound(x0 - 1000*(-b)), cvRound(y0 - 1000*(a)), 1);
+            auto l = polarLines[i];
+            EigVector3 pt1(l[0], l[1], 1);
+            EigVector3 pt2(l[2], l[3], 1);
+            
             EigVector3 line = pt1.cross(pt2);
             line /= line[2];
             lines.push_back(line);
@@ -154,19 +153,16 @@ namespace meshac {
 
     IntArrayList CRTuplesGenerator::generateCorrespondances(std::vector<EigVector3> &lines, GLMListVec2 &points2D)
     {
-        EigVector3 line;
-        EigVector3 point;
+        EigVector3 line, point;
         IntArrayList correspondances;
         correspondances.assign(lines.size(), IntList());
 
-        #pragma omp parallel for collapse(2)
         for (unsigned int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
-            line << lines[lineIndex];
+            EigVector3 line = lines[lineIndex];
 
             for (unsigned int pointIndex = 0; pointIndex < points2D.size(); pointIndex++) {
-                point << points2D[pointIndex].x, points2D[pointIndex].y, 1;
-                if (std::abs(line.transpose() * point) < 1 ) {
-                    #pragma omp critical
+                EigVector3 point =  EigVector3(points2D[pointIndex].x, points2D[pointIndex].y, 1);
+                if (std::abs(line.transpose() * point) < 1.0 ) {
                     correspondances[lineIndex].push_back(pointIndex);
                 }
             }

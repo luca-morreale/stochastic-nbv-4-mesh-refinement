@@ -63,7 +63,7 @@ namespace meshac {
 
     EigMatrix ImagePointVarianceEstimator::estimateSTDForTuple(CrossRatioTuple &tuple, int camIndex)
     {
-        double varianceSet = this->getVarianceSet(camIndex);
+        double varianceSet = this->estimateSTDTupleSet(camIndex);
         
         auto jacobian = tuple.jacobian();   // row vector 1x4
         
@@ -79,7 +79,7 @@ namespace meshac {
 
     double ImagePointVarianceEstimator::estimateSTDTupleSet(int camIndex)
     {
-        CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
+        CrossRatioTupleSet tupleSet = this->tuplesGenerator->determineTupleOfFourPointsForCam(camIndex);
         CrossRatioTupleSet::iterator tuple = tupleSet.begin();
         int N = tupleSet.size();
 

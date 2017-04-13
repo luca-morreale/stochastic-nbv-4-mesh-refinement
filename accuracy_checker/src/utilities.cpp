@@ -46,31 +46,12 @@ namespace meshac {
         return combo;
     }
 
-
-    // should add check to have taken 1 sample for each point at least
-    IntArrayList subsample(IntArrayList samples, int sampleSize)
-    {
-        IntArrayList subsamples;
-        IntList indexs = FisherYatesShuffle(sampleSize, samples.size());
-        
-        for (int i : indexs) {
-            subsamples.push_back(samples[i]);
-        }
-
-        return subsamples;
-    }
-
-    IntArrayList subsample(IntArrayList samples)
-    {
-        return subsample(samples, samples.size() / 4);
-    }
-
     // std::mt19937 = Mersenne Twister 19937 generator
-    std::vector<int> FisherYatesShuffle(size_t reducedSize, size_t batchSize)
+    IntList FisherYatesShuffle(size_t reducedSize, size_t batchSize)
     {
         std::mt19937 gen(std::random_device{}());
 
-        std::vector<int> permutation(reducedSize);
+        IntList permutation(reducedSize);
      
         for(size_t i = 0; i < batchSize; ++i) {
             std::uniform_int_distribution<> dis(0, i);
@@ -88,8 +69,9 @@ namespace meshac {
     void appendMatrixDiagonalToVector(EigMatrix &mat, DoubleList &list)
     {
         // vector<int> vec(mat.data(), mat.data() + mat.rows() * mat.cols())
-        auto it = mat.diagonal().data();
-        for (int i = 0; i < mat.diagonal().size(); i++) {
+        EigVector diagonal = mat.diagonal().transpose();
+        auto it = diagonal.data();
+        for (int i = 0; i < diagonal.size(); i++) {
             list.push_back(*(it+i));
         }
     }

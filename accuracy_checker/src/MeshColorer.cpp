@@ -32,13 +32,13 @@ namespace meshac {
     std::string MeshColorer::printVertexColor(GLMVec3 &point)
     {
         Color color = this->getColorForPoint(point);
-        return color.string();
+        return color.to_string();
     }
 
     std::string MeshColorer::printVertexColor(int pointIndex)
     {
         Color color = this->getColorForPoint(pointIndex);
-        return color.string();
+        return color.to_string();
     }
 
     void MeshColorer::printVertex(std::stringstream &stream, GLMVec3 &point)
@@ -60,12 +60,12 @@ namespace meshac {
         if (!document.IsObject()) throw InvalidJsonFileException("Invalid format for color file. \nRoot element is not an object.");
         if (!document.HasMember("colors")) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' does not exists.");
         
-        const rapidjson::Value& colors = document["colors"];
+        const rapidjson::Value& colorsArray = document["colors"];
 
-        if (!colors.IsArray()) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' is not an array.");
+        if (!colorsArray.IsArray()) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' is not an array.");
 
         
-        this->extractColors(colors);
+        this->extractColors(colorsArray);
     }
 
     void MeshColorer::extractColors(const rapidjson::Value& colors)

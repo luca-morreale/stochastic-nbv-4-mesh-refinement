@@ -45,7 +45,7 @@ namespace meshac {
     }
 
 
-    EigMatrix ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int camIndex)
+    EigMatrix ImagePointVarianceEstimator::estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex)
     {
         DoubleList covariancePointMatrix;
         CrossRatioTupleSet completeTupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);

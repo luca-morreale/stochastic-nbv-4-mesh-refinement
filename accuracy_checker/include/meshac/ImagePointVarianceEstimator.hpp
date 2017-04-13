@@ -15,7 +15,7 @@ namespace meshac {
         /*
          * Computes the variance for a 2D point in the given camera.
          */
-        virtual EigMatrix estimateVarianceForPoint(GLMVec2 &point, int camIndex);
+        virtual EigMatrix estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex);
 
         /*
          * Setter and getter for camera's observations.

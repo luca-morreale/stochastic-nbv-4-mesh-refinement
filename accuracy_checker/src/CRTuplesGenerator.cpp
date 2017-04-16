@@ -64,7 +64,6 @@ namespace meshac {
         CrossRatioTupleSet tuples;
         GLMListVec2 points2D = this->camObservations[camIndex];
         if (points2D.size() < 10) {
-            //std::cout << "not enough" << std::endl;
             return CrossRatioTupleSet();
         }
         
@@ -74,11 +73,14 @@ namespace meshac {
         
         IntArrayList correspondances = this->generateCorrespondances(lines, points2D);
         
-        for (IntList pointSet : correspondances) {
-            
+        #pragma omp parallel for
+        for (int i = 0; i < correspondances.size(); i++) {
+            IntList pointSet = correspondances[i];
             IntArrayList combos = fixedSizeCombination(pointSet.size(), 4, SKIP_TUPLE_RATE, MAX_SAMPLE_SIZE);
             
             CrossRatioTupleSet tmp = this->createsTuples(combos, pointSet, points2D);
+
+            #pragma omp critical
             for (auto el : tmp) {       // why this works and the one below do not??
                 tuples.insert(el);
             }
@@ -90,6 +92,7 @@ namespace meshac {
     
     ListCrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForAllCam()
     {
+        #pragma omp parallel for
         for (int i = 0; i < camObservations.size(); i++) {
             this->determineTupleOfFourPointsForCam(i);
         }
@@ -103,13 +106,17 @@ namespace meshac {
     {
         CrossRatioTupleSet tuples;
 
-        for (auto combo : combos) {
+        #pragma omp parallel for
+        for (int i = 0; i < combos.size(); i++) {
+            IntList combo = combos[i];
             CrossRatioTuple tmp;
+            
             for (int i=0; i < 4; i++) {
                 int index = pointSet[combo[i]];
                 tmp.append(points2D[index]);
             }
-            
+
+            #pragma omp critical
             tuples.insert(tmp);
         }
 
@@ -136,7 +143,7 @@ namespace meshac {
         // votes must be fixed! maybe with threshold, or check to not take close lines
         cv::HoughLinesP(edges, polarLines, 1, CV_PI/180, 90, 0, 0);  // this just gives rho and theta not the line!!!
 
-
+        #pragma omp parallel for
         for( size_t i = 0; i < polarLines.size(); i++ ) {
             auto l = polarLines[i];
             EigVector3 pt1(l[0], l[1], 1);
@@ -144,6 +151,8 @@ namespace meshac {
             
             EigVector3 line = pt1.cross(pt2);
             line /= line[2];
+
+            #pragma omp critical
             lines.push_back(line);
         }
 
@@ -157,12 +166,15 @@ namespace meshac {
         IntArrayList correspondances;
         correspondances.assign(lines.size(), IntList());
 
+        #pragma omp parallel for
         for (unsigned int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
             EigVector3 line = lines[lineIndex];
 
+            #pragma omp parallel for
             for (unsigned int pointIndex = 0; pointIndex < points2D.size(); pointIndex++) {
                 EigVector3 point =  EigVector3(points2D[pointIndex].x, points2D[pointIndex].y, 1);
                 if (std::abs(line.transpose() * point) < 1.0 ) {
+                    #pragma omp critical
                     correspondances[lineIndex].push_back(pointIndex);
                 }
             }

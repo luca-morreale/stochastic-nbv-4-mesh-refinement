@@ -14,6 +14,8 @@
 
 #include <realtimeMR/types_reconstructor.hpp>
 
+typedef std::pair<int, int> IntPair;
+typedef std::pair<double, double> DoublePair;
 
 typedef std::vector<int> IntList;
 typedef std::vector<double> DoubleList;

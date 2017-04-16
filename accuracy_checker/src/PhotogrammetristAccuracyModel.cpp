@@ -3,47 +3,47 @@
 
 namespace meshac {
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, 
-                                                            GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+                                                                    ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
     {
         this->fileList = fileList;
         this->cameras = cameras;
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
 
-        this->initMembers();
+        this->initMembers(pixelSize);
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, 
-                                                            GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMListArrayVec2 &camObservations,
+                                                                    ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
     {
         this->fileList = fileList;
         this->cameras = this->extractCameraMatrix(cameras);
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
 
-        this->initMembers();
+        this->initMembers(pixelSize);
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize)
     {
         this->fileList = data.camerasPaths_;
         this->cameras = this->extractCameraMatrix(data.camerasList_);
         this->camObservations = data.camViewing2DPoint_;
         this->point3DTo2DThroughCam = data.point3DTo2DThroughCam_;
 
-        this->initMembers();
+        this->initMembers(pixelSize);
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize)
     {
         this->fileList = data.camerasPaths_;
         this->cameras = this->extractCameraMatrix(data.camerasList_);
         this->camObservations = data.camViewing2DPoint_;
         this->point3DTo2DThroughCam = data.point3DTo2DThroughCam_;
-
+        
         this->fixImagesPath(pathPrefix);
-        this->initMembers();
+        this->initMembers(pixelSize);
     }
     
     PhotogrammetristAccuracyModel::~PhotogrammetristAccuracyModel() 
@@ -60,9 +60,9 @@ namespace meshac {
     /*
      * Protected method to initialize all members.
      */
-    void PhotogrammetristAccuracyModel::initMembers()
+    void PhotogrammetristAccuracyModel::initMembers(DoublePair &pixelSize)
     {
-        this->varianceEstimator = new ImagePointVarianceEstimator(this->fileList, this->camObservations);
+        this->varianceEstimator = new ImagePointVarianceEstimator(this->fileList, this->camObservations, pixelSize);
     }
 
     void PhotogrammetristAccuracyModel::fixImagesPath(std::string &pathPrefix)

@@ -12,14 +12,14 @@ namespace meshac {
     
     class PhotogrammetristAccuracyModel : public AccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, 
-                                GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
         
-        PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, 
-                                GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam);
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMListArrayVec2 &camObservations, 
+                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
         
-        PhotogrammetristAccuracyModel(SfMData &data);
-        PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix);
+        PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize);
+        PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         
         ~PhotogrammetristAccuracyModel();
         
@@ -60,7 +60,7 @@ namespace meshac {
         /*
          * Initializes all members.
          */
-        virtual void initMembers();
+        virtual void initMembers(DoublePair &pixelSize);
         virtual void fixImagesPath(std::string &pathPrefix);
 
         /*

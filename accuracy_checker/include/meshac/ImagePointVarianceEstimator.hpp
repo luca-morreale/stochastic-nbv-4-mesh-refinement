@@ -9,13 +9,14 @@ namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations);
+        ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations, DoublePair &pixelSize);
         ~ImagePointVarianceEstimator();
 
         /*
          * Computes the variance for a 2D point in the given camera.
          */
         virtual EigMatrix estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex);
+        virtual EigMatrixList collectPointVarianceMatrix(GLMVec2 &point, int camIndex);
 
         /*
          * Setter and getter for camera's observations.
@@ -43,11 +44,16 @@ namespace meshac {
         virtual double estimateSTDTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
 
     private:
+
+        void buildPixelSizeMatrix();
+
         //ListCrossRatioTupleSet listTupleSet;
 
         CRTuplesGeneratorPtr tuplesGenerator;
 
         DoubleList variances;
+        DoublePair pixelSize;
+        EigMatrix pixelSizeDiagonalMatrix;
 
     };
 

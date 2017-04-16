@@ -4,19 +4,21 @@
 namespace meshac {
 
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(StringList &fileList, CameraMatrixList &cameras, 
-                                    GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam) 
-                                    : PhotogrammetristAccuracyModel(fileList, cameras, camObservations, point3DTo2DThroughCam)
+                                    GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize) 
+                                    : PhotogrammetristAccuracyModel(fileList, cameras, camObservations, point3DTo2DThroughCam, pixelSize)
     { /*    */ }
 
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(StringList &fileList, CameraList &cameras, 
-                                    GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam)
-                                    : PhotogrammetristAccuracyModel(fileList, cameras, camObservations, point3DTo2DThroughCam)
+                                    GLMListArrayVec2 &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
+                                    : PhotogrammetristAccuracyModel(fileList, cameras, camObservations, point3DTo2DThroughCam, pixelSize)
     { /*    */ }
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data) : PhotogrammetristAccuracyModel(data) 
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, DoublePair &pixelSize) 
+                                    : PhotogrammetristAccuracyModel(data, pixelSize) 
     { /*    */ }
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix) : PhotogrammetristAccuracyModel(data, pathPrefix) 
+    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize) 
+                                    : PhotogrammetristAccuracyModel(data, pathPrefix, pixelSize) 
     { /*    */ }
     
     /*

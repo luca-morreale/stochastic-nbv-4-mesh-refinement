@@ -4,10 +4,12 @@
 namespace meshac {
 
 
-    ImagePointVarianceEstimator::ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations)
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations, DoublePair &pixelSize)
     {
         this->tuplesGenerator = new CRTuplesGenerator(fileList, camObservations);
         this->variances.assign(camObservations.size(), -1);
+        this->pixelSize = pixelSize;
+        this->buildPixelSizeMatrix();
     }
 
     ImagePointVarianceEstimator::~ImagePointVarianceEstimator()
@@ -15,6 +17,13 @@ namespace meshac {
         delete this->tuplesGenerator;
 
         this->variances.clear();
+    }
+
+    void ImagePointVarianceEstimator::buildPixelSizeMatrix()
+    {
+        this->pixelSizeDiagonalMatrix = EigIdentity(2);
+        this->pixelSizeDiagonalMatrix(0, 0) *= this->pixelSize.first;
+        this->pixelSizeDiagonalMatrix(1, 1) *= this->pixelSize.second;
     }
 
     void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations)

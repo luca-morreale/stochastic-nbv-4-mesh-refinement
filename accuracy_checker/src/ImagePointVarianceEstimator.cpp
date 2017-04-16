@@ -57,32 +57,46 @@ namespace meshac {
     EigMatrix ImagePointVarianceEstimator::estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex)
     {
         DoubleList covariancePointMatrix;
-        CrossRatioTupleSet completeTupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
-        
-        for (CrossRatioTuple tuple : completeTupleSet) {
-            if (tuple.isInTuple(point)) {
-                EigMatrix mat = this->estimateSTDForTuple(tuple, camIndex);
-                appendMatrixDiagonalToVector(mat, covariancePointMatrix);
-            }
+        EigMatrixList variances = collectPointVarianceMatrix(point, camIndex);
+
+        #pragma omp parallel for
+        for (int i = 0; i < variances.size(); i++) {
+            appendMatrixDiagonalToVector(variances[i], covariancePointMatrix);
         }
-        
+
         return generateDiagonalMatrix(covariancePointMatrix);
     }
 
+    EigMatrixList ImagePointVarianceEstimator::collectPointVarianceMatrix(GLMVec2 &point, int camIndex)
+    {
+        EigMatrixList variances;
 
-    EigMatrix ImagePointVarianceEstimator::estimateSTDForTuple(CrossRatioTuple &tuple, int camIndex)
+        CrossRatioTupleSet completeTupleSet = this->tuplesGenerator->determineTupleOfFourPointsForCam(camIndex);
+        std::cout << "complete tuple set " << completeTupleSet.size() << std::endl;
+        for (CrossRatioTuple tuple : completeTupleSet) {
+            if (tuple.isInTuple(point)) {
+                EigMatrix mat = this->estimateSTDForTuple(tuple, camIndex);
+                variances.push_back(mat);
+            }
+        }
+
+        return (variances.size() > 0) ? variances : EigMatrixList(1, EigZeros(2));
+    }
+
+
+    EigMatrix ImagePointVarianceEstimator::estimateSTDForTuple(CrossRatioTuple &tuple, int camIndex)    // should be multiplied for size of pize!
     {
         double varianceSet = this->estimateSTDTupleSet(camIndex);
-        
+
         auto jacobian = tuple.jacobian();   // row vector 1x4
-        
+
         double lambda = tuple.avgDistance();
-        
+
         double jacobianNorm = jacobian.norm();
-        
+
         double varianceTuple = varianceSet * lambda / (jacobianNorm * jacobianNorm);
-        
-        return varianceTuple * EigIdentity(2);
+
+        return varianceTuple * pixelSizeDiagonalMatrix;      // size of pixel 0.3527 mm x 0.3527 mm
     }
 
 

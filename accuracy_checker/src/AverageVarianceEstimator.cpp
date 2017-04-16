@@ -9,14 +9,20 @@ namespace meshac {
     AverageVarianceEstimator::~AverageVarianceEstimator()
     { /*    */ }
 
-    EigMatrix AverageVarianceEstimator::selectVarianceMatrix(EigMatrixList &mat)
-    {
-        EigMatrix variance = EigZeros(mat[0].rows());
-        for (EigMatrix matrix : mat) {
-            variance += matrix;
-        }
-
+    EigMatrix AverageVarianceEstimator::selectVarianceMatrix(EigMatrixList &mat) 
+    { 
+        EigMatrix variance = EigZeros(mat[0].rows()); 
+        for (EigMatrix matrix : mat) { 
+            variance += matrix; 
+        } 
+ 
         return variance / mat.size();
+    }
+
+    double AverageVarianceEstimator::computeVarianceFromMatrix(EigMatrix &varianceMatrix)
+    {
+        double sum = varianceMatrix.sum();
+        return sum / varianceMatrix.size();
     }
 
 

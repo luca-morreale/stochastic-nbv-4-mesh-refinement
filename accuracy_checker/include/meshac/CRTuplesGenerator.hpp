@@ -1,7 +1,8 @@
 #ifndef MESH_ACCURACY_CR_TUPLES_GENERATOR_H
 #define MESH_ACCURACY_CR_TUPLES_GENERATOR_H
 
-#include <manifoldReconstructor/SfMData.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <meshac/alias_definition.hpp>
 #include <meshac/CrossRatioTuple.hpp>
@@ -10,11 +11,16 @@
 
 namespace meshac {
 
+    #define CANNY_RATIO 3
+    #define CANNY_LOW_THRESHOLD 200
+    #define CANNY_KERNEL_SIZE 3
+    #define SKIP_TUPLE_RATE 0.8
+    #define MAX_SAMPLE_SIZE 50
+
     class CRTuplesGenerator {
     public:
-        CRTuplesGenerator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
+        CRTuplesGenerator(StringList &fileList, GLMListArrayVec2 &camObservations);
         ~CRTuplesGenerator();
-
 
         /*
          * Getter and setter for Cameras' Observations.
@@ -27,11 +33,10 @@ namespace meshac {
 
 
         /*
-         * Getter and setter for Size of Camera's Observations.
+         * Getter and setter for list of images path.
          */
-        void setObsSize(int obsWidth, int obsHeight);
-        std::pair<int,int> getObsSize();
-
+        void setFileList(StringList &fileList);
+        StringList getFileList();
 
 
         /*
@@ -45,17 +50,15 @@ namespace meshac {
         /*
          * Extracts quadruplets of collinear points for each image.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPoints(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
+        virtual CrossRatioTupleSet determineTupleOfFourPoints(StringList &fileList, GLMListArrayVec2 &camObservations);
         virtual CrossRatioTupleSet determineTupleOfFourPoints();
 
         /*
          * Extracts quadruplets of collinear points for the image obtained by the given camera.
          */
-        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(GLMListArrayVec2 &camObservations, int camIndex, int obsWidth, int obsHeight);
+        virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(StringList &fileList, GLMListArrayVec2 &camObservations, int camIndex);
         virtual CrossRatioTupleSet determineTupleOfFourPointsForCam(int camIndex);
         virtual ListCrossRatioTupleSet determineTupleOfFourPointsForAllCam();
-
-
         
     protected:
         void setTuples(CrossRatioTupleSet &tupleSet);
@@ -65,15 +68,13 @@ namespace meshac {
     private:
 
         CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMListVec2 &points2D);
-        CVListVec2 createLinesFromPoints(int imgHeight, int imgWidth, GLMListVec2 &points2D);
-        IntArrayList generateCorrespondances(CVListVec2 &lines, GLMListVec2 &points2D);
-        void createFeatureImage(CVMat &logicalImg, GLMListVec2 &points2D);
-
+        void computeEdges(int camIndex, CVMat &edges);
+        EigVector3List createLinesFromEdges(CVMat &edges);
+        IntArrayList generateCorrespondances(std::vector<EigVector3> &lines, GLMListVec2 &points2D);
         CrossRatioTupleSet collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam);
 
-
+        StringList fileList;
         GLMListArrayVec2 camObservations;
-        int obsHeight, obsWidth;
 
         ListCrossRatioTupleSet tupleSetPerCam;
         CrossRatioTupleSet tupleSet;

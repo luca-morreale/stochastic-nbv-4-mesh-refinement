@@ -9,32 +9,51 @@ namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight);
+        ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations, DoublePair &pixelSize);
         ~ImagePointVarianceEstimator();
 
+        /*
+         * Computes the variance for a 2D point in the given camera.
+         */
+        virtual EigMatrix estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex);
+        virtual EigMatrixList collectPointVarianceMatrix(GLMVec2 &point, int camIndex);
+
+        /*
+         * Setter and getter for camera's observations.
+         */
         void setCameraObservations(GLMListArrayVec2 &camObservations);
         void setCameraObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs);
         void updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs);
         GLMListArrayVec2 getCameraObeservations();
 
-        virtual EigMatrix4 estimateVarianceForPoint(GLMVec2 &point, int camIndex);
-
-
-
     protected:
-        double getVarianceSet(int setIndex);
-        void setVarianceSet(double variance, int setIndex);
+        /*
+         * Getter and setter for the variances of a given cameraId. 
+         */
+        double getVarianceSet(int camIndex);
+        void setVarianceSet(double variance, int camIndex);
 
-        virtual EigMatrix4 estimateVarianceForTuple(CrossRatioTuple &tuple, int setIndex);
+        /*
+         * Computes the standard deviation for the given tuple. 
+         */
+        virtual EigMatrix estimateSTDForTuple(CrossRatioTuple &tuple, int setIndex);
 
-        virtual double estimateVarianceTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
+        /*
+         * Computes the standard deviation for the set of tuples.
+         */
+        virtual double estimateSTDTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
 
     private:
+
+        void buildPixelSizeMatrix();
+
         //ListCrossRatioTupleSet listTupleSet;
 
         CRTuplesGeneratorPtr tuplesGenerator;
 
         DoubleList variances;
+        DoublePair pixelSize;
+        EigMatrix pixelSizeDiagonalMatrix;
 
     };
 

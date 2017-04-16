@@ -15,20 +15,62 @@ namespace meshac {
         points.clear();
     }
 
-    EigMatrix Point3DVarianceEstimator::computeVariaceForPoint(GLMVec3 &point)
+    EigMatrix Point3DVarianceEstimator::computeVariaceMatrixForPoint(GLMVec3 &point) 
+    { 
+        GLMListVec3 points = this->get3DPoints(); 
+        EigMatrixList variances; 
+         
+        for (int i = 0; i<points.size(); i++) {
+            if (glm::epsilonEqual(points[i], point, EPSILON)[0]) {
+                return this->getVariaceMatrixForPoint(i);
+            }
+        }
+        return EigMatrix(); 
+    }
+
+    EigMatrix Point3DVarianceEstimator::computeVariaceMatrixForPoint(int pointIndex)
+    {
+        EigMatrixList variances = this->getAccuracyModel()->getAccuracyForPoint(pointIndex);
+        return selectVarianceMatrix(variances);
+    }    
+
+    double Point3DVarianceEstimator::computeTotalVarianceForPoint(GLMVec3 &point)
     {
         GLMListVec3 points = this->get3DPoints();
 
-        EigMatrixList variances;
-        
         for (int i = 0; i<points.size(); i++) {
-            if (glm::epsilonEqual(points[i], point, EPSILON)[0]) {
-                variances = this->getAccuracyModel()->getAccuracyForPoint(i);
+            if (glm::all(glm::epsilonEqual(points[i], point, EPSILON))) {
+                return this->computeVarianceForPoint(i);
             }
         }
-
-        return selectVarianceMatrix(variances);
+        return -1.0;
     }
+
+    double Point3DVarianceEstimator::computeTotalVarianceForPoint(int pointIndex)
+    {
+        EigMatrix variance = this->getAccuracyModel()->getCompleteAccuracyForPoint(pointIndex);
+        return this->computeVarianceFromMatrix(variance);
+    }
+
+    double Point3DVarianceEstimator::computeSingleVarianceForPoint(GLMVec3 &point)
+    {
+        GLMListVec3 points = this->get3DPoints();
+
+        for (int i = 0; i<points.size(); i++) {
+            if (glm::all(glm::epsilonEqual(points[i], point, EPSILON))) {
+                return this->computeSingleVarianceForPoint(i);
+            }
+        }
+        return -1.0;
+    }
+
+    double Point3DVarianceEstimator::computeSingleVarianceForPoint(int pointIndex)
+    {
+        EigMatrixList varianceList = this->getAccuracyModel()->getAccuracyForPoint(pointIndex);
+        EigMatrix variance = this->selectVarianceMatrix(varianceList);
+        return this->computeVarianceFromMatrix(variance);
+    }
+
 
     void Point3DVarianceEstimator::setAccuracyModel(AccuracyModelPtr accuracyModel)
     {

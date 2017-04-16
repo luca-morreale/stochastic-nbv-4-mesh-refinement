@@ -4,7 +4,7 @@
 
 namespace meshac {
 
-    const float SENSIBILITY = 0.1f;
+    const float SENSIBILITY = 0.001f;
     
 } // namesace meshac
 

@@ -16,6 +16,8 @@
 
 namespace meshac {
 
+    extern const float SENSIBILITY;
+
     class CrossRatioTuple {
     public:
         /*
@@ -43,6 +45,8 @@ namespace meshac {
          */
         bool isInTuple(GLMVec2 &point);
 
+        std::string to_string();
+
         /*
          * Overloading < operation for comparation.
          */
@@ -63,7 +67,7 @@ namespace meshac {
          */
         double xy, xz, xt, yz, yt, zt;
 
-        const GLMVec2 EPSILON = GLMVec2(SENSIBILITY);
+        const GLMVec2 EPSILON = GLMVec2(1.0f, 1.0f);
     
     };
 

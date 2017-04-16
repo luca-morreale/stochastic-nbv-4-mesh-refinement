@@ -3,45 +3,54 @@
 
 namespace meshac {
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
-                                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+                                                                    ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
     {
+        this->fileList = fileList;
         this->cameras = cameras;
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
-        this->obsWidth = obsWidth;
-        this->obsHeight = obsHeight;
 
-        this->initMembers();
+        this->initMembers(pixelSize);
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations, 
-                                                            ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMListArrayVec2 &camObservations,
+                                                                    ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
     {
+        this->fileList = fileList;
         this->cameras = this->extractCameraMatrix(cameras);
         this->camObservations = camObservations;
         this->point3DTo2DThroughCam = point3DTo2DThroughCam;
-        this->obsWidth = obsWidth;
-        this->obsHeight = obsHeight;
 
-        this->initMembers();
+        this->initMembers(pixelSize);
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data)
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize)
     {
+        this->fileList = data.camerasPaths_;
         this->cameras = this->extractCameraMatrix(data.camerasList_);
         this->camObservations = data.camViewing2DPoint_;
         this->point3DTo2DThroughCam = data.point3DTo2DThroughCam_;
-        this->obsWidth = data.imageWidth_;
-        this->obsHeight = data.imageHeight_;
 
-        this->initMembers();
+        this->initMembers(pixelSize);
+    }
+
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize)
+    {
+        this->fileList = data.camerasPaths_;
+        this->cameras = this->extractCameraMatrix(data.camerasList_);
+        this->camObservations = data.camViewing2DPoint_;
+        this->point3DTo2DThroughCam = data.point3DTo2DThroughCam_;
+        
+        this->fixImagesPath(pathPrefix);
+        this->initMembers(pixelSize);
     }
     
     PhotogrammetristAccuracyModel::~PhotogrammetristAccuracyModel() 
     {
         delete this->varianceEstimator;
 
+        this->fileList.clear();
         this->cameras.clear();
         this->camObservations.clear();
         this->point3DTo2DThroughCam.clear();
@@ -51,31 +60,65 @@ namespace meshac {
     /*
      * Protected method to initialize all members.
      */
-    void PhotogrammetristAccuracyModel::initMembers()
+    void PhotogrammetristAccuracyModel::initMembers(DoublePair &pixelSize)
     {
-        this->varianceEstimator = new ImagePointVarianceEstimator(this->camObservations, obsWidth, obsHeight);
+        this->varianceEstimator = new ImagePointVarianceEstimator(this->fileList, this->camObservations, pixelSize);
+    }
+
+    void PhotogrammetristAccuracyModel::fixImagesPath(std::string &pathPrefix)
+    {
+        std::for_each(this->fileList.begin(), this->fileList.end(), [pathPrefix](std::string &path) { path.insert(0, pathPrefix); } );
     }
 
     /*
      * Estimates the uncertainties for the 3D point.
      */
-    EigMatrixList PhotogrammetristAccuracyModel::getAccuracyForPoint(int index3DPoint)  // TO check dimension of the multiplication
+    EigMatrixList PhotogrammetristAccuracyModel::getAccuracyForPoint(int index3DPoint)
     {
         EigMatrixList uncertaintyMatrix;
-        
-        #pragma omp parallel for
+
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
+            
             GLMVec2 point2D = cameraObsPair.second;
-            EigMatrix4 pointVariance = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first);
-
+            EigMatrixList pointMatrixList = this->varianceEstimator->collectPointVarianceMatrix(point2D, cameraObsPair.first);
+            
             EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
+            
+            EigMatrix jacobianMatrix = jacobian.replicate(1, pointMatrixList[0].rows());
 
-            #pragma omp critical
-            uncertaintyMatrix.push_back(jacobian.transpose() * pointVariance * jacobian);
+            for (EigMatrix mat : pointMatrixList) {
+                uncertaintyMatrix.push_back(jacobianMatrix * mat * jacobianMatrix.transpose());
+            }
         }
 
         return uncertaintyMatrix;
+    }
+
+    EigMatrix PhotogrammetristAccuracyModel::getCompleteAccuracyForPoint(int index3DPoint)
+    {
+        DoubleList variances;
+        EigMatrixList jacobianList;
+
+        int size = 0;
+        
+        for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
+            
+            GLMVec2 point2D = cameraObsPair.second;
+
+            EigMatrix pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(point2D, cameraObsPair.first);
+            EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
+
+        
+            size += pointVariance.rows();
+        
+            appendMatrixDiagonalToVector(pointVariance, variances);
+            jacobianList.push_back(jacobian.replicate(1, (int)pointVariance.rows()/2));
+        }
+
+        EigMatrix jacobian = juxtaposeMatrixs(jacobianList, size);
+
+        return jacobian * generateDiagonalMatrix(variances) * jacobian.transpose();
     }
 
     /*
@@ -83,17 +126,17 @@ namespace meshac {
      */
     EigMatrix PhotogrammetristAccuracyModel::computeJacobian(CameraMatrix &cam, GLMVec2 &point)
     {
-        GLMVec2 pointXh = point + GLMVec2(this->getXh(), 0.f);
-        GLMVec2 pointYh = point + GLMVec2(0.f, this->getYh());
+        GLMVec2 pointXh = point + GLMVec2(1.0f, 0.f);
+        GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
 
-        EigVector4 original = evaluateFunctionIn(cam, point);
-        EigVector4 originalXh = evaluateFunctionIn(cam, pointXh);
-        EigVector4 originalYh = evaluateFunctionIn(cam, pointYh);
+        EigVector original = this->evaluateFunctionIn(cam, point);
+        EigVector xh = this->evaluateFunctionIn(cam, pointXh);
+        EigVector yh = this->evaluateFunctionIn(cam, pointYh);
 
-        EigVector4 Jx = (originalXh - original) / xh;
-        EigVector4 Jy = (originalYh - original) / yh;
+        EigVector Jx = xh - original;
+        EigVector Jy = yh - original;
 
-        EigMatrix jacobian;
+        EigMatrix jacobian(Jx.rows(), 2);
         jacobian << Jx, Jy;
 
         return jacobian;
@@ -102,16 +145,16 @@ namespace meshac {
     /*
      * Evaluates the photogrammetrist's function in the given point with the given camera.
      */
-    EigVector4 PhotogrammetristAccuracyModel::evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point)
+    EigVector PhotogrammetristAccuracyModel::evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point)
     {
-        EigCameraMatrix A = EigZeros(2, 3); // A = [x*P31-P11  x*P32-P12  x*P33-P13; y*P31-P21  y*P32-P22  y*P33-P23];
-        EigVector3 b = EigOnes(2, 1); // b = [P14-x*P34; P24-y*P34];
+        EigMatrix A = EigZeros(2, 3); // A = [x*P31-P11  x*P32-P12  x*P33-P13; y*P31-P21  y*P32-P22  y*P33-P23];
+        EigVector2 b = EigOnes(2, 1); // b = [P14-x*P34; P24-y*P34];
         
-        A(0,0) = cam[2][1] * point[0] - cam[0][0];
+        A(0,0) = cam[2][0] * point[0] - cam[0][0];
         A(0,1) = cam[2][1] * point[0] - cam[0][1];
         A(0,2) = cam[2][2] * point[0] - cam[0][2];
         
-        A(1,0) = cam[2][1] * point[1] - cam[1][0];
+        A(1,0) = cam[2][0] * point[1] - cam[1][0];
         A(1,1) = cam[2][1] * point[1] - cam[1][1];
         A(1,2) = cam[2][2] * point[1] - cam[1][2];
         
@@ -119,7 +162,7 @@ namespace meshac {
         b(0) = cam[0][3] - point[0] * cam[2][3];
         b(1) = cam[1][3] - point[1] * cam[2][3];
         
-        return A.transpose() * (A * A.transpose()).inverse() * b;    // in reality this is a column vector
+        return A.transpose() * (A * A.transpose()).inverse() * b;    // this is a column vector
     }
 
 
@@ -146,11 +189,6 @@ namespace meshac {
     ListMappingGLMVec2 PhotogrammetristAccuracyModel::getMapping3DTo2DThroughCam()
     {
         return point3DTo2DThroughCam;
-    }
-
-    std::pair<int, int> PhotogrammetristAccuracyModel::getObservationSize()
-    {
-        return std::make_pair(obsWidth, obsHeight);
     }
 
     void PhotogrammetristAccuracyModel::setCameras(CameraMatrixList &cameras)
@@ -220,17 +258,6 @@ namespace meshac {
             }
             targetList[i].insert(list[i].begin(), list[i].end());
         }
-    }
-
-
-    float PhotogrammetristAccuracyModel::getXh()
-    {
-        return xh;
-    }
-
-    float PhotogrammetristAccuracyModel::getYh()
-    {
-        return yh;
     }
 
 } // namespace meshac

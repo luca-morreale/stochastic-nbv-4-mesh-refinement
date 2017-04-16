@@ -8,7 +8,8 @@ namespace meshac {
     {
         if (points.size() < 4) {
             points.push_back(point);
-        } else {
+        } 
+        if (points.size() < 4) {
             std::sort(points.begin(), points.end(), point2DComparator);
             this->precomputeDistancesBetweenPoints();
         }
@@ -25,11 +26,11 @@ namespace meshac {
         EigVector jacobian(4);
 
         jacobian[0] = (this->yt * this->zt) / (this->xt * this->xt * this->yz);
-        jacobian[1] = -(this->yt * this->xz) / (this->xt * this->yz * this->yz);
+        jacobian[1] = (this->zt * this->xz) / (this->xt * this->yz * this->yz);
         jacobian[2] = (this->yt * this->xy) / (this->xt * this->yz * this->yz);
-        jacobian[3] = -(this->xz * this->xy) / (this->xt * this->xt * this->yz);
+        jacobian[3] = (this->xz * this->xy) / (this->xt * this->xt * this->yz);
 
-        return jacobian;
+        return jacobian.transpose();
     }
 
 
@@ -41,7 +42,7 @@ namespace meshac {
     bool CrossRatioTuple::isInTuple(GLMVec2 &point)
     {
         for (GLMVec2 tuplePoint : points) {
-            if (glm::epsilonEqual(point, tuplePoint, EPSILON)[0]) {
+            if (glm::all(glm::epsilonEqual(point, tuplePoint, EPSILON))) {
                 return true;
             }
         }
@@ -69,21 +70,24 @@ namespace meshac {
 
         return fabs(vecA[0] - vecB[0]) < SENSIBILITY;
     }
+
+    std::string CrossRatioTuple::to_string()
+    {
+        std::string out;
+        std::string letters[] = {"x", "y", "z", "t"};
+        for (int i = 0; i < points.size(); i++) {
+            out += letters[i] + ": [" + std::to_string(points[i].x) + "," + std::to_string(points[i].y) + "] ";
+        }
+        return out;
+    }
     
     bool CrossRatioTuple::operator<(const CrossRatioTuple &other) const
     {
-        if (points.size() < other.points.size()) {
-            return true;
+        for (int i = 0; i < points.size(); i++) {
+            if (glm::any(glm::lessThan(points[i], other.points[i]))) {
+                return true;
+            }
         }
-
-        // find better compare
-        if (glm::epsilonEqual(points[0], other.points[0], EPSILON)[0] && 
-                glm::epsilonEqual(points[1], other.points[1], EPSILON)[0] && 
-                glm::epsilonEqual(points[2], other.points[2], EPSILON)[0] && 
-                glm::epsilonEqual(points[3], other.points[3], EPSILON)[0]) {
-            return true;
-        }
-        
         return false;
     }
 

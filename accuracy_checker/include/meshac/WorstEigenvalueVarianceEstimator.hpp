@@ -6,9 +6,7 @@
 
 
 namespace meshac {
-
-    extern const float SENSIBILITY;
-
+    
 
     class WorstEigenvalueVarianceEstimator : public Point3DVarianceEstimator {
     public:
@@ -16,7 +14,11 @@ namespace meshac {
         ~WorstEigenvalueVarianceEstimator();
 
     protected:
-        EigMatrix selectVarianceMatrix(EigMatrixList &mat);
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat); 
+        /*
+         * Computes the variance as the biggest eigenvalue of the matrix.
+         */
+        double computeVarianceFromMatrix(EigMatrix &varianceMatrix);
 
     };
 

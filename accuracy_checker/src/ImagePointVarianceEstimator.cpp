@@ -4,19 +4,32 @@
 namespace meshac {
 
 
-    ImagePointVarianceEstimator::ImagePointVarianceEstimator(GLMListArrayVec2 &camObservations, int obsWidth, int obsHeight)
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations, DoublePair &pixelSize)
     {
-        this->tuplesGenerator = new CRTuplesGenerator(camObservations, obsWidth, obsHeight);
+        this->tuplesGenerator = new CRTuplesGenerator(fileList, camObservations);
+        this->variances.assign(camObservations.size(), -1);
+        this->pixelSize = pixelSize;
+        this->buildPixelSizeMatrix();
     }
 
     ImagePointVarianceEstimator::~ImagePointVarianceEstimator()
     {
-        delete this->tuplesGenerator; 
+        delete this->tuplesGenerator;
+
+        this->variances.clear();
+    }
+
+    void ImagePointVarianceEstimator::buildPixelSizeMatrix()
+    {
+        this->pixelSizeDiagonalMatrix = EigIdentity(2);
+        this->pixelSizeDiagonalMatrix(0, 0) *= this->pixelSize.first;
+        this->pixelSizeDiagonalMatrix(1, 1) *= this->pixelSize.second;
     }
 
     void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations)
     {
         this->tuplesGenerator->setCamObservations(camObservations);
+        this->variances.assign(camObservations.size(), -1);
     }
 
     void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs)
@@ -24,11 +37,15 @@ namespace meshac {
         for (int i = 0; i < camObservations.size(); i++) {
             this->tuplesGenerator->setCamObservations(camObservations[i], i);
         }
+        this->variances.assign(camObservations.size(), -1);
     }
 
     void ImagePointVarianceEstimator::updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs)
     {
         this->tuplesGenerator->updateCamObservations(camObservations, indexs);
+        for (auto obsInd : indexs) {
+            this->variances[obsInd] = -1;
+        }
     }
 
     GLMListArrayVec2 ImagePointVarianceEstimator::getCameraObeservations()
@@ -37,57 +54,74 @@ namespace meshac {
     }
 
 
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForPoint(GLMVec2 &point, int camIndex)
+    EigMatrix ImagePointVarianceEstimator::estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex)
     {
-        int counterTuples = 0;
-        EigMatrix4 variance = EigZeros(4);
-        CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
+        DoubleList covariancePointMatrix;
+        EigMatrixList variances = collectPointVarianceMatrix(point, camIndex);
 
-        for (CrossRatioTuple tuple : tupleSet) {
+        #pragma omp parallel for
+        for (int i = 0; i < variances.size(); i++) {
+            appendMatrixDiagonalToVector(variances[i], covariancePointMatrix);
+        }
+
+        return generateDiagonalMatrix(covariancePointMatrix);
+    }
+
+    EigMatrixList ImagePointVarianceEstimator::collectPointVarianceMatrix(GLMVec2 &point, int camIndex)
+    {
+        EigMatrixList variances;
+
+        CrossRatioTupleSet completeTupleSet = this->tuplesGenerator->determineTupleOfFourPointsForCam(camIndex);
+        std::cout << "complete tuple set " << completeTupleSet.size() << std::endl;
+        for (CrossRatioTuple tuple : completeTupleSet) {
             if (tuple.isInTuple(point)) {
-                variance += this->estimateVarianceForTuple(tuple, camIndex);
-                ++counterTuples;
+                EigMatrix mat = this->estimateSTDForTuple(tuple, camIndex);
+                variances.push_back(mat);
             }
         }
 
-        return variance / counterTuples;
+        return (variances.size() > 0) ? variances : EigMatrixList(1, EigZeros(2));
     }
 
 
-    EigMatrix4 ImagePointVarianceEstimator::estimateVarianceForTuple(CrossRatioTuple &tuple, int camIndex)
+    EigMatrix ImagePointVarianceEstimator::estimateSTDForTuple(CrossRatioTuple &tuple, int camIndex)    // should be multiplied for size of pize!
     {
-        double varianceSet = this->getVarianceSet(camIndex);
+        double varianceSet = this->estimateSTDTupleSet(camIndex);
 
-        auto jacobian = tuple.jacobian();   // row vector 1x3
+        auto jacobian = tuple.jacobian();   // row vector 1x4
+
         double lambda = tuple.avgDistance();
 
         double jacobianNorm = jacobian.norm();
 
         double varianceTuple = varianceSet * lambda / (jacobianNorm * jacobianNorm);
 
-        return varianceTuple * EigIdentity(4);
+        return varianceTuple * pixelSizeDiagonalMatrix;      // size of pixel 0.3527 mm x 0.3527 mm
     }
 
 
-    double ImagePointVarianceEstimator::estimateVarianceTupleSet(int camIndex)
+    double ImagePointVarianceEstimator::estimateSTDTupleSet(int camIndex)
     {
-        CrossRatioTupleSet tupleSet = this->tuplesGenerator->getComputedTuplesForCam(camIndex);
+        CrossRatioTupleSet tupleSet = this->tuplesGenerator->determineTupleOfFourPointsForCam(camIndex);
         CrossRatioTupleSet::iterator tuple = tupleSet.begin();
         int N = tupleSet.size();
 
-        EigVector crossRatioValues(N);
+        if (N == 1) {
+            return 0;
+        }
 
         double avg = 0;
+        EigVector crossRatioValues(N);
         
-
         for (int i = 0; i < N; i++) {
             crossRatioValues[i] = (*tuple).crossRatio();
             avg += crossRatioValues[i];
 
             std::advance(tuple, 1);
         }
-
-        EigVector summation = crossRatioValues - avg * EigVector::Ones(N) / N;
+        avg /= N;
+        EigVector summation = crossRatioValues - avg * EigVector::Ones(N);
+        summation = summation.array().square();
 
         this->setVarianceSet(summation.sum() / (N - 1), camIndex);
         return this->getVarianceSet(camIndex);
@@ -98,8 +132,8 @@ namespace meshac {
      */
     double ImagePointVarianceEstimator::getVarianceSet(int camIndex)
     {
-        if (this->variances[camIndex] < 0){
-            this->estimateVarianceTupleSet(camIndex);
+        if (this->variances[camIndex] < 0) {
+            this->estimateSTDTupleSet(camIndex);
         }
         return this->variances[camIndex];
     }

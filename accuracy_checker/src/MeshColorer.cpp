@@ -3,60 +3,101 @@
 
 namespace meshac {
 
-    MeshColorer::MeshColorer(std::string &confiFileName)
+    MeshColorer::MeshColorer(std::string &confiFileName, Point3DVarianceEstimatorPtr uncertantyEstimator)
     {
         this->fileName = confiFileName;
+        this->uncertantyEstimator = uncertantyEstimator;
         this->colors = new ThresholdColor();
         this->readColors();
     }
 
     MeshColorer::~MeshColorer()
     {
+        delete this->uncertantyEstimator;
         delete this->colors;
     }
 
-    std::string MeshColorer::printVertexColor(GLMVec3 &point, double &accuracy)
+    Color MeshColorer::getColorForPoint(GLMVec3 &point)
     {
-        Color color = this->colors->getColorFor(accuracy);
-        return " " + color.string();
+        double accuracy = this->uncertantyEstimator->computeVarianceForPoint(point);
+        return this->colors->getColorFor(accuracy);
     }
 
-    std::string MeshColorer::printVertex(GLMVec3 &point, double &accuracy)
+    Color MeshColorer::getColorForPoint(int pointIndex)
     {
-        std::string out = std::to_string(point[0]) + " " + std::to_string(point[1]) + " " + std::to_string(point[2]);
-        return out + " " + printVertexColor(point, accuracy);
+        double accuracy = this->uncertantyEstimator->computeVarianceForPoint(pointIndex);
+        return this->colors->getColorFor(accuracy);
     }
 
-    void MeshColorer::printVertex(std::stringstream &stream, GLMVec3 &point, double &accuracy)
+    std::string MeshColorer::printVertexColor(GLMVec3 &point)
     {
-        stream << this->printVertex(point, accuracy);
+        Color color = this->getColorForPoint(point);
+        return color.to_string();
     }
 
-    void MeshColorer::encodeVertexToStream(std::stringstream &stream, GLMListVec3 &points, DoubleList &accuracies)
+    std::string MeshColorer::printVertexColor(int pointIndex)
     {
-        for (int i = 0; i < points.size(); i++) {
-            stream << this->printVertex(points[i], accuracies[i]) << std::endl;
-        }
+        Color color = this->getColorForPoint(pointIndex);
+        return color.to_string();
+    }
+
+    void MeshColorer::printVertex(std::stringstream &stream, GLMVec3 &point)
+    {
+        stream << this->printVertexColor(point);
+    }
+
+    void MeshColorer::printVertex(std::stringstream &stream, int pointIndex)
+    {
+        stream << this->printVertexColor(pointIndex);
     }
 
     void MeshColorer::readColors()
     {
+        rapidjson::Document document = this->getJsonDocument();
+
         this->colors->clearColors();
+        
+        if (!document.IsObject()) throw InvalidJsonFileException("Invalid format for color file. \nRoot element is not an object.");
+        if (!document.HasMember("colors")) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' does not exists.");
+        
+        const rapidjson::Value& colorsArray = document["colors"];
 
-        std::ifstream cin(this->fileName);
+        if (!colorsArray.IsArray()) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' is not an array.");
 
-        float threshold = 0;
-        float r = 0, g = 0, b = 0;
-        float a = 0;
+        
+        this->extractColors(colorsArray);
+    }
 
-        while (!cin.eof()) {
-            cin >> threshold >> r >> g >> b >> a;
-            Color c = {r, g, b, a};
-            
-            this->colors->addColor(threshold, c);
+    void MeshColorer::extractColors(const rapidjson::Value& colors)
+    {
+        for (rapidjson::SizeType i = 0; i < colors.Size(); i++) {  // Uses SizeType instead of size_t
+            if (this->hasCorrectMembers(colors[i])) {
+                Color c = this->buildColor(colors[i]);
+                this->colors->addColor(colors[i]["threshold"].GetFloat(), c);
+            }
         }
     }
 
+    rapidjson::Document MeshColorer::getJsonDocument()
+    {
+        std::ifstream jsonStream(this->fileName);
+        std::string str((std::istreambuf_iterator<char>(jsonStream)), std::istreambuf_iterator<char>());
+
+        rapidjson::Document document;
+        document.Parse(str.c_str());
+        return document;
+    }
+
+    bool MeshColorer::hasCorrectMembers(const rapidjson::Value& color)
+    {
+        return color.HasMember("threshold") && color.HasMember("r") && 
+                color.HasMember("g") && color.HasMember("b") && color.HasMember("a");
+    }
+
+    Color MeshColorer::buildColor(const rapidjson::Value& color)
+    {
+        return {(byte)color["r"].GetInt(), (byte)color["g"].GetInt(), (byte)color["b"].GetInt(), color["a"].GetFloat()};
+    }
 
     std::string MeshColorer::getConfigFileName()
     {

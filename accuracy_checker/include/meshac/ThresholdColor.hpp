@@ -20,20 +20,18 @@ namespace meshac {
         void clearColors();
 
     protected:
-        virtual bool hasFoundAccuracy(double targetAccuracy, int pivot);
-        virtual void goLeft(int &lowBound, int &pivot, int &upBound, double &refAccuracy);
-        virtual void goRight(int &lowBound, int &pivot, int &upBound, double &refAccuracy);
-        virtual int getPivot(int lowBound, int upBound);
 
     private:
 
         typedef std::pair<double, Color> PairDoubleColor;
+        typedef std::vector<PairDoubleColor> PairDoubleColorList;
 
         static bool pairCompare(const PairDoubleColor& l, const PairDoubleColor& r){ return l.first < r.first; }
 
-        
+        int getIndexForAccuracy(double targetAccuracy);
+        PairDoubleColorList::iterator getIteratorToPositionOf(double targetAccuracy);
 
-        std::vector<PairDoubleColor> colors;
+        PairDoubleColorList colors;
     };
 
     typedef ThresholdColor * ThresholdColorPtr;

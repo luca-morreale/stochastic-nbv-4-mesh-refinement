@@ -1,7 +1,7 @@
 #ifndef MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 #define MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 
-#include <boost/bind.hpp>
+#include <realtimeMR/SfMData.h>
 
 #include <meshac/AccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
@@ -12,13 +12,14 @@ namespace meshac {
     
     class PhotogrammetristAccuracyModel : public AccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(CameraMatrixList &cameras, GLMListArrayVec2 &camObservations, 
-                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
         
-        PhotogrammetristAccuracyModel(CameraList &cameras, GLMListArrayVec2 &camObservations,
-                                ListMappingGLMVec2 &point3DTo2DThroughCam, int obsWidth, int obsHeight);
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMListArrayVec2 &camObservations, 
+                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
         
-        PhotogrammetristAccuracyModel(SfMData &data);
+        PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize);
+        PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         
         ~PhotogrammetristAccuracyModel();
         
@@ -33,11 +34,18 @@ namespace meshac {
          */
         virtual EigMatrixList getAccuracyForPoint(int index3DPoint);
 
+        /*
+         * Computes the matrix representing the uncertainty of the 3D point.
+         * It takes into account all the observation of that point.
+         */
+        virtual EigMatrix getCompleteAccuracyForPoint(int index3DPoint);
 
+        /*
+         * Getter and setter of all the private variables.
+         */
         CameraMatrixList getCamerasMatrix();
         GLMListArrayVec2 getCamObservations();
         ListMappingGLMVec2 getMapping3DTo2DThroughCam();
-        std::pair<int, int> getObservationSize();
 
         void setCameras(CameraMatrixList &cameras);
         void setCameras(CameraList &cameras);
@@ -48,52 +56,39 @@ namespace meshac {
         void updateMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
         void setMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
 
-
     protected:
         /*
          * Initializes all members.
          */
-        virtual void initMembers();
+        virtual void initMembers(DoublePair &pixelSize);
+        virtual void fixImagesPath(std::string &pathPrefix);
 
         /*
          * Evaluates the photogrammetrist's function in the given point with the given camera.
+         * This function does not use homogeneous coordinates.
          */
-        virtual EigVector4 evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);
+        virtual EigVector evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);
 
         /*
-         * 
-         * 
+         * Computes the jacobian of the function.
          */
         virtual EigMatrix computeJacobian(CameraMatrix &cam, GLMVec2 &point);
 
-
-
-
+        /*
+         * Generalized method to update the lists.
+         */
         virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, std::string errorMsg);
         virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList);
-
-
-        /*
-         * 
-         */
-        float getXh();
-        float getYh();
 
     private:
         CameraMatrixList extractCameraMatrix(CameraList &cameras);
 
         ImagePointVarianceEstimatorPtr varianceEstimator;
 
-
+        StringList fileList;
         CameraMatrixList cameras;
         GLMListArrayVec2 camObservations;
         ListMappingGLMVec2 point3DTo2DThroughCam;
-
-        int obsWidth;
-        int obsHeight;
-
-        const float xh = 0.01;
-        const float yh = 0.01;
 
     };
 

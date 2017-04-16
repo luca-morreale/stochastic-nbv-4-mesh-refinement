@@ -9,16 +9,23 @@ namespace meshac {
     WorstTraceVarianceEstimator::~WorstTraceVarianceEstimator()
     { /*    */ }
 
-    EigMatrix WorstTraceVarianceEstimator::selectVarianceMatrix(EigMatrixList &mat)
-    {
+    EigMatrix WorstTraceVarianceEstimator::selectVarianceMatrix(EigMatrixList &mat) 
+    { 
         EigMatrix worst = mat[0];
-        for (EigMatrix matrix : mat) {
-            if (matrix.trace() > worst.trace()) {
-                worst = matrix;
-            }
-        }
-        
+        double maxTrace = this->computeVarianceFromMatrix(worst);
+        for (EigMatrix matrix : mat) { 
+            double trace = this->computeVarianceFromMatrix(matrix);
+            if (trace > maxTrace) { 
+                worst = matrix; 
+                maxTrace = trace;
+            } 
+        }        
         return worst;
+    } 
+
+    double WorstTraceVarianceEstimator::computeVarianceFromMatrix(EigMatrix &varianceMatrix)
+    {
+        return varianceMatrix.trace();
     }
 
 

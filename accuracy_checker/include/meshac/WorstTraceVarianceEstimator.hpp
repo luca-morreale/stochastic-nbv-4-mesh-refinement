@@ -7,8 +7,6 @@
 
 namespace meshac {
 
-    extern const float SENSIBILITY;
-
 
     class WorstTraceVarianceEstimator : public Point3DVarianceEstimator {
     public:
@@ -16,7 +14,11 @@ namespace meshac {
         ~WorstTraceVarianceEstimator();
 
     protected:
-        EigMatrix selectVarianceMatrix(EigMatrixList &mat);
+        virtual EigMatrix selectVarianceMatrix(EigMatrixList &mat); 
+        /*
+         * Computes the variance as the maximum trace of the matrix.
+         */
+        double computeVarianceFromMatrix(EigMatrix &varianceMatrix);
 
     };
 

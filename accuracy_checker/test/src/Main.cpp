@@ -217,6 +217,8 @@ void outlierFiltering(std::vector<bool>& inliers, const float outlierThreshold) 
 
 int main(int argc, char **argv) {
 
+    omp_set_num_threads(2);
+
     utilities::Logger log;
     std::ofstream statsFile, visiblePointsFile;
     ManifoldReconstructionConfig confManif;
@@ -289,8 +291,10 @@ int main(int argc, char **argv) {
 
     std::string pathPrefix = input_file.substr(0, input_file.find_last_of("/"));
     pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
-    meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, pathPrefix);
+    std::pair<double, double> pixelSize(0.0003527, 0.0003527);
+    meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
     meshColorer = new meshac::MeshColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
+    //meshColorer = new meshac::MeshColorer(color_file, new meshac::DeterminantVarianceEstimator(&accuracyModel, sfm_data_.points_));
 
     m.setExpectedTotalIterationsNumber((maxIterations_) ? maxIterations_ + 1 : sfm_data_.numCameras_);
 
@@ -318,17 +322,11 @@ int main(int argc, char **argv) {
 #ifdef COLOR
             // this is already after the outlier filtering, thus no outlier are computed??mkdi
             meshac::Color color = meshColorer->getColorForPoint(pointIndex);
-            std::cout << color.string() << std::endl;
+            std::cout << "color " << color.to_string() << std::endl;
             point->r = color.r;
             point->g = color.g;
             point->b = color.b;
             point->a = color.a;
-            /*
-            point->r = 255;
-            point->g = 255;
-            point->b = 0;
-            point->a = 1;
-            */
 #endif
             incData.addPoint(point);
         }

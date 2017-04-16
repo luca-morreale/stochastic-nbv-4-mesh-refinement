@@ -26,9 +26,9 @@ namespace meshac {
         EigVector jacobian(4);
 
         jacobian[0] = (this->yt * this->zt) / (this->xt * this->xt * this->yz);
-        jacobian[1] = -(this->yt * this->xz) / (this->xt * this->yz * this->yz);
+        jacobian[1] = (this->zt * this->xz) / (this->xt * this->yz * this->yz);
         jacobian[2] = (this->yt * this->xy) / (this->xt * this->yz * this->yz);
-        jacobian[3] = -(this->xz * this->xy) / (this->xt * this->xt * this->yz);
+        jacobian[3] = (this->xz * this->xy) / (this->xt * this->xt * this->yz);
 
         return jacobian.transpose();
     }
@@ -74,7 +74,7 @@ namespace meshac {
     std::string CrossRatioTuple::to_string()
     {
         std::string out;
-        std::string letters[] = {"a", "b", "c", "d"};
+        std::string letters[] = {"x", "y", "z", "t"};
         for (int i = 0; i < points.size(); i++) {
             out += letters[i] + ": [" + std::to_string(points[i].x) + "," + std::to_string(points[i].y) + "] ";
         }

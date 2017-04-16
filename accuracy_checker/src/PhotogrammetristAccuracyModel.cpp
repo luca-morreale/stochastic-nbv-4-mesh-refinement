@@ -73,47 +73,47 @@ namespace meshac {
     /*
      * Estimates the uncertainties for the 3D point.
      */
-    EigMatrixList PhotogrammetristAccuracyModel::getAccuracyForPoint(int index3DPoint) 
+    EigMatrixList PhotogrammetristAccuracyModel::getAccuracyForPoint(int index3DPoint)
     {
         EigMatrixList uncertaintyMatrix;
-        
-        #pragma omp parallel for
+
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
+            
             GLMVec2 point2D = cameraObsPair.second;
-            EigMatrix pointVarianceMatrix = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first);
+            EigMatrixList pointMatrixList = this->varianceEstimator->collectPointVarianceMatrix(point2D, cameraObsPair.first);
+            
+            EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
+            
+            EigMatrix jacobianMatrix = jacobian.replicate(1, pointMatrixList[0].rows());
 
-            EigMatrix singleJacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
-            EigMatrix jacobian = singleJacobian.replicate(1, (int)pointVarianceMatrix.cols()/2);
-
-            #pragma omp critical
-            uncertaintyMatrix.push_back(jacobian * pointVarianceMatrix * jacobian.transpose());
+            for (EigMatrix mat : pointMatrixList) {
+                uncertaintyMatrix.push_back(jacobianMatrix * mat * jacobianMatrix.transpose());
+            }
         }
 
         return uncertaintyMatrix;
     }
 
-    EigMatrix PhotogrammetristAccuracyModel::getCompleteAccuracyForPoint(int index3DPoint)      // TO FIX error
+    EigMatrix PhotogrammetristAccuracyModel::getCompleteAccuracyForPoint(int index3DPoint)
     {
         DoubleList variances;
         EigMatrixList jacobianList;
 
         int size = 0;
-
-        #pragma omp parallel for
+        
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
             GLMVec2 point2D = cameraObsPair.second;
 
-            EigMatrix currentVariance = this->varianceEstimator->estimateVarianceForPoint(point2D, cameraObsPair.first);
-            EigMatrix singleJacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
+            EigMatrix pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(point2D, cameraObsPair.first);
+            EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
 
-            size += currentVariance.rows();
-            #pragma omp critical 
-            {
-                appendMatrixDiagonalToVector(currentVariance, variances);
-                jacobianList.push_back(singleJacobian.replicate(1, (int)currentVariance.rows()/2));
-            }
+        
+            size += pointVariance.rows();
+        
+            appendMatrixDiagonalToVector(pointVariance, variances);
+            jacobianList.push_back(jacobian.replicate(1, (int)pointVariance.rows()/2));
         }
 
         EigMatrix jacobian = juxtaposeMatrixs(jacobianList, size);
@@ -162,8 +162,7 @@ namespace meshac {
         b(0) = cam[0][3] - point[0] * cam[2][3];
         b(1) = cam[1][3] - point[1] * cam[2][3];
         
-        return A.transpose() * (A * A.transpose()).inverse() * b;    // in reality this is a column vector
-        //return EigVector4();
+        return A.transpose() * (A * A.transpose()).inverse() * b;    // this is a column vector
     }
 
 

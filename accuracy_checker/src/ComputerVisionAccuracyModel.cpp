@@ -20,6 +20,54 @@ namespace meshac {
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize) 
                                     : PhotogrammetristAccuracyModel(data, pathPrefix, pixelSize) 
     { /*    */ }
+
+
+    EigMatrixList ComputerVisionAccuracyModel::getAccuracyForPoint(int index3DPoint)
+    {
+        EigMatrixList uncertaintyMatrix;
+        ListMappingGLMVec2 point3DTo2DThroughCam = this->getMapping3DTo2DThroughCam();
+        CameraMatrixList cameras = this->getCameras();
+        ImagePointVarianceEstimatorPtr varianceEstimator = this->getVarianceEstimator();
+
+        for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
+            
+            GLMVec2 point2D = cameraObsPair.second;
+            EigMatrixList pointMatrixList = varianceEstimator->collectPointVarianceMatrix(point2D, cameraObsPair.first);
+            
+            EigMatrix jacobian = this->computeJacobian(cameras[cameraObsPair.first], point2D);
+
+            for (EigMatrix mat : pointMatrixList) {
+                EigMatrix cov = EigZeros(jacobian.cols());
+                cov.block(0, 0, jacobian.cols(), jacobian.cols()) += mat;
+                uncertaintyMatrix.push_back(jacobian * mat * jacobian.transpose());
+            }
+        }
+
+        return uncertaintyMatrix;
+    }
+
+
+    /*
+     * Computes the Jacobian of the photogrammetrist's function wrt x and y.
+     */
+    EigMatrix ComputerVisionAccuracyModel::computeJacobian(CameraMatrix &cam, GLMVec2 &point)
+    {
+        GLMVec2 pointXh = point + GLMVec2(1.0f, 0.f);
+        GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
+
+        EigVector original = this->evaluateFunctionIn(cam, point);
+        EigVector xh = this->evaluateFunctionIn(cam, pointXh);
+        EigVector yh = this->evaluateFunctionIn(cam, pointYh);
+
+        EigVector Jx = xh - original;
+        EigVector Jy = yh - original;
+        EigVector padding = EigZeros(Jx.rows(), 1);
+
+        EigMatrix jacobian(Jx.rows(), 3);
+        jacobian << Jx, Jy, padding;
+
+        return jacobian;
+    }
     
     /*
      * Evaluates the photogrammetrist's function in the given point with the given camera.
@@ -43,7 +91,7 @@ namespace meshac {
 
         b(0) = -point[0] * cam[2][3];
         b(1) = -point[1] * cam[2][3];
-        
+
         return A.transpose() * (A * A.transpose()).inverse() * b;    // in reality this is a column vector
     }
 

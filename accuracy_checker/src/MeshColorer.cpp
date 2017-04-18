@@ -19,13 +19,13 @@ namespace meshac {
 
     Color MeshColorer::getColorForPoint(GLMVec3 &point)
     {
-        double accuracy = this->uncertantyEstimator->computeVarianceForPoint(point);
+        double accuracy = this->uncertantyEstimator->computeSingleVarianceForPoint(point);
         return this->colors->getColorFor(accuracy);
     }
 
     Color MeshColorer::getColorForPoint(int pointIndex)
     {
-        double accuracy = this->uncertantyEstimator->computeVarianceForPoint(pointIndex);
+        double accuracy = this->uncertantyEstimator->computeSingleVarianceForPoint(pointIndex);
         return this->colors->getColorFor(accuracy);
     }
 

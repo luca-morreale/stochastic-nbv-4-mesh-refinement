@@ -20,7 +20,7 @@ namespace meshac {
     class CRTuplesGenerator {
     public:
         CRTuplesGenerator(StringList &fileList, GLMVec2ArrayList &camObservations);
-        ~CRTuplesGenerator();
+        virtual ~CRTuplesGenerator();
 
         /*
          * Getter and setter for Cameras' Observations.

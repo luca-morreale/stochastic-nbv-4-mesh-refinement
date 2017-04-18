@@ -20,9 +20,7 @@ namespace meshac {
         ComputerVisionAccuracyModel(SfMData &data, DoublePair &pixelSize);
         ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         
-        ~ComputerVisionAccuracyModel() { };
-
-        virtual EigMatrixList getAccuracyForPoint(int index3DPoint);
+        virtual ~ComputerVisionAccuracyModel() { };
 
     protected:
         /*

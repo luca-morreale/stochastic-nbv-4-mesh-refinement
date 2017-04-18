@@ -20,8 +20,6 @@ namespace meshac {
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize) 
                                     : PhotogrammetristAccuracyModel(data, pathPrefix, pixelSize) 
     { /*    */ }
-
-
     
 
     /*

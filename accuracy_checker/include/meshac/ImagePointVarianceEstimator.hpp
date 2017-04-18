@@ -10,7 +10,7 @@ namespace meshac {
     class ImagePointVarianceEstimator {
     public:
         ImagePointVarianceEstimator(StringList &fileList, GLMVec2ArrayList &camObservations, DoublePair &pixelSize);
-        ~ImagePointVarianceEstimator();
+        virtual ~ImagePointVarianceEstimator();
 
         /*
          * Computes the variance for a 2D point in the given camera.

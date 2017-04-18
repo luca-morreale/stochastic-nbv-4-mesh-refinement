@@ -14,7 +14,7 @@ namespace meshac {
     class Point3DVarianceEstimator {
     public:
         Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points);
-        ~Point3DVarianceEstimator();
+        virtual ~Point3DVarianceEstimator();
 
         virtual EigMatrix computeVariaceMatrixForPoint(GLMVec3 &point);
         virtual EigMatrix computeVariaceMatrixForPoint(int pointIndex);

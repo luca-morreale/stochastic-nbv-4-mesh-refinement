@@ -21,7 +21,7 @@ namespace meshac {
         PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize);
         PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         
-        ~PhotogrammetristAccuracyModel();
+        virtual ~PhotogrammetristAccuracyModel();
         
         
         /*

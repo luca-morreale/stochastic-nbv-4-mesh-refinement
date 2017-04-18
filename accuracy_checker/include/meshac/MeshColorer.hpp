@@ -16,7 +16,7 @@ namespace meshac {
     class MeshColorer {
     public:
         MeshColorer(std::string &confiFileName, Point3DVarianceEstimatorPtr uncertantyEstimator);
-        ~MeshColorer();
+        virtual ~MeshColorer();
 
         virtual Color getColorForPoint(GLMVec3 &point);
         virtual std::string printVertexColor(GLMVec3 &point);

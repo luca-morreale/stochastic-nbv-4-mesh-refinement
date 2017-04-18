@@ -13,7 +13,7 @@ namespace meshac {
     public:
         ThresholdColor();
         ThresholdColor(DoubleList &thresholds, ColorList &colors);
-        ~ThresholdColor();
+        virtual ~ThresholdColor();
 
         void addColor(double threshold, Color &color);
         Color getColorFor(double targetAccuracy);

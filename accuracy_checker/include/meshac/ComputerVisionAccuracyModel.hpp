@@ -31,7 +31,13 @@ namespace meshac {
         virtual EigVector evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);
 
         virtual EigMatrix computeJacobian(CameraMatrix &cam, GLMVec2 &point);
+
+        virtual void iterativeEstimationOfCovariance(EigMatrixList &destList, EigMatrixList &pointMatrixList, EigMatrix &jacobian);
         
+        virtual void updateVariancesList(DoubleList &varianesList, EigMatrix &varianceMat, EigMatrixList &jacobianList, EigMatrix &jacobianMat);
+
+    private:
+        typedef PhotogrammetristAccuracyModel super;
     };
 
 

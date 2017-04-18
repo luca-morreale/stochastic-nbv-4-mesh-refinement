@@ -78,21 +78,13 @@ namespace meshac {
         EigMatrixList uncertaintyMatrix;
 
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
-            
-            
             GLMVec2 point2D = cameraObsPair.second;
             EigMatrixList pointMatrixList = this->varianceEstimator->collectPointVarianceMatrix(point2D, cameraObsPair.first);
             
             EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
-            std::cout << "jacobian rows " << jacobian.rows() << std::endl;
-            //EigMatrix jacobianMatrix = jacobian.replicate(1, pointMatrixList[0].rows());
 
-            for (EigMatrix mat : pointMatrixList) {
-                uncertaintyMatrix.push_back(jacobian * mat * jacobian.transpose());
-                std::cout << "deltap " << mat.rows() << std::endl;
-            }
+            this->iterativeEstimationOfCovariance(uncertaintyMatrix, pointMatrixList, jacobian);
         }
-
         return uncertaintyMatrix;
     }
 
@@ -100,8 +92,6 @@ namespace meshac {
     {
         DoubleList variances;
         EigMatrixList jacobianList;
-
-        int size = 0;
         
         for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
             
@@ -110,15 +100,13 @@ namespace meshac {
             EigMatrix pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(point2D, cameraObsPair.first);
             EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
 
-            size += pointVariance.rows();
-        
-            appendMatrixDiagonalToVector(pointVariance, variances);
-            jacobianList.push_back(jacobian.replicate(1, (int)pointVariance.rows()/2));
+            this->updateVariancesList(variances, pointVariance, jacobianList, jacobian);
         }
 
-        EigMatrix jacobian = juxtaposeMatrixs(jacobianList, size);
+        EigMatrix pointCovariance = generateDiagonalMatrix(variances);
+        EigMatrix jacobian = juxtaposeMatrixs(jacobianList, pointCovariance.size());
 
-        return jacobian * generateDiagonalMatrix(variances) * jacobian.transpose();
+        return jacobian * pointCovariance * jacobian.transpose();
     }
 
     /*
@@ -130,16 +118,19 @@ namespace meshac {
         GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
 
         EigVector original = this->evaluateFunctionIn(cam, point);
-        EigVector xh = this->evaluateFunctionIn(cam, pointXh);
-        EigVector yh = this->evaluateFunctionIn(cam, pointYh);
 
-        EigVector Jx = xh - original;
-        EigVector Jy = yh - original;
+        EigVector Jx = this->computeSingleJacobianFor(original, cam, pointXh);
+        EigVector Jy = this->computeSingleJacobianFor(original, cam, pointYh);
 
         EigMatrix jacobian(Jx.rows(), 2);
         jacobian << Jx, Jy;
 
         return jacobian;
+    }
+
+    EigVector PhotogrammetristAccuracyModel::computeSingleJacobianFor(EigVector &original, CameraMatrix &cam, GLMVec2 &pointH)
+    {
+        return this->evaluateFunctionIn(cam, pointH) - original;
     }
 
     /*
@@ -163,6 +154,19 @@ namespace meshac {
         b(1) = cam[1][3] - point[1] * cam[2][3];
         
         return A.transpose() * (A * A.transpose()).inverse() * b;    // this is a column vector
+    }
+
+    void PhotogrammetristAccuracyModel::iterativeEstimationOfCovariance(EigMatrixList &destList, EigMatrixList &pointMatrixList, EigMatrix &jacobian)
+    {
+        for (EigMatrix mat : pointMatrixList) {
+            destList.push_back(jacobian * mat * jacobian.transpose());
+        }
+    }
+
+    void PhotogrammetristAccuracyModel::updateVariancesList(DoubleList &varianesList, EigMatrix &varianceMat, EigMatrixList &jacobianList, EigMatrix &jacobianMat)
+    {
+        appendMatrixDiagonalToVector(varianceMat, varianesList);
+        jacobianList.push_back(jacobianMat.replicate(1, (int)varianceMat.rows()/2));
     }
 
 
@@ -190,7 +194,7 @@ namespace meshac {
     {
         return point3DTo2DThroughCam;
     }
-    
+
     StringList PhotogrammetristAccuracyModel::getFileList()
     {
         return this->fileList;

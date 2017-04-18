@@ -64,6 +64,10 @@ namespace meshac {
          * Initializes all members.
          */
         virtual void initMembers(DoublePair &pixelSize);
+
+        /*
+         * Puts at the beginning of each file path stored the given prefix.
+         */
         virtual void fixImagesPath(std::string &pathPrefix);
 
         /*
@@ -76,6 +80,17 @@ namespace meshac {
          * Computes the jacobian of the function.
          */
         virtual EigMatrix computeJacobian(CameraMatrix &cam, GLMVec2 &point);
+        virtual EigVector computeSingleJacobianFor(EigVector &original, CameraMatrix &cam, GLMVec2 &pointH);
+
+        /*
+         * For each value in the pointMatrixList computes the covariance matrix and append the result in destList.
+         */
+        virtual void iterativeEstimationOfCovariance(EigMatrixList &destList, EigMatrixList &pointMatrixList, EigMatrix &jacobian);
+
+        /*
+         * 
+         */
+        virtual void updateVariancesList(DoubleList &varianesList, EigMatrix &varianceMat, EigMatrixList &jacobianList, EigMatrix &jacobianMat);
 
         /*
          * Generalized method to update the lists.

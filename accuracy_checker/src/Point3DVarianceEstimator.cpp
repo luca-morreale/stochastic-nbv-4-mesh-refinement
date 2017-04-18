@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    Point3DVarianceEstimator::Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points)
+    Point3DVarianceEstimator::Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points)
     {
         this->accuracyModel = accuracyModel;
         this->points = points;
@@ -17,12 +17,12 @@ namespace meshac {
 
     EigMatrix Point3DVarianceEstimator::computeVariaceMatrixForPoint(GLMVec3 &point) 
     { 
-        GLMListVec3 points = this->get3DPoints(); 
+        GLMVec3List points = this->get3DPoints(); 
         EigMatrixList variances; 
          
         for (int i = 0; i<points.size(); i++) {
             if (glm::epsilonEqual(points[i], point, EPSILON)[0]) {
-                return this->getVariaceMatrixForPoint(i);
+                return this->computeVariaceMatrixForPoint(i);
             }
         }
         return EigMatrix(); 
@@ -36,11 +36,11 @@ namespace meshac {
 
     double Point3DVarianceEstimator::computeTotalVarianceForPoint(GLMVec3 &point)
     {
-        GLMListVec3 points = this->get3DPoints();
+        GLMVec3List points = this->get3DPoints();
 
         for (int i = 0; i<points.size(); i++) {
             if (glm::all(glm::epsilonEqual(points[i], point, EPSILON))) {
-                return this->computeVarianceForPoint(i);
+                return this->computeTotalVarianceForPoint(i);
             }
         }
         return -1.0;
@@ -54,7 +54,7 @@ namespace meshac {
 
     double Point3DVarianceEstimator::computeSingleVarianceForPoint(GLMVec3 &point)
     {
-        GLMListVec3 points = this->get3DPoints();
+        GLMVec3List points = this->get3DPoints();
 
         for (int i = 0; i<points.size(); i++) {
             if (glm::all(glm::epsilonEqual(points[i], point, EPSILON))) {
@@ -68,6 +68,7 @@ namespace meshac {
     {
         EigMatrixList varianceList = this->getAccuracyModel()->getAccuracyForPoint(pointIndex);
         EigMatrix variance = this->selectVarianceMatrix(varianceList);
+        std::cout << "variance matrix " << variance << std::endl;
         return this->computeVarianceFromMatrix(variance);
     }
 
@@ -82,17 +83,17 @@ namespace meshac {
         return this->accuracyModel;
     }
 
-    GLMListVec3 Point3DVarianceEstimator::get3DPoints()
+    GLMVec3List Point3DVarianceEstimator::get3DPoints()
     {
         return this->points;
     }
     
-    void Point3DVarianceEstimator::set3DPoints(GLMListVec3 &points)
+    void Point3DVarianceEstimator::set3DPoints(GLMVec3List &points)
     {
         this->points = points;
     }
 
-    void Point3DVarianceEstimator::append3DPoints(GLMListVec3 &newPoints)
+    void Point3DVarianceEstimator::append3DPoints(GLMVec3List &newPoints)
     {
         this->points.insert(this->points.end(), newPoints.begin(), newPoints.end());
     }

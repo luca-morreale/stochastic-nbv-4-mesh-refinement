@@ -9,7 +9,7 @@ namespace meshac {
 
     class ImagePointVarianceEstimator {
     public:
-        ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations, DoublePair &pixelSize);
+        ImagePointVarianceEstimator(StringList &fileList, GLMVec2ArrayList &camObservations, DoublePair &pixelSize);
         ~ImagePointVarianceEstimator();
 
         /*
@@ -21,10 +21,10 @@ namespace meshac {
         /*
          * Setter and getter for camera's observations.
          */
-        void setCameraObservations(GLMListArrayVec2 &camObservations);
-        void setCameraObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs);
-        void updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs);
-        GLMListArrayVec2 getCameraObeservations();
+        void setCameraObservations(GLMVec2ArrayList &camObservations);
+        void setCameraObservations(GLMVec2ArrayList &camObservations, IntList &camIndexs);
+        void updateCameraObservations(GLMVec2ArrayList &camObservations, IntList &indexs);
+        GLMVec2ArrayList getCameraObeservations();
 
     protected:
         /*

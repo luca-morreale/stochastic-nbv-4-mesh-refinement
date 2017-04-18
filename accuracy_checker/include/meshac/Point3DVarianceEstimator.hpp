@@ -13,7 +13,7 @@ namespace meshac {
 
     class Point3DVarianceEstimator {
     public:
-        Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points);
+        Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points);
         ~Point3DVarianceEstimator();
 
         virtual EigMatrix computeVariaceMatrixForPoint(GLMVec3 &point);
@@ -36,9 +36,9 @@ namespace meshac {
         /*
          * Setter and getter for the 3D points.
          */
-        GLMListVec3 get3DPoints();
-        void set3DPoints(GLMListVec3 &points);
-        void append3DPoints(GLMListVec3 &points);
+        GLMVec3List get3DPoints();
+        void set3DPoints(GLMVec3List &points);
+        void append3DPoints(GLMVec3List &points);
         void append3DPoints(GLMVec3 &points);
 
     protected:
@@ -50,7 +50,7 @@ namespace meshac {
 
     private:
         AccuracyModelPtr accuracyModel;
-        GLMListVec3 points;
+        GLMVec3List points;
 
         const GLMVec3 EPSILON = GLMVec3(SENSIBILITY);
 

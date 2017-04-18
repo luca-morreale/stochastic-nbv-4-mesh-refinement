@@ -60,7 +60,7 @@ namespace meshac {
         /*
          * First point x, Second point y, Third point z, Fourth point t.
          */
-        std::vector<GLMVec2> points;
+        GLMVec2List points;
 
         /*
          * Precomputed distances.

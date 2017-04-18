@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    DeterminantVarianceEstimator::DeterminantVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points) : Point3DVarianceEstimator(accuracyModel, points)
+    DeterminantVarianceEstimator::DeterminantVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points) : Point3DVarianceEstimator(accuracyModel, points)
     { /*    */ }
     
     DeterminantVarianceEstimator::~DeterminantVarianceEstimator()

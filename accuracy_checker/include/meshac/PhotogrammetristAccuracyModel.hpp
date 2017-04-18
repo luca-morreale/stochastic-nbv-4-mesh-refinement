@@ -12,10 +12,10 @@ namespace meshac {
     
     class PhotogrammetristAccuracyModel : public AccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMVec2ArrayList &camObservations,
                                         ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
         
-        PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMListArrayVec2 &camObservations, 
+        PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMVec2ArrayList &camObservations, 
                                         ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
         
         PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize);
@@ -43,16 +43,19 @@ namespace meshac {
         /*
          * Getter and setter of all the private variables.
          */
+        CameraMatrixList getCameras();
         CameraMatrixList getCamerasMatrix();
-        GLMListArrayVec2 getCamObservations();
+        GLMVec2ArrayList getCamObservations();
+        ImagePointVarianceEstimatorPtr getVarianceEstimator();
         ListMappingGLMVec2 getMapping3DTo2DThroughCam();
+        StringList getFileList();
 
         void setCameras(CameraMatrixList &cameras);
         void setCameras(CameraList &cameras);
         void appendCamera(CameraMatrix &cam);
-        void setCameraObservations(GLMListArrayVec2 &newCamObservations);
-        void setCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs);
-        void updateCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs);
+        void setCameraObservations(GLMVec2ArrayList &newCamObservations);
+        void setCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs);
+        void updateCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs);
         void updateMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
         void setMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
 
@@ -77,8 +80,10 @@ namespace meshac {
         /*
          * Generalized method to update the lists.
          */
-        virtual void camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, std::string errorMsg);
+        virtual void camObservationGeneralUpdate(IntList &indexs, GLMVec2ArrayList &list, GLMVec2ArrayList &targetList, std::string errorMsg);
         virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList);
+
+        
 
     private:
         CameraMatrixList extractCameraMatrix(CameraList &cameras);
@@ -87,7 +92,7 @@ namespace meshac {
 
         StringList fileList;
         CameraMatrixList cameras;
-        GLMListArrayVec2 camObservations;
+        GLMVec2ArrayList camObservations;
         ListMappingGLMVec2 point3DTo2DThroughCam;
 
     };

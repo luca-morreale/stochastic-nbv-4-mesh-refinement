@@ -4,7 +4,7 @@
 namespace meshac {
 
 
-    ImagePointVarianceEstimator::ImagePointVarianceEstimator(StringList &fileList, GLMListArrayVec2 &camObservations, DoublePair &pixelSize)
+    ImagePointVarianceEstimator::ImagePointVarianceEstimator(StringList &fileList, GLMVec2ArrayList &camObservations, DoublePair &pixelSize)
     {
         this->tuplesGenerator = new CRTuplesGenerator(fileList, camObservations);
         this->variances.assign(camObservations.size(), -1);
@@ -26,13 +26,13 @@ namespace meshac {
         this->pixelSizeDiagonalMatrix(1, 1) *= this->pixelSize.second;
     }
 
-    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations)
+    void ImagePointVarianceEstimator::setCameraObservations(GLMVec2ArrayList &camObservations)
     {
         this->tuplesGenerator->setCamObservations(camObservations);
         this->variances.assign(camObservations.size(), -1);
     }
 
-    void ImagePointVarianceEstimator::setCameraObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs)
+    void ImagePointVarianceEstimator::setCameraObservations(GLMVec2ArrayList &camObservations, IntList &camIndexs)
     {
         for (int i = 0; i < camObservations.size(); i++) {
             this->tuplesGenerator->setCamObservations(camObservations[i], i);
@@ -40,7 +40,7 @@ namespace meshac {
         this->variances.assign(camObservations.size(), -1);
     }
 
-    void ImagePointVarianceEstimator::updateCameraObservations(GLMListArrayVec2 &camObservations, IntList &indexs)
+    void ImagePointVarianceEstimator::updateCameraObservations(GLMVec2ArrayList &camObservations, IntList &indexs)
     {
         this->tuplesGenerator->updateCamObservations(camObservations, indexs);
         for (auto obsInd : indexs) {
@@ -48,7 +48,7 @@ namespace meshac {
         }
     }
 
-    GLMListArrayVec2 ImagePointVarianceEstimator::getCameraObeservations()
+    GLMVec2ArrayList ImagePointVarianceEstimator::getCameraObeservations()
     {
         return this->tuplesGenerator->getCamObservations();
     }

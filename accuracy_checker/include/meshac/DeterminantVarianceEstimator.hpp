@@ -10,7 +10,7 @@ namespace meshac {
 
     class DeterminantVarianceEstimator : public Point3DVarianceEstimator {
     public:
-        DeterminantVarianceEstimator(AccuracyModelPtr accuracyModel, GLMListVec3 &points);
+        DeterminantVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points);
         ~DeterminantVarianceEstimator();
 
     protected:

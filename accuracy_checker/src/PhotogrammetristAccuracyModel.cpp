@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMListArrayVec2 &camObservations,
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMVec2ArrayList &camObservations,
                                                                     ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
     {
         this->fileList = fileList;
@@ -14,7 +14,7 @@ namespace meshac {
         this->initMembers(pixelSize);
     }
 
-    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMListArrayVec2 &camObservations,
+    PhotogrammetristAccuracyModel::PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMVec2ArrayList &camObservations,
                                                                     ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
     {
         this->fileList = fileList;
@@ -84,11 +84,12 @@ namespace meshac {
             EigMatrixList pointMatrixList = this->varianceEstimator->collectPointVarianceMatrix(point2D, cameraObsPair.first);
             
             EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
-            
-            EigMatrix jacobianMatrix = jacobian.replicate(1, pointMatrixList[0].rows());
+            std::cout << "jacobian rows " << jacobian.rows() << std::endl;
+            //EigMatrix jacobianMatrix = jacobian.replicate(1, pointMatrixList[0].rows());
 
             for (EigMatrix mat : pointMatrixList) {
-                uncertaintyMatrix.push_back(jacobianMatrix * mat * jacobianMatrix.transpose());
+                uncertaintyMatrix.push_back(jacobian * mat * jacobian.transpose());
+                std::cout << "deltap " << mat.rows() << std::endl;
             }
         }
 
@@ -109,7 +110,6 @@ namespace meshac {
             EigMatrix pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(point2D, cameraObsPair.first);
             EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
 
-        
             size += pointVariance.rows();
         
             appendMatrixDiagonalToVector(pointVariance, variances);
@@ -181,7 +181,7 @@ namespace meshac {
         return cameras;
     }
 
-    GLMListArrayVec2 PhotogrammetristAccuracyModel::getCamObservations()
+    GLMVec2ArrayList PhotogrammetristAccuracyModel::getCamObservations()
     {
         return camObservations;
     }
@@ -189,6 +189,21 @@ namespace meshac {
     ListMappingGLMVec2 PhotogrammetristAccuracyModel::getMapping3DTo2DThroughCam()
     {
         return point3DTo2DThroughCam;
+    }
+    
+    StringList PhotogrammetristAccuracyModel::getFileList()
+    {
+        return this->fileList;
+    }
+
+    CameraMatrixList PhotogrammetristAccuracyModel::getCameras()
+    {
+        return this->cameras;
+    }
+
+    ImagePointVarianceEstimatorPtr PhotogrammetristAccuracyModel::getVarianceEstimator()
+    {
+        return this->varianceEstimator;
     }
 
     void PhotogrammetristAccuracyModel::setCameras(CameraMatrixList &cameras)
@@ -204,22 +219,22 @@ namespace meshac {
     void PhotogrammetristAccuracyModel::appendCamera(CameraMatrix &cam)
     {
         this->cameras.push_back(cam);
-        this->camObservations.push_back(GLMListVec2());
+        this->camObservations.push_back(GLMVec2List());
     }
 
-    void PhotogrammetristAccuracyModel::setCameraObservations(GLMListArrayVec2 &newCamObservations)  
+    void PhotogrammetristAccuracyModel::setCameraObservations(GLMVec2ArrayList &newCamObservations)  
     {
         this->camObservations = newCamObservations;
         this->varianceEstimator->setCameraObservations(newCamObservations);
     }
 
-    void PhotogrammetristAccuracyModel::setCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs)  
+    void PhotogrammetristAccuracyModel::setCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs)  
     {
         this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, "of camera to set the camera's observation.");
         this->varianceEstimator->setCameraObservations(newCamObservations, camIndexs);
     }
 
-    void PhotogrammetristAccuracyModel::updateCameraObservations(GLMListArrayVec2 &newCamObservations, IntList &camIndexs)  
+    void PhotogrammetristAccuracyModel::updateCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs)  
     {
         this->camObservationGeneralUpdate(camIndexs, newCamObservations, camObservations, "of camera to updated the camera's observation.");
         this->varianceEstimator->updateCameraObservations(newCamObservations, camIndexs);
@@ -239,7 +254,7 @@ namespace meshac {
     /*
      * Protected methods that provide a general way to update lists
      */
-    void PhotogrammetristAccuracyModel::camObservationGeneralUpdate(IntList &indexs, GLMListArrayVec2 &list, GLMListArrayVec2 &targetList, std::string errorMsg)
+    void PhotogrammetristAccuracyModel::camObservationGeneralUpdate(IntList &indexs, GLMVec2ArrayList &list, GLMVec2ArrayList &targetList, std::string errorMsg)
     {
         for (int i : indexs) {
             if (i > list.size()) {
@@ -259,5 +274,6 @@ namespace meshac {
             targetList[i].insert(list[i].begin(), list[i].end());
         }
     }
+
 
 } // namespace meshac

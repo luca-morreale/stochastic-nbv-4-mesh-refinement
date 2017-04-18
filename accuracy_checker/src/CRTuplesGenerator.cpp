@@ -4,7 +4,7 @@
 
 namespace meshac {
 
-    CRTuplesGenerator::CRTuplesGenerator(StringList &fileList, GLMListArrayVec2 &camObservations)
+    CRTuplesGenerator::CRTuplesGenerator(StringList &fileList, GLMVec2ArrayList &camObservations)
     {
         this->fileList = fileList;
         this->camObservations = camObservations;
@@ -23,7 +23,7 @@ namespace meshac {
     /*
      * Extraction of quadruplets of collinear points for each image.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(StringList &fileList, GLMListArrayVec2 &camObservations)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPoints(StringList &fileList, GLMVec2ArrayList &camObservations)
     {
         this->setFileList(fileList);
         this->setCamObservations(camObservations);
@@ -51,7 +51,7 @@ namespace meshac {
     /*
      * Extraction quadruplets of collinear points for the image obtained by the given camera.
      */
-    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(StringList &fileList, GLMListArrayVec2 &camObservations, int camIndex)
+    CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(StringList &fileList, GLMVec2ArrayList &camObservations, int camIndex)
     {
         this->setFileList(fileList);
         this->setCamObservations(camObservations);
@@ -62,7 +62,7 @@ namespace meshac {
     {
         CVMat edges;
         CrossRatioTupleSet tuples;
-        GLMListVec2 points2D = this->camObservations[camIndex];
+        GLMVec2List points2D = this->camObservations[camIndex];
         if (points2D.size() < 10) {
             return CrossRatioTupleSet();
         }
@@ -102,7 +102,7 @@ namespace meshac {
     /*
      * Private methods
      */
-    CrossRatioTupleSet CRTuplesGenerator::createsTuples(IntArrayList &combos, IntList &pointSet, GLMListVec2 &points2D) 
+    CrossRatioTupleSet CRTuplesGenerator::createsTuples(IntArrayList &combos, IntList &pointSet, GLMVec2List &points2D) 
     {
         CrossRatioTupleSet tuples;
 
@@ -133,7 +133,7 @@ namespace meshac {
 
     std::vector<EigVector3> CRTuplesGenerator::createLinesFromEdges(CVMat &edges)
     {
-        CVListVec4 polarLines;
+        CVVec4List polarLines;
         std::vector<EigVector3> lines;
         
         // discretization rho 1
@@ -160,7 +160,7 @@ namespace meshac {
     }
 
 
-    IntArrayList CRTuplesGenerator::generateCorrespondances(std::vector<EigVector3> &lines, GLMListVec2 &points2D)
+    IntArrayList CRTuplesGenerator::generateCorrespondances(EigVector3List &lines, GLMVec2List &points2D)
     {
         EigVector3 line, point;
         IntArrayList correspondances;
@@ -232,31 +232,31 @@ namespace meshac {
     /*
      * Getter and setter for Camera's Observations.
      */
-    void CRTuplesGenerator::setCamObservations(GLMListArrayVec2 &camObservations)
+    void CRTuplesGenerator::setCamObservations(GLMVec2ArrayList &camObservations)
     {
         this->camObservations = camObservations;
     }
 
-    void CRTuplesGenerator::setCamObservations(GLMListVec2 &list, int camIndex)
+    void CRTuplesGenerator::setCamObservations(GLMVec2List &list, int camIndex)
     {
         this->camObservations[camIndex].clear();
         this->camObservations[camIndex].insert(camObservations[camIndex].begin(), list.begin(), list.end());
     }
 
-    void CRTuplesGenerator::updateCamObservations(GLMListVec2 &list, int camIndex)
+    void CRTuplesGenerator::updateCamObservations(GLMVec2List &list, int camIndex)
     {
         this->camObservations[camIndex] = list;
         this->tupleSetPerCam[camIndex].clear();
     }
 
-    void CRTuplesGenerator::updateCamObservations(GLMListArrayVec2 &camObservations, IntList &camIndexs)
+    void CRTuplesGenerator::updateCamObservations(GLMVec2ArrayList &camObservations, IntList &camIndexs)
     {
         for (int i = 0; i < camObservations.size(); i++) {
             this->updateCamObservations(camObservations[i], camIndexs[i]);
         }
     }
 
-    GLMListArrayVec2 CRTuplesGenerator::getCamObservations()
+    GLMVec2ArrayList CRTuplesGenerator::getCamObservations()
     {
         return camObservations;
     }

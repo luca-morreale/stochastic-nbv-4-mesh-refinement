@@ -34,6 +34,7 @@
 // accuracy check imports
 #include <meshac/AccuracyModel.hpp>
 #include <meshac/PhotogrammetristAccuracyModel.hpp>
+#include <meshac/ComputerVisionAccuracyModel.hpp>
 #include <meshac/Color.hpp>
 #include <meshac/DeterminantVarianceEstimator.hpp>
 #include <meshac/WorstEigenvalueVarianceEstimator.hpp>
@@ -292,7 +293,8 @@ int main(int argc, char **argv) {
     std::string pathPrefix = input_file.substr(0, input_file.find_last_of("/"));
     pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
     std::pair<double, double> pixelSize(0.0003527, 0.0003527);
-    meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
+    //meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
+    meshac::ComputerVisionAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
     meshColorer = new meshac::MeshColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
     //meshColorer = new meshac::MeshColorer(color_file, new meshac::DeterminantVarianceEstimator(&accuracyModel, sfm_data_.points_));
 

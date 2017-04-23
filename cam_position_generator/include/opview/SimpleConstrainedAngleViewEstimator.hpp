@@ -13,16 +13,21 @@
 
 namespace opview {
 
+    #define BD_RAPPORT 0.7
+
     class SimpleConstrainedAngleViewEstimator : public OptimalViewEstimator {
     public:
-        SimpleConstrainedAngleViewEstimator(Delaunay3 &dt);
+        SimpleConstrainedAngleViewEstimator(Delaunay3 &dt, GLMVec3List &cams);
         ~SimpleConstrainedAngleViewEstimator();
 
     protected:
         virtual GLMVec3 determingBestPositionForFace(Face face);
 
         virtual void buildModel(IloModel &model, IloEnv env, Face &face);
-        virtual IloExpr createProblem(PointD3 &centroid, CGALVec3 &targetDirection, IloEnv env);
+        virtual void addGoal(IloModel &model, PointD3 &barycenter, CGALVec3 &normVector, IloEnv env);
+        virtual IloExpr createGoalExpression(PointD3 &centroid, CGALVec3 &targetDirection, IloEnv env);
+        virtual void addConstraints(IloModel &model, PointD3 &barycenter);
+        virtual IloRangeList createConstraints(PointD3 &centroid);
         virtual GLMVec3 extractSolutions(IloCplex &cplex);
 
 
@@ -31,6 +36,7 @@ namespace opview {
 
     private:
         IloNumVarList goalPoint;
+        GLMVec3List cams;
         
     };   
 }   // namespace opview

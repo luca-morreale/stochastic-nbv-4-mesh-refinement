@@ -45,6 +45,7 @@ namespace opview {
     inline EigMatrix EigOnes(int rows, int cols) { return Eigen::MatrixXd::Ones(rows, cols); };
 
     /* Shortcuts for CGAL types */
+    typedef std::vector<PointD3> PointD3List;
     typedef Delaunay3::Cell_handle CGALCell;
     typedef Delaunay3::Vertex_handle CGALVertex;
     typedef std::vector<Delaunay3::Cell_handle> CGALCellList;
@@ -58,7 +59,9 @@ namespace opview {
     typedef K::Vector_3 CGALVec3;
 
     typedef std::vector<IloNumVar> IloNumVarList;
+    typedef std::vector<IloNum> IloNumList;
     typedef std::vector<IloExpr> IloExprList;
+    typedef std::vector<IloRange> IloRangeList;
 
 }
 

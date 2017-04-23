@@ -12,14 +12,13 @@ namespace opview {
         return list;
     }
 
-    IloExprList diff(CGALVec3 &a, IloNumVarList &b)
+    IloNumExprArray absDifference(IloNumVarList &a, GLMVec3 &b)
     {
-        IloExprList exps;
-        for (int i = 0; i < a.dimension(); i++) {
-            exps.push_back(a[i] - b[i]);
+        IloNumExprArray diffs;
+        for (int i = 0; i < a.size(); i++) {
+            diffs.add(IloAbs(a[i]-b[i]));
         }
-
-        return exps;
+        return diffs;
     }
 
     IloExpr dot(CGALVec3 &a, IloNumVarList &b)
@@ -58,6 +57,32 @@ namespace opview {
             exp += IloSquare(v[i]);
         }
         return exp;
+    }
+
+    IloExpr sqrtDistance(IloNumVarList &a, GLMVec3 &b)
+    {
+        IloExpr distance;
+        for (int i = 0; i < a.size(); i++) {
+            distance += IloSquare(a[i] - b[i]);
+        }
+        return distance;
+    }
+
+    IloExpr linearDistance(IloNumVarList &a, GLMVec3 &b)
+    {
+        IloNumExprArray diffs = absDifference(a, b);
+        return IloMin(diffs);    // IloMin(const IloNumExprArray exprs)
+    }
+
+    IloExpr pyramidDistance(IloNumVarList &a, GLMVec3 &b)
+    {
+        IloNumExprArray diffs = absDifference(a, b);
+        return IloMax(diffs);
+    }
+
+    IloExpr octagonalDistance(IloNumVarList &a, GLMVec3 &b)
+    {
+        return 1007.0 / 1024.0 * pyramidDistance(a, b) + 441.0 / 1024.0 * linearDistance(a, b);
     }
 
     

@@ -11,29 +11,29 @@ namespace opview{
 
     class OptimalViewEstimator {
     public:
-        OptimalViewEstimator(Delaunay3 &dt);
+        OptimalViewEstimator();
         ~OptimalViewEstimator();
 
-        virtual GLMVec3List estimateOptimalView(CGALCell voxel);
-        virtual GLMVec3List estimateOptimalViews(CGALCellList voxels);
-        virtual GLMVec3 estimateOptimalView(CGALFace triangleVertices, PointD3 oppositeVertex);
+        virtual GLMVec3List estimateOptimalViews(CGALCell &voxel);
+        virtual GLMVec3List estimateOptimalViews(CGALCellList &voxels);
+        virtual GLMVec3 estimateOptimalView(CGALFace &triangleVertices, PointD3 &oppositeVertex);
 
     protected:
 
-        virtual GLMVec3 determingBestPositionForFace(Face face) = 0;
+        virtual GLMVec3 determingBestPositionForFace(Face &face) = 0;
 
-        virtual FaceList extractTrianglesFromCells(CGALCellSet boundaryCells);
-        virtual FaceList extractTrianglesFromCell(CGALCell cell);
+        virtual FaceList extractTrianglesFromCells(CGALCellSet &boundaryCells);
+        virtual FaceList extractTrianglesFromCell(CGALCell &cell);
         virtual CGALFace faceIndexToVertices(CGALCell &cell, int faceIndex);
 
-        virtual CGALVec3 normalVectorToFace(Face face);
-        virtual PointD3 barycenterVectorToFace(FaceVertices face);  // should produce another function for weighted points
+        virtual CGALVec3 normalVectorToFace(Face &face);
+        virtual PointD3 barycenterVectorToFace(FaceVertices &face);  // should produce another function for weighted points
 
     private:
-        bool isCell(CGALCell cell);
-        bool isInBoundaries(CGALCell cell, int faceIndex);
-        bool existsSteinerPoint(CGALFace triangleVertices);
-        int countSteinerPoints(CGALFace triangleVertices);
+        bool isCell(CGALCell &cell);
+        bool isInBoundaries(CGALCell &cell, int faceIndex);
+        bool existsSteinerPoint(CGALFace &triangleVertices);
+        int countSteinerPoints(CGALFace &triangleVertices);
 
 
         const int faceToTriangleMatrix[4][3] = { 
@@ -45,7 +45,10 @@ namespace opview{
         const int oppositeVertex[4] = { 0, 1, 2, 3};
 
         Delaunay3 delaunayTriang;
-    };   
+    };
+
+    typedef OptimalViewEstimator* OptimalViewEstimatorPtr;
+
 }
 
 #endif // CAM_POSITION_GENERATOR_OPTIMAL_VIEW_ESTIMATOR_H

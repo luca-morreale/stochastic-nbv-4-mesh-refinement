@@ -3,32 +3,30 @@
 
 namespace opview {
 
-    OptimalViewEstimator::OptimalViewEstimator(Delaunay3 &dt)
-    {
-        this->delaunayTriang = dt;
-    }
+    OptimalViewEstimator::OptimalViewEstimator()
+    { /*    */ }
 
     OptimalViewEstimator::~OptimalViewEstimator()
     { /*    */ }
 
 
-    GLMVec3List OptimalViewEstimator::estimateOptimalViews(CGALCellList voxels)
+    GLMVec3List OptimalViewEstimator::estimateOptimalViews(CGALCellList &voxels)
     {
         GLMVec3List camPositions;
         
         for (CGALCell voxel : voxels) {
-            GLMVec3List optimalPositions = this->estimateOptimalView(voxel);
+            GLMVec3List optimalPositions = this->estimateOptimalViews(voxel);
             camPositions.insert(camPositions.end(), optimalPositions.begin(), optimalPositions.end());
         }
         
         return camPositions;
     }
 
-    GLMVec3List OptimalViewEstimator::estimateOptimalView(CGALCell voxel)
+    GLMVec3List OptimalViewEstimator::estimateOptimalViews(CGALCell &voxel)
     {
         GLMVec3List posList;
         FaceList faces = this->extractTrianglesFromCell(voxel);
-
+        
         for (Face face : faces) {
             GLMVec3 camPos = this->determingBestPositionForFace(face);
             posList.push_back(camPos);
@@ -37,14 +35,14 @@ namespace opview {
         return posList;
     }
 
-    GLMVec3 OptimalViewEstimator::estimateOptimalView(CGALFace triangleVertices, PointD3 oppositeVertex)
+    GLMVec3 OptimalViewEstimator::estimateOptimalView(CGALFace &triangleVertices, PointD3 &oppositeVertex)
     {
         Face face = convertCGALFaceToFace(triangleVertices, oppositeVertex);
         return this->determingBestPositionForFace(face);
     }
     
 
-    FaceList OptimalViewEstimator::extractTrianglesFromCells(CGALCellSet boundaryCells)
+    FaceList OptimalViewEstimator::extractTrianglesFromCells(CGALCellSet &boundaryCells)
     {
         FaceList triangles;
 
@@ -56,14 +54,14 @@ namespace opview {
         return triangles;
     }
 
-    FaceList OptimalViewEstimator::extractTrianglesFromCell(CGALCell cell)
+    FaceList OptimalViewEstimator::extractTrianglesFromCell(CGALCell &cell)
     {
         FaceList triangles;
-
-        if (!this->isCell(cell)) {
+        //std::cout << "is a cell? " << this->isCell(cell) << std::endl;
+        /*if (!this->isCell(cell)) {
             return FaceList();
-        }
-    
+        }*/
+
         for (int faceIndex = 0; faceIndex < 4; faceIndex++) { // For each face in the cell
 
             // If the face is a boundary face (between the boundary cell and a non manifold cell)
@@ -94,7 +92,7 @@ namespace opview {
         return vertices;
     }
 
-    CGALVec3 normalVectorToFace(Face face)
+    CGALVec3 OptimalViewEstimator::normalVectorToFace(Face &face)
     {
         // the point opposite to facet
         const PointD3 &p0 = face.oppositeVertex;
@@ -113,7 +111,7 @@ namespace opview {
         return n;
     }
 
-    PointD3 OptimalViewEstimator::barycenterVectorToFace(FaceVertices face)
+    PointD3 OptimalViewEstimator::barycenterVectorToFace(FaceVertices &face)
     {
         std::vector<std::pair<PointD3, double> > points;
         for (int i = 0; i < face.size(); i++) {
@@ -123,19 +121,19 @@ namespace opview {
     }
 
 
-    bool OptimalViewEstimator::isCell(CGALCell cell)
+    bool OptimalViewEstimator::isCell(CGALCell &cell)
     {
         return this->delaunayTriang.is_cell(cell);
     }
 
-    bool OptimalViewEstimator::isInBoundaries(CGALCell cell, int faceIndex)
+    bool OptimalViewEstimator::isInBoundaries(CGALCell &cell, int faceIndex)
     {
         auto neighbor = cell->neighbor(faceIndex);
         auto neighInfo = neighbor->info();
         return !neighInfo.getManifoldFlag(); 
     }
 
-    bool OptimalViewEstimator::existsSteinerPoint(CGALFace triangleVertices)
+    bool OptimalViewEstimator::existsSteinerPoint(CGALFace &triangleVertices)
     {
         for (auto vertex : triangleVertices) {
             if(vertex->info().getPointId() < 0) { 
@@ -145,7 +143,7 @@ namespace opview {
         return false;
     }
 
-    int OptimalViewEstimator::countSteinerPoints(CGALFace triangleVertices)
+    int OptimalViewEstimator::countSteinerPoints(CGALFace &triangleVertices)
     {
         int steinerVertices = 0;
         for (auto vertex : triangleVertices) {

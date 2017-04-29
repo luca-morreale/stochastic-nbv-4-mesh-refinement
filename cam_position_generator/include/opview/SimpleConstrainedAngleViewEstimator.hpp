@@ -17,28 +17,35 @@ namespace opview {
 
     class SimpleConstrainedAngleViewEstimator : public OptimalViewEstimator {
     public:
-        SimpleConstrainedAngleViewEstimator(Delaunay3 &dt, GLMVec3List &cams);
+        SimpleConstrainedAngleViewEstimator(GLMVec3List &cams);
         ~SimpleConstrainedAngleViewEstimator();
 
     protected:
-        virtual GLMVec3 determingBestPositionForFace(Face face);
+        virtual GLMVec3 determingBestPositionForFace(Face &face);
 
-        virtual void buildModel(IloModel &model, IloEnv env, Face &face);
-        virtual void addGoal(IloModel &model, PointD3 &barycenter, CGALVec3 &normVector, IloEnv env);
-        virtual IloExpr createGoalExpression(PointD3 &centroid, CGALVec3 &targetDirection, IloEnv env);
-        virtual void addConstraints(IloModel &model, PointD3 &barycenter);
-        virtual IloRangeList createConstraints(PointD3 &centroid);
+        virtual void buildModel(IloModel model, Face &face);
+        virtual void setUpGoalVariables(IloEnv env);
+        virtual void addGoal(IloModel model, CGALVec3 &normVector, CGALVec3 &centroid);
+        virtual IloExpr createGoalExpression(CGALVec3 &targetDirection, CGALVec3 &centroid, IloEnv env);
+        virtual void addConstraints(IloModel model, CGALVec3 &barycenter);
+        virtual IloConstraintList createConstraints(CGALVec3 &centroid, IloEnv env);
         virtual GLMVec3 extractSolutions(IloCplex &cplex);
 
 
         IloNumVarList getGoalPoint();
-        void setGoalPoint(IloNumVarList point);
+        void setGoalPoint(IloNumVarList &point);
 
     private:
         IloNumVarList goalPoint;
-        GLMVec3List cams;
+        CGALVec3List cams;
+
+        IloExpr middleToCenterDistanceExpr(CGALVec3 &cam, CGALVec3 &center, IloEnv env);
+        IloConstraint createBDConstraint(CGALVec3 &cam, CGALVec3 &center, IloEnv env);
         
-    };   
+    };
+
+    typedef SimpleConstrainedAngleViewEstimator* SimpleConstrainedAngleViewEstimatorPtr;
+
 }   // namespace opview
 
 #endif // CAM_POSITION_GENERATOR_CONSTRAINED_ANGLE_VIEW_ESTIMATOR_H

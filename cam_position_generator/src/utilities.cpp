@@ -19,6 +19,28 @@ namespace opview {
         return face;
     }
 
+    GLMVec3 convertPoinToGLMVec(PointD3 &point)
+    {
+        return GLMVec3(point.hx(), point.hy(), point.hz());
+    }
 
+    CGALVec3 convertPoinToCGALVec(PointD3 &point)
+    {
+        return CGALVec3(point.hx(), point.hy(), point.hz());
+    }
+
+    CGALVec3 convertPoinToCGALVec(GLMVec3 &point)
+    {
+        return CGALVec3(point.x, point.y, point.z);
+    }
+
+    CGALVec3List convertListToCGALVecList(GLMVec3List &inList)
+    {
+        CGALVec3List outList;
+        for (auto el : inList) {
+            outList.push_back(convertPoinToCGALVec(el));
+        }
+        return outList;
+    }
 
 } // namespace opview

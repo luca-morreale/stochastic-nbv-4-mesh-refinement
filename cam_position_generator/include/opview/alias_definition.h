@@ -57,11 +57,13 @@ namespace opview {
 
     typedef K::Direction_3 CGALDirection;
     typedef K::Vector_3 CGALVec3;
+    typedef std::vector<CGALVec3> CGALVec3List;
 
     typedef std::vector<IloNumVar> IloNumVarList;
     typedef std::vector<IloNum> IloNumList;
     typedef std::vector<IloExpr> IloExprList;
     typedef std::vector<IloRange> IloRangeList;
+    typedef std::vector<IloConstraint> IloConstraintList;
 
 }
 

@@ -52,11 +52,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 # ------------------------ BUILD -------------------------------
 
 
-file(GLOB meshac_SOURCE src/*.cpp)
+file(GLOB opview_SOURCE src/*.cpp)
 
-add_library(opview SHARED ${meshac_SOURCE})
+add_library(optimalView SHARED ${opview_SOURCE})
 
-target_link_libraries(opview ${OpenCV_LIBS} 
+target_link_libraries(optimalView ${OpenCV_LIBS} 
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
                                             ${GMP_LIBRARIES}
@@ -64,14 +64,13 @@ target_link_libraries(opview ${OpenCV_LIBS}
                                             ${CGAL_LIBRARY}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
-                                            ${MANIFOLD_LIB} 
-                                            ${MESH_ACCURACY_LIB}
+                                            ${MANIFOLD_LIB}
                                             ${OPTIMIZER_LIBRARIES}
                                             ${GMP_LIBRARY} )
 
 # ------------------------ INSTALLATION ------------------------
 
-#install(TARGETS opview DESTINATION lib)
-#install(DIRECTORY include/opview/ DESTINATION include/opview)
+install(TARGETS optimalView DESTINATION lib)
+install(DIRECTORY include/opview/ DESTINATION include/opview)
 
 # --------------------------------------------------------------

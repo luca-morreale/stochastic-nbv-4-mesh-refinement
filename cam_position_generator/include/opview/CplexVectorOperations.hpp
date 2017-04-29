@@ -11,17 +11,31 @@ namespace opview {
     #define MAX_VAR_DOMAIN 1000.0
 
     IloNumVarList convertVector(unsigned int vecSize, IloEnv env);
-    IloNumExprArray absDifference(IloNumVarList &a, GLMVec3 &b);
+    
+    IloNumExprArray differenceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+    IloNumExprArray differenceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);
+    IloNumExprArray absDifferenceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+    IloNumExprArray absDifferenceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);
 
-    IloExpr dot(CGALVec3 &a, IloNumVarList &b);
-    IloExpr dot(CGALVec3 &a, IloExprList &b);
-    IloExpr norm(IloNumVarList &v);      // cplex can not handle root so not performed, not even needed to!
-    IloExpr norm(IloExprList &v);
+    IloExpr dotExpr(CGALVec3 &a, IloNumVarList &b, IloEnv env);
+    IloExpr dotExpr(CGALVec3 &a, IloExprList &b, IloEnv env);
+    IloExpr dotExpr(CGALVec3 &a, IloNumExprArray &b, IloEnv env);
+    IloExpr sqrtNormExpr(IloNumVarList &v, IloEnv env);     // cplex can not handle root so not performed, not even needed to!
+    IloExpr sqrtNormExpr(IloExprList &v, IloEnv env);
+    IloExpr sqrtNormExpr(IloNumExprArray &v, IloEnv env);
 
-    IloExpr sqrtDistance(IloNumVarList &a, GLMVec3 &b);
-    IloExpr linearDistance(IloNumVarList &a, GLMVec3 &b);
-    IloExpr pyramidDistance(IloNumVarList &a, GLMVec3 &b);
-    IloExpr octagonalDistance(IloNumVarList &a, GLMVec3 &b);
+    IloExprList middlePoint(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+
+    IloExpr sqrtDistanceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+    IloExpr sqrtDistanceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);
+    IloExpr linearDistanceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+    IloExpr linearDistanceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);
+    IloExpr pyramidDistanceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+    IloExpr pyramidDistanceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);
+    IloExpr octagonalDistanceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+    IloExpr octagonalDistanceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);
+    IloExpr manhattanDistanceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
+    IloExpr manhattanDistanceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);
 
 }   // namespace opview
 

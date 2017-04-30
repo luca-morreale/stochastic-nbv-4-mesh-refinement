@@ -10,7 +10,7 @@ namespace opview {
     #define MIN_VAR_DOMAIN -1000.0
     #define MAX_VAR_DOMAIN 1000.0
 
-    IloNumVarList convertVector(unsigned int vecSize, IloEnv env);
+    IloNumVarList createCplexVariables(unsigned int vecSize, IloEnv env);
     
     IloNumExprArray differenceExpr(IloNumVarList &a, CGALVec3 &b, IloEnv env);
     IloNumExprArray differenceExpr(IloExprList &a, CGALVec3 &b, IloEnv env);

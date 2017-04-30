@@ -4,7 +4,7 @@ namespace opview {
 
     // ============>> Should initialize all expressions with the environment before using them!
 
-    IloNumVarList convertVector(unsigned int vecSize, IloEnv env)
+    IloNumVarList createCplexVariables(unsigned int vecSize, IloEnv env)
     {
         IloNumVarList list;
         for (int i = 0; i < vecSize; i++) {

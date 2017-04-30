@@ -43,4 +43,13 @@ namespace opview {
         return outList;
     }
 
+    double distanceCGALVec3(CGALVec3 &a, CGALVec3 &b)
+    {   
+        double distance = 0;
+        for (int i = 0; i < a.dimension(); i++) {
+            distance += std::sqrt(a[i] - b[i]);
+        }
+        return distance;
+    }
+
 } // namespace opview

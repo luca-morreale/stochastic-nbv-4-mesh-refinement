@@ -60,22 +60,19 @@ namespace meshac {
 
     CrossRatioTupleSet CRTuplesGenerator::determineTupleOfFourPointsForCam(int camIndex)
     {
-        CVMat edges;
+        IntArrayList quadruplets;
         CrossRatioTupleSet tuples;
         GLMVec2List points2D = this->camObservations[camIndex];
-        if (points2D.size() < 10) {
-            return CrossRatioTupleSet();
-        }
+
+        if (!enoughPoints(points2D)) return CrossRatioTupleSet();
+
+        this->fillQuadruplets(camIndex, points2D, quadruplets);
         
-        this->computeEdges(camIndex, edges);
-        
-        EigVector3List lines = this->createLinesFromEdges(edges);
-        
-        IntArrayList correspondances = this->generateCorrespondances(lines, points2D);
+        //IntArrayList correspondances = this->generateCorrespondances(lines, points2D);
         
         #pragma omp parallel for
-        for (int i = 0; i < correspondances.size(); i++) {
-            IntList pointSet = correspondances[i];
+        for (int i = 0; i < quadruplets.size(); i++) {
+            IntList pointSet = quadruplets[i];
             IntArrayList combos = fixedSizeCombination(pointSet.size(), 4, SKIP_TUPLE_RATE, MAX_SAMPLE_SIZE);
             
             CrossRatioTupleSet tmp = this->createsTuples(combos, pointSet, points2D);
@@ -123,6 +120,20 @@ namespace meshac {
         return tuples;
     }
 
+    bool CRTuplesGenerator::enoughPoints(GLMVec2List &points2D)
+    {
+        return points2D.size() < MIN_NUM_POINTS_IN_IMAGE;
+    }
+
+    void CRTuplesGenerator::fillQuadruplets(int camIndex, GLMVec2List &points2D, IntArrayList &quadruplets)
+    {
+        CVMat edges;
+        CVSegmentList segments;
+        computeEdges(camIndex, edges);
+        extractSegmentsFromEdges(edges, segments);
+        generateCorrespondances(segments, points2D, quadruplets);
+    }
+
     void CRTuplesGenerator::computeEdges(int camIndex, CVMat &edges)
     {
         std::string imagePath = this->fileList[camIndex];
@@ -131,56 +142,37 @@ namespace meshac {
         cv::Canny(src, edges, CANNY_LOW_THRESHOLD, CANNY_LOW_THRESHOLD * CANNY_RATIO, CANNY_KERNEL_SIZE);
     }
 
-    std::vector<EigVector3> CRTuplesGenerator::createLinesFromEdges(CVMat &edges)
+    void CRTuplesGenerator::extractSegmentsFromEdges(CVMat &edges, CVSegmentList &segments)
     {
-        CVVec4List polarLines;
-        std::vector<EigVector3> lines;
-        
-        // discretization rho 1
-        // discretization angle CV_PI/180
-        // at least 100 votes
-        //cv::HoughLines(logicalImg, lines, 1, CV_PI/180, 4, 0, 0 );
-        // votes must be fixed! maybe with threshold, or check to not take close lines
-        cv::HoughLinesP(edges, polarLines, 1, CV_PI/180, 90, 0, 0);  // this just gives rho and theta not the line!!!
-
-        #pragma omp parallel for
-        for( size_t i = 0; i < polarLines.size(); i++ ) {
-            auto l = polarLines[i];
-            EigVector3 pt1(l[0], l[1], 1);
-            EigVector3 pt2(l[2], l[3], 1);
-            
-            EigVector3 line = pt1.cross(pt2);
-            line /= line[2];
-
-            #pragma omp critical
-            lines.push_back(line);
-        }
-
-        return lines;
+        cv::Ptr<cv::line_descriptor::LSDDetector> segmentDetector = cv::line_descriptor::LSDDetector::createLSDDetector();
+        segmentDetector->detect(edges, segments, 2, 2);
     }
 
-
-    IntArrayList CRTuplesGenerator::generateCorrespondances(EigVector3List &lines, GLMVec2List &points2D)
+    void CRTuplesGenerator::generateCorrespondances(CVSegmentList &segments, GLMVec2List &points2D, IntArrayList &quadruplets)
     {
-        EigVector3 line, point;
-        IntArrayList correspondances;
-        correspondances.assign(lines.size(), IntList());
+        quadruplets.assign(segments.size(), IntList());
 
         #pragma omp parallel for
-        for (unsigned int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
-            EigVector3 line = lines[lineIndex];
+        for (unsigned int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++) {
+            CVSegment segment = segments[segmentIndex];
+            CVPoint2 start = segment.getStartPoint();
+            CVPoint2 end = segment.getEndPoint();
+
+            double segmentSize = cv::norm(start - end);
 
             #pragma omp parallel for
             for (unsigned int pointIndex = 0; pointIndex < points2D.size(); pointIndex++) {
-                EigVector3 point =  EigVector3(points2D[pointIndex].x, points2D[pointIndex].y, 1);
-                if (std::abs(line.transpose() * point) < 1.0 ) {
+                CVPoint2 point = CVPoint2(points2D[pointIndex].x, points2D[pointIndex].y);
+
+                double pointToStart = cv::norm(point - start);
+                double pointToEnd = cv::norm(point - end);
+
+                if (pointToStart + pointToEnd - segmentSize < 1.0) {
                     #pragma omp critical
-                    correspondances[lineIndex].push_back(pointIndex);
+                    quadruplets[segmentIndex].push_back(pointIndex);
                 }
             }
         }
-
-        return correspondances;
     }
 
     CrossRatioTupleSet CRTuplesGenerator::collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam)

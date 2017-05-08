@@ -3,6 +3,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/line_descriptor/descriptor.hpp>
 
 #include <meshac/alias_definition.hpp>
 #include <meshac/CrossRatioTuple.hpp>
@@ -16,6 +17,7 @@ namespace meshac {
     #define CANNY_KERNEL_SIZE 3
     #define SKIP_TUPLE_RATE 0.8
     #define MAX_SAMPLE_SIZE 50
+    #define MIN_NUM_POINTS_IN_IMAGE 10
 
     class CRTuplesGenerator {
     public:
@@ -65,12 +67,17 @@ namespace meshac {
         void setTuplesPerCam(ListCrossRatioTupleSet &tupleSetPerCam);
         void setTuplesPerCam(CrossRatioTupleSet &tupleSet, int camIndex);
 
-    private:
+        virtual void fillQuadruplets(int camIndex, GLMVec2List &points2D, IntArrayList &quadruplets);
 
-        CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMVec2List &points2D);
-        void computeEdges(int camIndex, CVMat &edges);
-        EigVector3List createLinesFromEdges(CVMat &edges);
-        IntArrayList generateCorrespondances(EigVector3List &lines, GLMVec2List &points2D);
+        virtual CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMVec2List &points2D);
+        virtual bool enoughPoints(GLMVec2List &points2D);
+
+        virtual void computeEdges(int camIndex, CVMat &edges);
+        virtual void extractSegmentsFromEdges(CVMat &edges, CVSegmentList &segments);
+
+        virtual void generateCorrespondances(CVSegmentList &segments, GLMVec2List &points2D, IntArrayList &quadruplets);
+
+    private:
         CrossRatioTupleSet collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam);
 
         StringList fileList;

@@ -10,7 +10,7 @@ namespace meshac {
 
     class WorstSingularValueVarianceEstimator : public Point3DVarianceEstimator {
     public:
-        WorstSingularValueVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points);
+        WorstSingularValueVarianceEstimator(PointAccuracyModelPtr accuracyModel, GLMVec3List &points);
         virtual ~WorstSingularValueVarianceEstimator();
 
     protected:

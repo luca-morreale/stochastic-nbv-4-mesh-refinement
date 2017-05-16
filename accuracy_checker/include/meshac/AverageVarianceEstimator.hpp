@@ -10,7 +10,7 @@ namespace meshac {
 
     class AverageVarianceEstimator : public Point3DVarianceEstimator {
     public:
-        AverageVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points);
+        AverageVarianceEstimator(PointAccuracyModelPtr accuracyModel, GLMVec3List &points);
         virtual ~AverageVarianceEstimator();
 
     protected:

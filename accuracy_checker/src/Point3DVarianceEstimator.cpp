@@ -3,7 +3,7 @@
 
 namespace meshac {
 
-    Point3DVarianceEstimator::Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points)
+    Point3DVarianceEstimator::Point3DVarianceEstimator(PointAccuracyModelPtr accuracyModel, GLMVec3List &points)
     {
         this->accuracyModel = accuracyModel;
         this->points = points;
@@ -73,12 +73,12 @@ namespace meshac {
     }
 
 
-    void Point3DVarianceEstimator::setAccuracyModel(AccuracyModelPtr accuracyModel)
+    void Point3DVarianceEstimator::setAccuracyModel(PointAccuracyModelPtr accuracyModel)
     {
         this->accuracyModel = accuracyModel;
     }
 
-    AccuracyModelPtr Point3DVarianceEstimator::getAccuracyModel()
+    PointAccuracyModelPtr Point3DVarianceEstimator::getAccuracyModel()
     {
         return this->accuracyModel;
     }

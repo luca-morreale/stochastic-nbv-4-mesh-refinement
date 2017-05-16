@@ -3,7 +3,8 @@
 
 namespace meshac {
 
-    WorstEigenvalueVarianceEstimator::WorstEigenvalueVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points) : Point3DVarianceEstimator(accuracyModel, points)
+    WorstEigenvalueVarianceEstimator::WorstEigenvalueVarianceEstimator(PointAccuracyModelPtr accuracyModel, GLMVec3List &points)
+                                                             : Point3DVarianceEstimator(accuracyModel, points)
     { /*    */ }
     
     WorstEigenvalueVarianceEstimator::~WorstEigenvalueVarianceEstimator()

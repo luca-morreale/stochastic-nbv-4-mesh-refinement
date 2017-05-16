@@ -3,7 +3,8 @@
 
 namespace meshac {
 
-    WorstTraceVarianceEstimator::WorstTraceVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points) : Point3DVarianceEstimator(accuracyModel, points)
+    WorstTraceVarianceEstimator::WorstTraceVarianceEstimator(PointAccuracyModelPtr accuracyModel, GLMVec3List &points) 
+                                                                : Point3DVarianceEstimator(accuracyModel, points)
     { /*    */ }
     
     WorstTraceVarianceEstimator::~WorstTraceVarianceEstimator()

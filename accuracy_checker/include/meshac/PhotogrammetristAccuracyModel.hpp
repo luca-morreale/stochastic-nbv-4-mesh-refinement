@@ -3,14 +3,14 @@
 
 #include <realtimeMR/SfMData.h>
 
-#include <meshac/AccuracyModel.hpp>
+#include <meshac/PointAccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
 #include <meshac/ImagePointVarianceEstimator.hpp>
 #include <meshac/InvalidUpdateException.hpp>
 
 namespace meshac {
     
-    class PhotogrammetristAccuracyModel : public AccuracyModel {
+    class PhotogrammetristAccuracyModel : public PointAccuracyModel {
     public:
         PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMVec2ArrayList &camObservations,
                                         ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);

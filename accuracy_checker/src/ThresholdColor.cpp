@@ -31,6 +31,7 @@ namespace meshac {
     Color ThresholdColor::getColorFor(double targetAccuracy)
     {
         int index = this->getIndexForAccuracy(targetAccuracy) - 1;
+        std::cout << "acc " << targetAccuracy << " index " << index << std::endl;
         return this->colors[index].second;
     }
 

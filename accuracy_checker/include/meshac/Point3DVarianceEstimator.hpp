@@ -5,7 +5,7 @@
 #include <glm/gtc/epsilon.hpp>
 
 #include <meshac/alias_definition.hpp>
-#include <meshac/AccuracyModel.hpp>
+#include <meshac/PointAccuracyModel.hpp>
 #include <meshac/meshac_type_definition.hpp>
 
 
@@ -13,7 +13,7 @@ namespace meshac {
 
     class Point3DVarianceEstimator {
     public:
-        Point3DVarianceEstimator(AccuracyModelPtr accuracyModel, GLMVec3List &points);
+        Point3DVarianceEstimator(PointAccuracyModelPtr accuracyModel, GLMVec3List &points);
         virtual ~Point3DVarianceEstimator();
 
         virtual EigMatrix computeVariaceMatrixForPoint(GLMVec3 &point);
@@ -30,8 +30,8 @@ namespace meshac {
         /*
          * Setter and getter for the accuracy model used.
          */
-        void setAccuracyModel(AccuracyModelPtr accuracyModel);
-        AccuracyModelPtr getAccuracyModel();
+        void setAccuracyModel(PointAccuracyModelPtr accuracyModel);
+        PointAccuracyModelPtr getAccuracyModel();
 
         /*
          * Setter and getter for the 3D points.
@@ -49,7 +49,7 @@ namespace meshac {
         virtual double computeVarianceFromMatrix(EigMatrix &varianceMatrix) = 0;
 
     private:
-        AccuracyModelPtr accuracyModel;
+        PointAccuracyModelPtr accuracyModel;
         GLMVec3List points;
 
         const GLMVec3 EPSILON = GLMVec3(SENSIBILITY);

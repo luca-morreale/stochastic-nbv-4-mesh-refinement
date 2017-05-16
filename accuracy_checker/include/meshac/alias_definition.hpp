@@ -6,7 +6,8 @@
 
 #include <glm/glm.hpp>
 
-#include <opencv/cv.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/line_descriptor/descriptor.hpp>
 
 #include <map>
 #include <set>

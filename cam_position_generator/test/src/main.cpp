@@ -368,9 +368,9 @@ int main(int argc, char **argv) {
     for (auto cam : sfm_data_.camerasList_) {
         cams.push_back(cam.center);
     }
-    //opview::OptimalViewEstimator *estimator = new opview::SimpleConstrainedAngleViewEstimator(cams);
+    opview::OptimalViewEstimator *estimator = new opview::SimpleConstrainedAngleViewEstimator(cams);
     //opview::OptimalViewEstimator *estimator = new opview::VonMisesViewEstimator(cams);
-    opview::OptimalViewEstimator *estimator = new opview::AngleDistanceViewEstimator(cams);
+    //opview::OptimalViewEstimator *estimator = new opview::AngleDistanceViewEstimator(cams);
 
     std::vector<Delaunay3::Cell_handle> vect(cellSet.begin(), cellSet.end());
     //std::cout << "vector size " << vect.size() << std::endl;

@@ -5,6 +5,13 @@
 namespace meshac {
 
     const float SENSIBILITY = 0.001f;
+
+    struct Face {
+        FaceVertices face;
+        PointD3 oppositeVertex;
+    };
+
+    typedef std::vector<Face> FaceList;
     
 } // namesace meshac
 

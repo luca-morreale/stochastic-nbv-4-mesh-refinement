@@ -5,7 +5,7 @@
 
 namespace meshac {
     
-    class AccuracyModel {
+    class PointAccuracyModel {
     public:
 
         /*
@@ -21,7 +21,7 @@ namespace meshac {
     };
 
 
-    typedef AccuracyModel * AccuracyModelPtr;
+    typedef PointAccuracyModel * PointAccuracyModelPtr;
 
 
 

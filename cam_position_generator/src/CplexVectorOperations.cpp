@@ -81,7 +81,7 @@ namespace opview {
     {
         IloExpr exp(env);
         for (int i = 0; i < v.size(); i++) {
-            exp += IloSquare(v[i]);
+            exp += v[i] * v[i];
         }
         return exp;
     }
@@ -90,7 +90,7 @@ namespace opview {
     {
         IloExpr exp(env);
         for (int i = 0; i < v.size(); i++) {
-            exp += IloSquare(v[i]);
+            exp += v[i] * v[i];
         }
         return exp;
     }
@@ -99,7 +99,7 @@ namespace opview {
     {
         IloExpr exp(env);
         for (int i = 0; i < 3; i++) {
-            exp += IloSquare(v[i]);
+            exp += v[i] * v[i];
         }
         return exp;
     }
@@ -119,7 +119,7 @@ namespace opview {
     {
         IloExpr distance(env);
         for (int i = 0; i < a.size(); i++) {
-            distance += IloSquare(a[i] - b[i]);
+            distance += (a[i] - b[i]) * (a[i] - b[i]);
         }
         return distance;
     }
@@ -128,7 +128,7 @@ namespace opview {
     {
         IloExpr distance(env);
         for (int i = 0; i < a.size(); i++) {
-            distance += IloSquare(a[i] - b[i]);
+            distance += (a[i] - b[i]) * (a[i] - b[i]);
         }
         return distance;
     }

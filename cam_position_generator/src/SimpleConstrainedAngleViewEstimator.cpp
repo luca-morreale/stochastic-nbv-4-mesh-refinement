@@ -18,7 +18,11 @@ namespace opview {
 
         //return IloSquare(numerator) / denominator;
         //return IloSquare(numerator);
-        return numerator;
+        return numerator * numerator;
+
+        //return goalPoint[0] * goalPoint[0] / (goalPoint[1] * goalPoint[1]);
     }
+
+
 
 } // namespace opview

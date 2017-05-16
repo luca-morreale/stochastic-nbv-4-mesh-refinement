@@ -64,7 +64,7 @@ namespace meshac {
         CrossRatioTupleSet tuples;
         GLMVec2List points2D = this->camObservations[camIndex];
 
-        if (!enoughPoints(points2D)) return CrossRatioTupleSet();
+        if (!enoughPoints(points2D.size())) return CrossRatioTupleSet();
 
         this->fillQuadruplets(camIndex, points2D, quadruplets);
         
@@ -120,9 +120,9 @@ namespace meshac {
         return tuples;
     }
 
-    bool CRTuplesGenerator::enoughPoints(GLMVec2List &points2D)
+    bool CRTuplesGenerator::enoughPoints(unsigned int size)
     {
-        return points2D.size() < MIN_NUM_POINTS_IN_IMAGE;
+        return size > MIN_NUM_POINTS_IN_IMAGE;
     }
 
     void CRTuplesGenerator::fillQuadruplets(int camIndex, GLMVec2List &points2D, IntArrayList &quadruplets)

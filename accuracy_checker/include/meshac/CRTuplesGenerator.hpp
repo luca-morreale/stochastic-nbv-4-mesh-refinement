@@ -70,7 +70,7 @@ namespace meshac {
         virtual void fillQuadruplets(int camIndex, GLMVec2List &points2D, IntArrayList &quadruplets);
 
         virtual CrossRatioTupleSet createsTuples(IntArrayList &combos, IntList &pointSet, GLMVec2List &points2D);
-        virtual bool enoughPoints(GLMVec2List &points2D);
+        virtual bool enoughPoints(unsigned int size);
 
         virtual void computeEdges(int camIndex, CVMat &edges);
         virtual void extractSegmentsFromEdges(CVMat &edges, CVSegmentList &segments);

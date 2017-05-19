@@ -6,6 +6,8 @@
 
 #include <glm/gtx/norm.hpp>
 
+#include <opengm/inference/inference.hxx>
+
 #include <opview/type_definition.h>
 
 namespace opview {
@@ -23,7 +25,10 @@ namespace opview {
 
     protected:
 
-        virtual void buildModel(GraphicalModelAdder &model, GMExplicitFunction &vonMises, GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual LabelList extractResults(AdderInferencePtr algorithm);
+        virtual AdderInferencePtr getOptimizerAlgorithm(GraphicalModelAdder &model);
+
+        virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void fillConstraintFunction(GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3 &centroid);
         virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 point, GLMVec3 &cam, GLMVec3 &centroid);
@@ -41,15 +46,15 @@ namespace opview {
 
         const int numVariables = 3;
         std::vector<size_t> variableIndices;
-        const int numLabels = 200;
+        const int numLabels = 100;
         std::vector<size_t> shape;
 
         const int startX = 0;
-        const int endX = 200;
+        const int endX = 100;
         const int startY = 0;
-        const int endY = 200;
+        const int endY = 100;
         const int startZ = 0;
-        const int endZ = 200;
+        const int endZ = 100;
 
         void initShapes();
         void addFunctionTo(GMExplicitFunction &fun, GraphicalModelAdder &model);

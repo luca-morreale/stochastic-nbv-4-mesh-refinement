@@ -29,17 +29,8 @@ namespace opview {
         SimpleSpace space(numVariables, numLabels);
         GraphicalModelAdder model(space);
 
-        GMExplicitFunction vonMises(shape.begin(), shape.end());
-        GMSparseFunction constraints(shape.begin(), shape.end(), -10.0);
-        GMSparseFunction distances(shape.begin(), shape.end(), -100.0);
+        this->fillModel(model, centroid, normVector);
 
-        buildModel(model, vonMises, constraints, distances, centroid, normVector);
-
-        LabelList startPoint(numVariables);
-        for (int i = 0; i < numVariables; i++) {
-            startPoint[i] = static_cast<LabelType>(std::rand()) / RAND_MAX + 1;
-            std::cout << "startPoint[i]: " << startPoint[i] << std::endl;
-        }
 
         //MinAlphaExpansion algorithm(model); // OpenGM error: This implementation of Alpha-Expansion supports only factors of order <= 2
         //MinAlphaBetaSwap algorithm(model); // OpenGM error: This implementation of Alpha-Beta-Swap supports only factors of order <= 2.
@@ -48,12 +39,6 @@ namespace opview {
         //ICM::Parameter para(startPoint);
         //ICM algorithm(model, para);
         //algorithm.infer();
-
-        size_t maxSubgraphSize = 1; // works only if it is 1
-
-        LazyFlipper::Parameter para(maxSubgraphSize, startPoint.begin(), startPoint.end());
-        LazyFlipper algorithm(model, para);
-        algorithm.infer();
 
         /*
         const std::string solver="ad3",
@@ -89,20 +74,51 @@ namespace opview {
         //algorithm.setStartingPoint(startPoint.begin());
         // optimize (approximately)
         algorithm.infer();
-        */        
+        */
 
+        AdderInferencePtr algorithm = this->getOptimizerAlgorithm(model);
+        algorithm->infer();
+
+        LabelList x = this->extractResults(algorithm);
+    }
+
+    LabelList GraphicalModelBuilder::extractResults(AdderInferencePtr algorithm)
+    {
         LabelList x;
-        algorithm.arg(x);
-        std::cout << algorithm.value() << std::endl;
+        algorithm->arg(x);
+        
+        std::cout << algorithm->value() << std::endl;
+        
         for (size_t j = 0; j < x.size(); ++j) {
             std::cout << x[j] << ' ';
         }
+        
         std::cout << std::endl;
-
+        return x;
     }
 
-    void GraphicalModelBuilder::buildModel(GraphicalModelAdder &model, GMExplicitFunction &vonMises, GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3 &centroid, GLMVec3 &normVector)
+    AdderInferencePtr GraphicalModelBuilder::getOptimizerAlgorithm(GraphicalModelAdder &model)
     {
+        size_t maxSubgraphSize = 1; // works only if it is 1
+
+        LabelList startPoint(numVariables);
+        for (int i = 0; i < numVariables; i++) {
+            startPoint[i] = static_cast<LabelType>(std::rand()) / RAND_MAX;
+            std::cout << "startPoint[" << i << " ]: " << startPoint[i] << std::endl;
+        }
+
+        LazyFlipperParameter para(maxSubgraphSize, startPoint.begin(), startPoint.end());
+        LazyFlipperPtr algorithm = new LazyFlipper(model, para);
+
+        return algorithm;
+    }
+
+    void GraphicalModelBuilder::fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector)
+    {
+        GMExplicitFunction vonMises(shape.begin(), shape.end());
+        GMSparseFunction constraints(shape.begin(), shape.end(), -10.0);
+        GMSparseFunction distances(shape.begin(), shape.end(), -100.0);
+
         fillObjectiveFunction(vonMises, centroid, normVector);
         addFunctionTo(vonMises, model);
         
@@ -115,9 +131,9 @@ namespace opview {
     {
         #pragma omp parallel for collapse(3)
         coordinatecycles(startX, endX, startY, endY, startZ, endZ) {
-            double xd = static_cast<double>(x) * 0.25 + 0.25;
-            double yd = static_cast<double>(y) * 0.25 + 0.25;
-            double zd = static_cast<double>(z) * 0.25 + 0.25;
+            double xd = static_cast<double>(x) * 0.01 + 0.01;
+            double yd = static_cast<double>(y) * 0.01 + 0.01;
+            double zd = static_cast<double>(z) * 0.01 + 0.01;
             LabelType val = logVonMises(GLMVec3(xd, yd, zd), centroid, normVector, &vonMisesConfig);
             #pragma omp critical
             vonMises(xd, yd, zd) = val;
@@ -129,9 +145,9 @@ namespace opview {
         for (GLMVec3 cam : cams) {
             #pragma omp parallel for collapse(3)
             coordinatecycles(startX, endX, startY, endY, startZ, endZ) {
-                double xd = static_cast<double>(x) * 0.25 + 0.25;
-                double yd = static_cast<double>(y) * 0.25 + 0.25;
-                double zd = static_cast<double>(z) * 0.25 + 0.25;
+                double xd = static_cast<double>(x) * 0.01 + 0.01;
+                double yd = static_cast<double>(y) * 0.01 + 0.01;
+                double zd = static_cast<double>(z) * 0.01 + 0.01;
                 addValueToConstraintFunction(constraints, GLMVec3(xd, yd, zd), cam, centroid);
             }
             LabelType vals[] = {cam.x, cam.y, cam.z};

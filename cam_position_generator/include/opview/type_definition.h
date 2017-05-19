@@ -32,6 +32,7 @@ namespace opview {
     typedef size_t VariableIndexType;
 
     typedef std::vector<LabelType> LabelList;
+    typedef std::vector<size_t> VarIndexList;
 
 
     typedef opengm::SimpleDiscreteSpace<VariableIndexType, LabelType> SimpleSpace;
@@ -49,6 +50,7 @@ namespace opview {
     typedef GraphicalModelMultiplier * GraphicalModelMultiplierPtr;
 
     typedef opengm::Inference<GraphicalModelAdder, opengm::Maximizer> AdderInference;
+    typedef opengm::Inference<GraphicalModelMultiplier, opengm::Maximizer> MultiplierInference;
     typedef opengm::external::MinSTCutKolmogorov<size_t, double> MinStCutType;
     typedef opengm::GraphCut<GraphicalModelAdder, opengm::Maximizer, MinStCutType> MinGraphCut;
     typedef opengm::AlphaExpansion<GraphicalModelAdder, MinGraphCut> MinAlphaExpansion;
@@ -60,6 +62,7 @@ namespace opview {
 
 
     typedef AdderInference* AdderInferencePtr;
+    typedef MultiplierInference* MultiplierInferencePtr;
     typedef MinAlphaExpansion* MinAlphaExpansionPtr;
     typedef MinAlphaBetaSwap* MinAlphaBetaSwapPtr;
     typedef ICM* ICMPtr;

@@ -48,13 +48,24 @@ namespace opview {
     typedef GraphicalModelAdder * GraphicalModelAdderPtr;
     typedef GraphicalModelMultiplier * GraphicalModelMultiplierPtr;
 
+    typedef opengm::Inference<GraphicalModelAdder, opengm::Maximizer> AdderInference;
     typedef opengm::external::MinSTCutKolmogorov<size_t, double> MinStCutType;
     typedef opengm::GraphCut<GraphicalModelAdder, opengm::Maximizer, MinStCutType> MinGraphCut;
     typedef opengm::AlphaExpansion<GraphicalModelAdder, MinGraphCut> MinAlphaExpansion;
     typedef opengm::AlphaBetaSwap<GraphicalModelAdder, MinGraphCut> MinAlphaBetaSwap;
     typedef opengm::ICM<GraphicalModelAdder, opengm::Maximizer> ICM;
     typedef opengm::LazyFlipper<GraphicalModelAdder, opengm::Maximizer> LazyFlipper;
+    typedef LazyFlipper::Parameter LazyFlipperParameter;
     typedef opengm::LOC<GraphicalModelAdder, opengm::Maximizer> LOC;
+
+
+    typedef AdderInference* AdderInferencePtr;
+    typedef MinAlphaExpansion* MinAlphaExpansionPtr;
+    typedef MinAlphaBetaSwap* MinAlphaBetaSwapPtr;
+    typedef ICM* ICMPtr;
+    typedef LazyFlipper* LazyFlipperPtr;
+    typedef LOC* LOCPtr;
+
 
 
     typedef struct VonMisesConfiguration {

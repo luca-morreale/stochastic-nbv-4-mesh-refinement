@@ -2,6 +2,12 @@
 #define CAM_POSITION_GENERATOR_ALIAS_DEFINITION_H
 
 #include <CGAL/Vector_3.h>
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
+#include <CGAL/AABB_face_graph_triangle_primitive.h>
+#include <CGAL/AABB_triangle_primitive.h>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -43,6 +49,12 @@ namespace opview {
     typedef K::Direction_3 CGALDirection;
     typedef K::Vector_3 CGALVec3;
     typedef std::vector<CGALVec3> CGALVec3List;
+
+    typedef K::Ray_3 Ray;
+    typedef std::vector<Triangle>::iterator Iterator;
+    typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
+    typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
+    typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
 
     typedef std::vector<IloNumVar> IloNumVarList;
     typedef std::vector<IloNum> IloNumList;

@@ -68,8 +68,7 @@ namespace opview {
     typedef ICM* ICMPtr;
     typedef LazyFlipper* LazyFlipperPtr;
     typedef LOC* LOCPtr;
-
-
+    
 
     typedef struct VonMisesConfiguration {
         double goalAngle;

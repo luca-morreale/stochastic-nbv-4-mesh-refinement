@@ -39,7 +39,7 @@ namespace opview {
         #pragma omp parallel for collapse(3)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-            LabelType val = logVonMises(pos, centroid, normVector, &vonMisesConfig);
+            LabelType val = logVonMises(pos, centroid, normVector);
             #pragma omp critical
             vonMises(pos[0], pos[1], pos[2]) = val;
         }
@@ -81,30 +81,35 @@ namespace opview {
         return scaledPoint + offset;
     }
     
-    LabelType BasicGraphicalModel::logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfigurationPtr config)
+    LabelType BasicGraphicalModel::logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         GLMVec3 v = point - centroid;
-        return logVonMises(v, normalVector, config);
+        return logVonMises(v, normalVector);
     }
 
-    LabelType BasicGraphicalModel::logVonMises(GLMVec3 &v, GLMVec3 &normalVector, VonMisesConfigurationPtr config)
+    LabelType BasicGraphicalModel::logVonMises(GLMVec3 &v, GLMVec3 &normalVector)
     { 
         double dotProduct = glm::dot(normalVector, v);
         double normProduct = glm::l2Norm(normalVector) * glm::l2Norm(v);
         double angle = dotProduct / normProduct;
  
-        return logVonMises(angle, config);
+        return logVonMises(angle);
     }
 
-    LabelType BasicGraphicalModel::logVonMises(double angle, VonMisesConfigurationPtr config)
+    LabelType BasicGraphicalModel::logVonMises(double angle)
     { 
-        return std::cos(angle - config->goalAngle) * config->dispersion - std::log(2 * M_PI) - logBessel0(config->dispersion); 
+        return std::cos(angle - vonMisesConfig.goalAngle) * vonMisesConfig.dispersion - std::log(2 * M_PI) - logBessel0(vonMisesConfig.dispersion); 
     }
 
     LabelType BasicGraphicalModel::logBessel0(double k)   // log of I0(x) as approximately x − 1/2 log(2 *pi * x)     https://math.stackexchange.com/questions/376758/exponential-approximation-of-the-modified-bessel-function-of-first-kind-equatio 
     { 
         double logArg = 2.0f * M_PI * k; 
         return k - 0.5f * std::log(logArg);
+    }
+
+    VonMisesConfigurationPtr BasicGraphicalModel::vonMisesConfiguration()
+    {
+        return &vonMisesConfig;
     }
 
     size_t BasicGraphicalModel::numVariables()

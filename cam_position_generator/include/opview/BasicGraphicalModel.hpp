@@ -27,9 +27,9 @@ namespace opview {
         virtual void fillConstraintFunction(GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3 &centroid);
         virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid);
 
-        virtual LabelType logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfigurationPtr config);
-        virtual LabelType logVonMises(GLMVec3 &v, GLMVec3 &normalVector, VonMisesConfigurationPtr config);
-        virtual LabelType logVonMises(double angle, VonMisesConfigurationPtr config);
+        virtual LabelType logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector);
+        virtual LabelType logVonMises(GLMVec3 &v, GLMVec3 &normalVector);
+        virtual LabelType logVonMises(double angle);
         virtual LabelType logBessel0(double K);
 
         virtual GLMVec3 scalePoint(GLMVec3 point);
@@ -37,6 +37,7 @@ namespace opview {
         void initShapes();
         virtual size_t numVariables();
         virtual size_t numLabels();
+        virtual VonMisesConfigurationPtr vonMisesConfiguration();
         
         std::function<float()> scale = [this](){ return 2.0 / (float)numLabels(); };
         std::function<float()> offsetX = [](){ return -1.0; };

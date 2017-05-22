@@ -12,8 +12,8 @@ namespace opview {
         SolverGenerator() { /*    */ }
         ~SolverGenerator() { /*    */ }
 
-        virtual AdderInferencePtr getOptimizerAlgorithm(GraphicalModelAdder &model, size_t numVariables) = 0;
-        virtual MultiplierInferencePtr getOptimizerAlgorithm(GraphicalModelMultiplier &model, size_t numVariables) = 0;
+        virtual AdderInferencePtr getOptimizerAlgorithm(GraphicalModelAdder &model, LabelList currentOptimal, size_t numVariables) = 0;
+        virtual MultiplierInferencePtr getOptimizerAlgorithm(GraphicalModelMultiplier &model, LabelList currentOptimal, size_t numVariables) = 0;
 
     protected:
         LabelList genStartPoint(size_t numVariables);

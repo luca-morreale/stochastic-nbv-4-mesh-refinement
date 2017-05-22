@@ -11,7 +11,6 @@
 
 namespace opview {
 
-
     #define coordinatecycles(X0, Xn, Y0, Yn, Z0, Zn) for(int x = X0; x < Xn; x++) for(int y = Y0; y < Yn; y++) for(int z = Z0; z < Zn; z++)
 
     #define LABELS 100

@@ -2,21 +2,21 @@
 
 namespace opview {
     
-    AdderInferencePtr FlipperSolverGenerator::getOptimizerAlgorithm(GraphicalModelAdder &model, size_t numVariables)
+    AdderInferencePtr FlipperSolverGenerator::getOptimizerAlgorithm(GraphicalModelAdder &model, LabelList currentOptimal, size_t numVariables)
     {
-        size_t maxSubgraphSize = 1; // works only if it is 1
+        size_t maxSubgraphSize = 3; // works only if it is 1
 
-        LabelList startPoint = genStartPoint(numVariables);
+        LabelList startPoint = (currentOptimal.size() > 0) ? currentOptimal : genStartPoint(numVariables);
         LazyFlipperParameter para(maxSubgraphSize, startPoint.begin(), startPoint.end());
         LazyFlipperPtr algorithm = new LazyFlipper(model, para);
         return algorithm;
     }
     
-    MultiplierInferencePtr FlipperSolverGenerator::getOptimizerAlgorithm(GraphicalModelMultiplier &model, size_t numVariables)
+    MultiplierInferencePtr FlipperSolverGenerator::getOptimizerAlgorithm(GraphicalModelMultiplier &model, LabelList currentOptimal, size_t numVariables)
     {
         size_t maxSubgraphSize = 1; // works only if it is 1
 
-        LabelList startPoint = genStartPoint(numVariables);
+        LabelList startPoint = (currentOptimal.size() > 0) ? currentOptimal : genStartPoint(numVariables);
         LazyFlipperParameter para(maxSubgraphSize, startPoint.begin(), startPoint.end());
         //LazyFlipperPtr algorithm = new LazyFlipper(model, para);
 

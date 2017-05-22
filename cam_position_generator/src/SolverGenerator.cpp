@@ -2,7 +2,7 @@
 
 namespace opview {
 
-    LabelList SolverGenerator::genStartPoint(size_t numVariables)   // FIXME point shoudl start from bounding box
+    LabelList SolverGenerator::genStartPoint(size_t numVariables)   // FIXME point should start from bounding box
     {
         LabelList startPoint(numVariables);
         for (int i = 0; i < numVariables; i++) {

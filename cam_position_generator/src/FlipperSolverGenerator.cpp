@@ -12,7 +12,7 @@ namespace opview {
         return algorithm;
     }
     
-    MultiplierInferencePtr FlipperSolverGenerator::getOptimizerAlgorithm(GraphicalModelMultiplier &model, LabelList currentOptimal, size_t numVariables)
+    /*MultiplierInferencePtr FlipperSolverGenerator::getOptimizerAlgorithm(GraphicalModelMultiplier &model, LabelList currentOptimal, size_t numVariables)
     {
         size_t maxSubgraphSize = 1; // works only if it is 1
 
@@ -21,6 +21,6 @@ namespace opview {
         //LazyFlipperPtr algorithm = new LazyFlipper(model, para);
 
         return NULL;
-    }
+    }*/
 
 } // namespace opview

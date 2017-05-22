@@ -19,7 +19,7 @@ namespace opview {
     
     class BasicGraphicalModel : public GraphicalModelBuilder {
     public:
-        BasicGraphicalModel(SolverGeneratorPtr solver, GLMVec3List &cams, double goalAngle = 45, double dispersion = 1);
+        BasicGraphicalModel(SolverGeneratorPtr solver, GLMVec3List &cams, double goalAngle=45, double dispersion=1);
         ~BasicGraphicalModel();
 
     protected:
@@ -29,15 +29,21 @@ namespace opview {
         virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid);
 
         virtual LabelType logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfigurationPtr config);
-        virtual LabelType logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfigurationPtr config);
         virtual LabelType logVonMises(GLMVec3 &v, GLMVec3 &normalVector, VonMisesConfigurationPtr config);
         virtual LabelType logVonMises(double angle, VonMisesConfigurationPtr config);
         virtual LabelType logBessel0(double K);
+
+        virtual GLMVec3 scalePoint(GLMVec3 point);
         
         void initShapes();
-
         virtual size_t numVariables();
         virtual size_t numLabels();
+        // virtual double scale();
+
+        std::function<double()> scale = [this](){ return 2.0 / (double)numLabels(); };
+        std::function<double()> offsetX = [](){ return -1.0; };
+        std::function<double()> offsetY = [](){ return -1.0; };
+        std::function<double()> offsetZ = [](){ return -1.0; };
 
         std::vector<size_t> variableIndices;
         std::vector<size_t> shape;
@@ -45,14 +51,6 @@ namespace opview {
     private:
         GLMVec3List cams;
         VonMisesConfiguration vonMisesConfig;
-
-        const int startX = 0;
-        const int endX = LABELS;
-        const int startY = 0;
-        const int endY = LABELS;
-        const int startZ = 0;
-        const int endZ = LABELS;
-
     };
 
 

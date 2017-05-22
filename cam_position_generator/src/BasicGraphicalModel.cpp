@@ -37,11 +37,11 @@ namespace opview {
     void BasicGraphicalModel::fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector)
     {
         #pragma omp parallel for collapse(3)
-        coordinatecycles(startX, endX, startY, endY, startZ, endZ) {
+        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
             LabelType val = logVonMises(pos, centroid, normVector, &vonMisesConfig);
             #pragma omp critical
-            vonMises(xd, yd, zd) = val;
+            vonMises(pos[0], pos[1], pos[2]) = val;
         }
     }
 
@@ -49,7 +49,7 @@ namespace opview {
     {
         for (GLMVec3 cam : cams) {
             #pragma omp parallel for collapse(3)
-            coordinatecycles(startX, endX, startY, endY, startZ, endZ) {
+            coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
                 GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
                 addValueToConstraintFunction(constraints, pos, cam, centroid);
             }
@@ -62,7 +62,7 @@ namespace opview {
     {
         double B = glm::distance(point, cam);
         
-        GLMVec3 midPoint = (point + cam) / 2.0f;
+        GLMVec3 midPoint = (point + cam) / 2.0;
         GLMVec3 center = GLMVec3(centroid[0], centroid[1], centroid[2]);
 
         double D = glm::distance(midPoint, center);
@@ -76,8 +76,8 @@ namespace opview {
 
     GLMVec3 BasicGraphicalModel::scalePoint(GLMVec3 point)
     {
-        GLMVec3 scaledPoint = point * scale;
-        GLMVec3 offset = GLMVec3(minSquareX, minSquareY, minSquareZ);
+        GLMVec3 scaledPoint = point * scale();
+        GLMVec3 offset = GLMVec3(offsetX(), offsetY(), offsetZ());
         return scaledPoint + offset;
     }
     
@@ -85,12 +85,6 @@ namespace opview {
     {
         GLMVec3 v = point - centroid;
         return logVonMises(v, normalVector, config);
-    }
-
-    LabelType BasicGraphicalModel::logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfigurationPtr config)
-    {
-        GLMVec3 v = point - centroid;
-        return logVonMises(v, normalVector,config);
     }
 
     LabelType BasicGraphicalModel::logVonMises(GLMVec3 &v, GLMVec3 &normalVector, VonMisesConfigurationPtr config)
@@ -121,6 +115,6 @@ namespace opview {
     size_t BasicGraphicalModel::numLabels()
     {
         return LABELS;
-    }
+    }    
 
 } // namespace opview

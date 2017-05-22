@@ -40,7 +40,7 @@ namespace opview {
             std::cout << x[j] << ' ';
         }
         
-        std::cout << std::endl;
+        std::cout << std::endl << std::endl;
         return x;
     }
 

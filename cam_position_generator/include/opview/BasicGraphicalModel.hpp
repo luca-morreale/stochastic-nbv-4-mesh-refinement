@@ -38,12 +38,11 @@ namespace opview {
         void initShapes();
         virtual size_t numVariables();
         virtual size_t numLabels();
-        // virtual double scale();
-
-        std::function<double()> scale = [this](){ return 2.0 / (double)numLabels(); };
-        std::function<double()> offsetX = [](){ return -1.0; };
-        std::function<double()> offsetY = [](){ return -1.0; };
-        std::function<double()> offsetZ = [](){ return -1.0; };
+        
+        std::function<float()> scale = [this](){ return 2.0 / (float)numLabels(); };
+        std::function<float()> offsetX = [](){ return -1.0; };
+        std::function<float()> offsetY = [](){ return -1.0; };
+        std::function<float()> offsetZ = [](){ return -1.0; };
 
         std::vector<size_t> variableIndices;
         std::vector<size_t> shape;

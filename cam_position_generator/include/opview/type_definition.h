@@ -28,7 +28,7 @@ namespace opview {
 
     typedef std::vector<Face> FaceList;
 
-    typedef double LabelType;
+    typedef float LabelType;
     typedef size_t VariableIndexType;
 
     typedef std::vector<LabelType> LabelList;

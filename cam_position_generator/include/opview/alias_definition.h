@@ -19,7 +19,7 @@
 namespace opview {
 
     /* Shortcuts for GLM types */
-    typedef glm::dvec3 GLMVec3;
+    typedef glm::vec3 GLMVec3;
     typedef std::vector<GLMVec3> GLMVec3List;
 
     /* Shortcuts for Eigen types */

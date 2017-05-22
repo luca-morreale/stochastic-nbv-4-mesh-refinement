@@ -62,7 +62,7 @@ namespace opview {
     {
         double B = glm::distance(point, cam);
         
-        GLMVec3 midPoint = (point + cam) / 2.0;
+        GLMVec3 midPoint = (point + cam) / 2.0f;
         GLMVec3 center = GLMVec3(centroid[0], centroid[1], centroid[2]);
 
         double D = glm::distance(midPoint, center);

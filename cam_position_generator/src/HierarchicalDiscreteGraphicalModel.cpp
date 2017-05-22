@@ -33,23 +33,23 @@ namespace opview {
 
     void HierarchicalDiscreteGraphicalModel::reduceScale(LabelList currentOptimal)
     {
-        double currentScale = scale();
-        double half_size = scale() / 2.0;
+        float currentScale = scale();
+        float half_size = scale() / 2.0f;
 
         offsetX = [currentOptimal, half_size](){ return currentOptimal[0] - half_size; };
         offsetY = [currentOptimal, half_size](){ return currentOptimal[1] - half_size; };
         offsetZ = [currentOptimal, half_size](){ return currentOptimal[2] - half_size; };
 
-        scale = [currentScale, this](){ return currentScale / (double)numLabels(); };
+        scale = [currentScale, this](){ return currentScale / (float)numLabels(); };
     }
 
     void HierarchicalDiscreteGraphicalModel::resetPosition()
     {
-        scale = [this](){ return (double)ORIGINAL_SIDE_SIZE / (double)numLabels(); };
+        scale = [this](){ return (float)ORIGINAL_SIDE_SIZE / (float)numLabels(); };
 
-        offsetX = [](){ return (double)MIN_COORDINATE; };
-        offsetY = [](){ return (double)MIN_COORDINATE; };
-        offsetZ = [](){ return (double)MIN_COORDINATE; };
+        offsetX = [](){ return (float)MIN_COORDINATE; };
+        offsetY = [](){ return (float)MIN_COORDINATE; };
+        offsetZ = [](){ return (float)MIN_COORDINATE; };
     }
 
     size_t HierarchicalDiscreteGraphicalModel::numVariables()

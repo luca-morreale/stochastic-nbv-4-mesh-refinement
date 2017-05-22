@@ -23,7 +23,7 @@ namespace opview {
 
         this->fillModel(model, centroid, normVector);
 
-        AdderInferencePtr algorithm = solver->getOptimizerAlgorithm(model, numVariables());
+        AdderInferencePtr algorithm = solver->getOptimizerAlgorithm(model, LabelList(), numVariables());
         algorithm->infer();
 
         LabelList x = this->extractResults(algorithm);

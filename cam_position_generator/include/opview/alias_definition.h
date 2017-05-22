@@ -19,8 +19,11 @@
 namespace opview {
 
     /* Shortcuts for GLM types */
+    typedef glm::vec2 GLMVec2;
     typedef glm::vec3 GLMVec3;
+    typedef glm::vec4 GLMVec4;
     typedef std::vector<GLMVec3> GLMVec3List;
+    typedef glm::mat4 CameraMatrix;
 
     /* Shortcuts for Eigen types */
     typedef Eigen::Matrix<float, 5, 1> EigVector5;

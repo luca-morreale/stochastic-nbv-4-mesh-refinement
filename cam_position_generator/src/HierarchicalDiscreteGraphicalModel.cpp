@@ -2,11 +2,12 @@
 
 namespace opview {
 
-    HierarchicalDiscreteGraphicalModel::HierarchicalDiscreteGraphicalModel(SolverGeneratorPtr solver, size_t depth, GLMVec3List &cams, 
-                                                                            double goalAngle, double dispersion)
+    HierarchicalDiscreteGraphicalModel::HierarchicalDiscreteGraphicalModel(SolverGeneratorPtr solver, size_t depth, size_t labels,
+                                                                            GLMVec3List &cams, double goalAngle, double dispersion)
                                                                             : BasicGraphicalModel(solver, cams, goalAngle, dispersion)
     {
-        this->depth = depth; 
+        this->depth = depth;
+        this->labels = labels;
     }
 
     HierarchicalDiscreteGraphicalModel::~HierarchicalDiscreteGraphicalModel()
@@ -16,31 +17,32 @@ namespace opview {
     {
         this->resetPosition();
 
+        LabelList currentOptimal;
         for (int d = 0; d < this->depth; d++) {
             SimpleSpace space(numVariables(), numLabels());
             GraphicalModelAdder model(space);
 
             this->fillModel(model, centroid, normVector);
 
-            AdderInferencePtr algorithm = solverGenerator()->getOptimizerAlgorithm(model, numVariables());
+            AdderInferencePtr algorithm = solverGenerator()->getOptimizerAlgorithm(model, currentOptimal, numVariables());
             algorithm->infer();
 
-            LabelList x = this->extractResults(algorithm);
-
-            this->reduceScale(x);
+            currentOptimal = this->extractResults(algorithm);
+            this->reduceScale(currentOptimal);
         }
     }
 
     void HierarchicalDiscreteGraphicalModel::reduceScale(LabelList currentOptimal)
     {
         float currentScale = scale();
-        float half_size = scale() / 2.0f;
+        float halfSize = scale() / 2.0f;
+        float halfNextScale = halfSize / (float)numLabels();
 
-        offsetX = [currentOptimal, half_size](){ return currentOptimal[0] - half_size; };
-        offsetY = [currentOptimal, half_size](){ return currentOptimal[1] - half_size; };
-        offsetZ = [currentOptimal, half_size](){ return currentOptimal[2] - half_size; };
+        offsetX = [currentOptimal, halfSize, halfNextScale](){ return currentOptimal[0] - halfSize - halfNextScale; };
+        offsetY = [currentOptimal, halfSize, halfNextScale](){ return currentOptimal[1] - halfSize - halfNextScale; };
+        offsetZ = [currentOptimal, halfSize, halfNextScale](){ return currentOptimal[2] - halfSize - halfNextScale; };
 
-        scale = [currentScale, this](){ return currentScale / (float)numLabels(); };
+        scale = [halfNextScale](){ return halfNextScale * 2.0f; };
     }
 
     void HierarchicalDiscreteGraphicalModel::resetPosition()
@@ -52,14 +54,9 @@ namespace opview {
         offsetZ = [](){ return (float)MIN_COORDINATE; };
     }
 
-    size_t HierarchicalDiscreteGraphicalModel::numVariables()
-    {
-        return VARS;
-    }
-
     size_t HierarchicalDiscreteGraphicalModel::numLabels()
     {
-        return DISCRETE_LABELS;
+        return this->labels;
     }
 
 

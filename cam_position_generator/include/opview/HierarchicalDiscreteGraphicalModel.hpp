@@ -10,36 +10,28 @@
 #include <opview/BasicGraphicalModel.hpp>
 
 namespace opview {
-
-
     
-    #define DISCRETE_LABELS 20
-    #define VARS 3
     #define ORIGINAL_SIDE_SIZE 2
     #define MIN_COORDINATE -1.0
     
     class HierarchicalDiscreteGraphicalModel : public BasicGraphicalModel {
     public:
-        HierarchicalDiscreteGraphicalModel(SolverGeneratorPtr solver, size_t depth, GLMVec3List &cams, double goalAngle=45, double dispersion=8);
+        HierarchicalDiscreteGraphicalModel(SolverGeneratorPtr solver, size_t depth, size_t labels, GLMVec3List &cams, double goalAngle=45, double dispersion=8);
         ~HierarchicalDiscreteGraphicalModel();
 
         virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector) override;
 
     protected:
-
         virtual void reduceScale(LabelList currentOptimal);
 
-        void initShapes();
-
-        virtual size_t numVariables() override;
         virtual size_t numLabels() override;
 
         void resetPosition();
 
     private:
         size_t depth;
+        size_t labels;
 
-        //double scale = 1.0;
         double minSquareX = MIN_COORDINATE;
         double minSquareY = MIN_COORDINATE;
         double minSquareZ = MIN_COORDINATE;

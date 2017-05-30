@@ -2,57 +2,111 @@
 
 namespace opview {
 
-    OrientationHierarchicalGraphicalModel::OrientationHierarchicalGraphicalModel(SolverGeneratorPtr solver, size_t depth, size_t labels,
-                                                                        float dAngle, Delaunay3 &dt_, CGALCellSet &cells, 
-                                                                        GLMVec3List &cams, double goalAngle, double dispersion)
-                                                                        : HierarchicalDiscreteGraphicalModel(solver, depth, labels, cams, goalAngle, dispersion)
+    OrientationHierarchicalGraphicalModel::OrientationHierarchicalGraphicalModel(SolverGeneratorPtr solver, 
+                                            OrientationHierarchicalConfiguration &config, std::string meshFile, 
+                                            GLMVec3List &cams, double goalAngle, double dispersion)
+                                            : HierarchicalDiscreteGraphicalModel(solver, config.config, cams, goalAngle, dispersion)
     {
-        this->dAngle = dAngle;
-        fillTree(dt_, cells);
+        this->deltaAngle = config.deltaAngle;
+        this->meshFilename = meshFile;
+        fillTree();     // called to assure usage of overridden function
+        initShapes();
     }
 
     OrientationHierarchicalGraphicalModel::~OrientationHierarchicalGraphicalModel()
     { /*    */ }
 
-    void OrientationHierarchicalGraphicalModel::fillTree(Delaunay3 &dt_, CGALCellSet &cells)
+    void OrientationHierarchicalGraphicalModel::fillTree()
     {
-        std::vector<Triangle> faceList;
-        for (auto cell : cells) {
-            for (int facetIndex = 0; facetIndex < 4; facetIndex++){
-                faceList.push_back(dt_.triangle(cell, facetIndex));
-            }
-        }
-        
-        tree = new Tree(faceList.begin(), faceList.end());
+        Polyhedron poly = extractPolyhedron();
+        TriangleList triangles = getTriangleList(poly);
+
+        tree = new Tree(triangles.begin(), triangles.end());
     }
 
+    Polyhedron OrientationHierarchicalGraphicalModel::extractPolyhedron()
+    {
+        std::ifstream meshIn(meshFilename);
+        Polyhedron poly;
+        meshIn >> poly;
+        meshIn.close();
 
-    void OrientationHierarchicalGraphicalModel::fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector)
+        return poly;
+    }
+
+    TriangleList OrientationHierarchicalGraphicalModel::getTriangleList(Polyhedron &poly)
+    {
+        TriangleList triangles;
+        for (Facet_iterator it = poly.facets_begin(); it != poly.facets_end(); it++) {
+            Halfedge_facet_circulator p = it->facet_begin();
+            Vertex_handle p0 = p->vertex();
+            Vertex_handle p1 = (++p)->vertex();
+            Vertex_handle p2 = (++p)->vertex();
+
+            triangles.push_back(Triangle(p0->point(), p1->point(), p2->point()));
+        }
+        return triangles;
+    }
+
+    void OrientationHierarchicalGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector)
+    {
+        GMSparseFunction vonMises(shape.begin(), shape.end(), 0.0);
+        GMSparseFunction constraints(shape.begin(), shape.end(), 0.0);
+        GMSparseFunction distances(shape.begin(), shape.end(), 0.0);
+
+        fillObjectiveFunction(vonMises, centroid, normVector);
+        addFunctionTo(vonMises, model, variableIndices);
+
+        fillConstraintFunction(constraints, distances, centroid);
+        addFunctionTo(constraints, model, variableIndices);
+        addFunctionTo(distances, model, variableIndices);
+    }
+
+    void OrientationHierarchicalGraphicalModel::fillObjectiveFunction(GMSparseFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector)
     {
         #pragma omp parallel for collapse(5)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
             orientationcycles(0, orientationLabels(), 0, orientationLabels()) { 
                 GLMVec3 scaledPos = scalePoint(GLMVec3(x, y, z));
-                EigVector5 pose;
-                pose << scaledPos.x, scaledPos.y, scaledPos.z, deg2rad(ptc), deg2rad(yaw);
+                GLMVec2 scaledOri = scaleOrientation(GLMVec2(ptc, yaw));
+
+                EigVector5 pose = getPose(scaledPos, scaledOri);
                 
                 LabelType val = computeObjectiveFunction(pose, centroid, normVector);
-
+                size_t coord[] = {(size_t)x, (size_t)y, (size_t)z, (size_t)ptc, (size_t)yaw};
+                
                 #pragma omp critical
-                vonMises(pose[0], pose[1], pose[2], pose[3], pose[4]) = val;
+                vonMises.insert(coord, val);
             }
         }
+    }
+
+    EigVector5 OrientationHierarchicalGraphicalModel::getPose(GLMVec3 &scaledPos, GLMVec2 &scaledOri)
+    {
+        EigVector5 pose;
+        pose << scaledPos.x, scaledPos.y, scaledPos.z, deg2rad(scaledOri.x), deg2rad(scaledOri.y);
+        return pose;
+    }
+
+    GLMVec2 OrientationHierarchicalGraphicalModel::scaleOrientation(GLMVec2 orientation)
+    {
+        return orientation * 360.0f / (float)orientationLabels();
     }
 
     LabelType OrientationHierarchicalGraphicalModel::computeObjectiveFunction(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         GLMVec3 point = GLMVec3(pose[0], pose[1], pose[2]);
 
-        if (!isPointInsideImage(pose, centroid) || isIntersecting(pose, centroid) || isOppositeView(pose, centroid)) {
-            return 0.0;
+        if (!isMeaningfulPose(pose, centroid)) {
+            return -1.0;
         }
 
-        return logVonMises(point, centroid, normalVector);
+        return -logVonMises(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
+    }
+
+    bool OrientationHierarchicalGraphicalModel::isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid)
+    {
+        return isPointInsideImage(pose, centroid) && !isIntersecting(pose, centroid) && !isOppositeView(pose, centroid);
     }
 
     bool OrientationHierarchicalGraphicalModel::isOppositeView(EigVector5 &pose, GLMVec3 &centroid)
@@ -62,9 +116,11 @@ namespace opview {
         
         CGALVec3 rayVector = Ray(cam, point).to_vector();
         GLMVec3 ray = GLMVec3(rayVector[0], rayVector[1], rayVector[2]);
-        GLMVec3 direction = GLMVec3(1.0, cos(pose[3]), cos(pose[4]));
+        
+        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
+        GLMVec3 zDirection = R * zdir;
 
-        return glm::dot(ray, direction) < 0;
+        return glm::dot(ray, zDirection) < 0;
     }
 
     bool OrientationHierarchicalGraphicalModel::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
@@ -77,23 +133,49 @@ namespace opview {
 
     bool OrientationHierarchicalGraphicalModel::isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid)
     {
-        GLMVec4 viewport = GLMVec4(0, 0, 1920, 1080);
-        CameraMatrix projection = glm::perspective(glm::radians(90.0f), (float) 1920 / (float)1080, 0.1f, 100.0f); // what is this??
-        CameraMatrix cam = getCameraMatrix(pose);
+        GLMVec4 point3D = GLMVec4(centroid, 1.0);
+        CameraMatrix P = getCameraMatrix(pose);
+        GLMVec4 point2D = P * point3D;
 
-        GLMVec3 projected = glm::project(centroid, cam, projection, viewport);
-        projected = projected / projected.z;
+        point2D = point2D / point2D.z;
 
-        return projected.x < 1920.0f && projected.x > 0.0f && projected.y < 1080.0f && projected.y > 0.0f;
+        return point2D.x < 1920.0f && point2D.x > 0.0f && point2D.y < 1080.0f && point2D.y > 0.0f;
+    }
+
+    RotationMatrix OrientationHierarchicalGraphicalModel::getRotationMatrix(float roll, float pitch, float yaw)
+    {
+        // Calculate rotation about x axis
+        RotationMatrix Rx = RotationMatrix(GLMVec3(1, 0, 0), 
+                                        GLMVec3(0, cos(roll), -sin(roll)),
+                                        GLMVec3(0, sin(roll), cos(roll)));
+        // Calculate rotation about y axis
+        RotationMatrix Ry = RotationMatrix(GLMVec3(cos(pitch), 0, sin(pitch)), 
+                                        GLMVec3(0, 1, 0),
+                                        GLMVec3(-sin(pitch), 0, cos(pitch)));
+        // Calculate rotation about z axis
+        RotationMatrix Rz = RotationMatrix(GLMVec3(cos(yaw), -sin(yaw), 0), 
+                                        GLMVec3(sin(yaw), cos(yaw), 0),
+                                        GLMVec3(0, 0, 1));
+        return Rz * Ry * Rx;
+
+        // glm::vec3 myRotationAxis( ??, ??, ??);
+        // glm::rotate( angle_in_degrees, myRotationAxis );
     }
 
     CameraMatrix OrientationHierarchicalGraphicalModel::getCameraMatrix(EigVector5 &pose)
     {
-        GLMVec3 cameraPos = GLMVec3(pose[0], pose[1], pose[2]);
-        GLMVec3 cameraOrient = GLMVec3(sin(pose[3]) * cos(pose[4]), sin(pose[3]), sin(pose[3]) * cos(pose[4]));
-        cameraOrient = glm::normalize(cameraOrient);
-        
-        return glm::lookAt(cameraPos, cameraPos + cameraOrient, GLMVec3(0.0f, 1.0f,  0.0f));
+        float f = 16.0f / 9.0f;     // TODO
+        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
+        GLMVec3 t = GLMVec3(pose[0], pose[1], pose[2]);
+        CameraMatrix K = glm::scale(GLMVec3(f, f , 1.0f));
+
+        CameraMatrix P = CameraMatrix(R);
+
+        P = glm::translate(P, t);
+        P[4][3] = 1.0;  // fourth column, third row
+        P[4][4] = 0.0;  // fourth column, fourth row
+
+        return K * P;
     }
 
 
@@ -104,23 +186,22 @@ namespace opview {
 
     size_t OrientationHierarchicalGraphicalModel::orientationLabels()
     {
-        return (int) (360.0 / deltaAngle());
+        return (int) (360.0 / getDeltaAngle());
     }
 
-    float OrientationHierarchicalGraphicalModel::deltaAngle()
+    float OrientationHierarchicalGraphicalModel::getDeltaAngle()
     {
-        return dAngle;
+        return deltaAngle;
     }
 
-    float OrientationHierarchicalGraphicalModel::deg2rad(float deg)
+    std::string OrientationHierarchicalGraphicalModel::getMeshFilename()
     {
-        return deg * M_PI / 180.0;
+        return meshFilename;
     }
 
-    float OrientationHierarchicalGraphicalModel::rad2deg(float rad)
+    void OrientationHierarchicalGraphicalModel::setMeshFilename(std::string filename)
     {
-        return rad * 180.0 / M_PI;
+        this->meshFilename = filename;
     }
-    //
 
 } // namespace opview

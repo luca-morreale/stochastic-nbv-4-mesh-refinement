@@ -4,11 +4,12 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <glm/gtx/norm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/transform.hpp>
 
-#include <opview/type_definition.h>
 #include <opview/HierarchicalDiscreteGraphicalModel.hpp>
+#include <opview/type_definition.h>
 
 namespace opview {
 
@@ -17,31 +18,45 @@ namespace opview {
     
     class OrientationHierarchicalGraphicalModel : public HierarchicalDiscreteGraphicalModel {
     public:
-        OrientationHierarchicalGraphicalModel(SolverGeneratorPtr solver, size_t depth, size_t labels, float dAngle, Delaunay3 &dt_, CGALCellSet &cells, GLMVec3List &cams, double goalAngle=45, double dispersion=8);
+        OrientationHierarchicalGraphicalModel(SolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config,
+                                            std::string meshFile, GLMVec3List &cams, double goalAngle=55, double dispersion=5);
         ~OrientationHierarchicalGraphicalModel();
-
-    protected:
-
-        virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector) override;
-        virtual LabelType computeObjectiveFunction(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-
-        virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
-        virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
 
         virtual size_t numVariables() override;
         virtual size_t orientationLabels();
-        virtual float deltaAngle();
+        float getDeltaAngle();
 
-        float deg2rad(float deg);
-        float rad2deg(float rad);
+        std::string getMeshFilename();
+        void setMeshFilename(std::string filename);
+
+
+    protected:
+        virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) override;
+        virtual void fillObjectiveFunction(GMSparseFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual LabelType computeObjectiveFunction(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+
+        virtual bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid);
+        virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
+        virtual bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid);
+        virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
+
+        virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
+        virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
+
+        virtual EigVector5 getPose(GLMVec3 &scaledPos, GLMVec2 &scaledOri);
+
+        virtual GLMVec2 scaleOrientation(GLMVec2 orientation);
+
 
     private:
-        float dAngle;
+        float deltaAngle;
+        const GLMVec3 zdir = GLMVec3(0.0, 0.0, 1.0);
+        std::string meshFilename;
         Tree *tree;
 
-        void fillTree(Delaunay3 &dt_, CGALCellSet &cells);
+        void fillTree();
+        Polyhedron extractPolyhedron();
+        TriangleList getTriangleList(Polyhedron &poly);
 
     };
 

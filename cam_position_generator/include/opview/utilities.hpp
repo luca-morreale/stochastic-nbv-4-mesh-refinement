@@ -18,6 +18,9 @@ namespace opview {
 
     double distanceCGALVec3(CGALVec3 &a, CGALVec3 &b);
 
+    float deg2rad(float deg);
+    float rad2deg(float rad);
+
 }
 
 #endif // CAM_POSITION_GENERATOR_UTILITIES_H

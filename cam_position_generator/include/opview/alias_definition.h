@@ -1,13 +1,14 @@
 #ifndef CAM_POSITION_GENERATOR_ALIAS_DEFINITION_H
 #define CAM_POSITION_GENERATOR_ALIAS_DEFINITION_H
 
-#include <CGAL/Vector_3.h>
-#include <CGAL/AABB_tree.h>
-#include <CGAL/AABB_traits.h>
-#include <CGAL/Polyhedron_3.h>
-#include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #include <CGAL/AABB_face_graph_triangle_primitive.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_triangle_primitive.h>
+#include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
+#include <CGAL/IO/Polyhedron_iostream.h>
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/Vector_3.h>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -30,6 +31,7 @@ namespace opview {
     typedef glm::vec4 GLMVec4;
     typedef std::vector<GLMVec3> GLMVec3List;
     typedef glm::mat4 CameraMatrix;
+    typedef glm::mat3 RotationMatrix;
 
     /* Shortcuts for Eigen types */
     typedef Eigen::Matrix<float, 5, 1> EigVector5;
@@ -51,7 +53,13 @@ namespace opview {
     typedef std::vector<CGALVec3> CGALVec3List;
 
     typedef K::Ray_3 Ray;
-    typedef std::vector<Triangle>::iterator Iterator;
+    typedef CGAL::Polyhedron_3<K> Polyhedron;
+    typedef Polyhedron::Vertex_handle Vertex_handle;
+    typedef Polyhedron::Facet_iterator Facet_iterator;
+    typedef Polyhedron::Halfedge_around_facet_circulator Halfedge_facet_circulator;
+    typedef K::Triangle_3 Triangle;
+    typedef std::vector<Triangle> TriangleList;
+    typedef TriangleList::iterator Iterator;
     typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
     typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
     typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;

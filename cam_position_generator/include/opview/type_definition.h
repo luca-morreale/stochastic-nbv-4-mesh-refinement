@@ -5,18 +5,18 @@
 
 #include <opview/alias_definition.h>
 
+#include <opengm/functions/sparsemarray.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/graphicalmodel/space/simplediscretespace.hxx>
-#include <opengm/functions/sparsemarray.hxx>
-#include <opengm/operations/adder.hxx>
-#include <opengm/operations/multiplier.hxx>
-#include <opengm/inference/graphcut.hxx>
-#include <opengm/inference/auxiliary/minstcutkolmogorov.hxx>
-#include <opengm/inference/alphaexpansion.hxx>
 #include <opengm/inference/alphabetaswap.hxx>
+#include <opengm/inference/alphaexpansion.hxx>
+#include <opengm/inference/auxiliary/minstcutkolmogorov.hxx>
+#include <opengm/inference/graphcut.hxx>
 #include <opengm/inference/icm.hxx>
 #include <opengm/inference/lazyflipper.hxx>
 #include <opengm/inference/loc.hxx>
+#include <opengm/operations/adder.hxx>
+#include <opengm/operations/multiplier.hxx>
 
 
 namespace opview {
@@ -59,6 +59,7 @@ namespace opview {
     typedef opengm::LazyFlipper<GraphicalModelAdder, opengm::Maximizer> LazyFlipper;
     typedef LazyFlipper::Parameter LazyFlipperParameter;
     typedef opengm::LOC<GraphicalModelAdder, opengm::Maximizer> LOC;
+    typedef opengm::Bruteforce<GraphicalModelAdder, opengm::Maximizer> Bruteforce;
 
 
     typedef AdderInference* AdderInferencePtr;
@@ -68,6 +69,7 @@ namespace opview {
     typedef ICM* ICMPtr;
     typedef LazyFlipper* LazyFlipperPtr;
     typedef LOC* LOCPtr;
+    typedef Bruteforce* BruteforcePtr;
     
 
     typedef struct VonMisesConfiguration {
@@ -80,6 +82,37 @@ namespace opview {
     } VonMisesConfiguration;
 
     typedef VonMisesConfiguration * VonMisesConfigurationPtr;
+
+    typedef struct HierarchicalDiscretizationConfiguration {
+        size_t depth;
+        size_t labels;
+
+    public:
+        HierarchicalDiscretizationConfiguration(size_t depth, size_t labels) : depth(depth), labels(labels) { }
+        HierarchicalDiscretizationConfiguration() : depth(5), labels(10) { }
+
+    } HierarchicalDiscretizationConfiguration;
+
+    typedef HierarchicalDiscretizationConfiguration* HierarchicalDiscretizationConfigPtr;
+
+    typedef struct OrientationHierarchicalConfiguration {
+        HierarchicalDiscretizationConfiguration config;
+        float deltaAngle;
+
+    public:
+        OrientationHierarchicalConfiguration(size_t depth, size_t labels, float deltaAngle) : deltaAngle(deltaAngle)
+        {
+            config = {depth, labels};
+        }
+        OrientationHierarchicalConfiguration() : deltaAngle(10)
+        {
+            config = HierarchicalDiscretizationConfiguration();
+        }
+
+    } OrientationHierarchicalConfiguration;
+
+    typedef OrientationHierarchicalConfiguration* OrientationHierarchicalConfigPtr;
+
 
 }
 

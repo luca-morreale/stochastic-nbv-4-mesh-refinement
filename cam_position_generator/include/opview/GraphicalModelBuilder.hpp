@@ -19,6 +19,12 @@ namespace opview {
 
         virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
+        virtual size_t numVariables() = 0;
+        virtual size_t numLabels() = 0;
+
+        SolverGeneratorPtr solverGenerator();
+        void setSolverGenerator(SolverGeneratorPtr solver);
+
     protected:
         virtual LabelList extractResults(AdderInferencePtr algorithm);
         
@@ -27,10 +33,6 @@ namespace opview {
 
         void addFunctionTo(GMExplicitFunction &fun, GraphicalModelAdder &model, VarIndexList &variableIndices);
         void addFunctionTo(GMSparseFunction &fun, GraphicalModelAdder &model, VarIndexList &variableIndices);  
-
-        virtual size_t numVariables() = 0;
-        virtual size_t numLabels() = 0;
-        SolverGeneratorPtr solverGenerator();
 
     private:
         SolverGeneratorPtr solver;

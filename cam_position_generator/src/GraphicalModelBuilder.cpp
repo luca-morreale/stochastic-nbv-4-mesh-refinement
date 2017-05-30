@@ -14,7 +14,9 @@ namespace opview {
     }
 
     GraphicalModelBuilder::~GraphicalModelBuilder()
-    { /*    */ }
+    {
+        delete solver;
+    }
 
     void GraphicalModelBuilder::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
     {
@@ -34,8 +36,9 @@ namespace opview {
         LabelList x;
         algorithm->arg(x);
         
-        std::cout << algorithm->value() << std::endl;
+        std::cout << "Value obtained: " << algorithm->value() << std::endl;
         
+        std::cout << "Optimal solution: ";
         for (size_t j = 0; j < x.size(); ++j) {
             std::cout << x[j] << ' ';
         }
@@ -59,6 +62,12 @@ namespace opview {
     SolverGeneratorPtr GraphicalModelBuilder::solverGenerator()
     {
         return solver;
+    }
+
+    void GraphicalModelBuilder::setSolverGenerator(SolverGeneratorPtr solver)
+    {
+        delete this->solver;
+        this->solver = solver;
     }
 
 } // namespace opview

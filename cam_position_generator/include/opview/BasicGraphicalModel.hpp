@@ -6,8 +6,9 @@
 
 #include <glm/gtx/norm.hpp>
 
-#include <opview/type_definition.h>
 #include <opview/GraphicalModelBuilder.hpp>
+#include <opview/type_definition.h>
+#include <opview/utilities.hpp>
 
 namespace opview {
 
@@ -15,17 +16,30 @@ namespace opview {
 
     #define LABELS 100
     #define VARS 3
+    #define BD_AERIAL 0.2f
+    #define BD_TERRESTRIAL_PROSPECTIVE 0.25f
+    #define BD_TERRESTRIAL_ARCHITECTURAL 0.33f 
     
     class BasicGraphicalModel : public GraphicalModelBuilder {
     public:
         BasicGraphicalModel(SolverGeneratorPtr solver, GLMVec3List &cams, double goalAngle=45, double dispersion=1);
         ~BasicGraphicalModel();
 
+        GLMVec3List getCams();
+        void setCams(GLMVec3List &cams);
+
+        VonMisesConfigurationPtr vonMisesConfiguration();
+        void setVonMisesConfiguration(VonMisesConfiguration vonMisesConfig);
+
+        virtual size_t numVariables();
+        virtual size_t numLabels();
+
     protected:
-        virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) override;
         virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void fillConstraintFunction(GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3 &centroid);
-        virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid);
+        virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, GLMVec3 spacePos);
+        virtual void addCameraPointConstrain(GMSparseFunction &distances, GLMVec3 &cam);
 
         virtual LabelType logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector);
         virtual LabelType logVonMises(GLMVec3 &v, GLMVec3 &normalVector);
@@ -33,11 +47,10 @@ namespace opview {
         virtual LabelType logBessel0(double K);
 
         virtual GLMVec3 scalePoint(GLMVec3 point);
+        virtual GLMVec3 unscalePoint(GLMVec3 point);
         
-        void initShapes();
-        virtual size_t numVariables();
-        virtual size_t numLabels();
-        virtual VonMisesConfigurationPtr vonMisesConfiguration();
+        virtual void initShapes();
+        
         
         std::function<float()> scale = [this](){ return 2.0 / (float)numLabels(); };
         std::function<float()> offsetX = [](){ return -1.0; };

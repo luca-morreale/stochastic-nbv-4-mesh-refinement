@@ -7,7 +7,7 @@ namespace opview {
                                              : GraphicalModelBuilder(solver)
     {
         this->cams = cams;
-        this->vonMisesConfig = {goalAngle, dispersion};
+        this->vonMisesConfig = {deg2rad(goalAngle), dispersion};
         this->initShapes();
     }
 
@@ -16,15 +16,19 @@ namespace opview {
 
     void BasicGraphicalModel::initShapes()
     {
-        for (size_t i = 0; i < numVariables(); i++) this->variableIndices.push_back(i);
-        for (size_t i = 0; i < numVariables(); i++) this->shape.push_back(numLabels());
+        variableIndices.clear();
+        shape.clear();
+        for (size_t i = 0; i < numVariables(); i++) {
+            this->variableIndices.push_back(i);
+            this->shape.push_back(numLabels());
+        }
     }
 
     void BasicGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector)
     {
         GMExplicitFunction vonMises(shape.begin(), shape.end());
-        GMSparseFunction constraints(shape.begin(), shape.end(), -10.0);
-        GMSparseFunction distances(shape.begin(), shape.end(), -100.0);
+        GMSparseFunction constraints(shape.begin(), shape.end(), 0.0);
+        GMSparseFunction distances(shape.begin(), shape.end(), 0.0);
 
         fillObjectiveFunction(vonMises, centroid, normVector);
         addFunctionTo(vonMises, model, variableIndices);
@@ -39,9 +43,9 @@ namespace opview {
         #pragma omp parallel for collapse(3)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-            LabelType val = logVonMises(pos, centroid, normVector);
+            LabelType val = -logVonMises(pos, centroid, normVector);
             #pragma omp critical
-            vonMises(pos[0], pos[1], pos[2]) = val;
+            vonMises(x, y, z) = val;
         }
     }
 
@@ -51,26 +55,37 @@ namespace opview {
             #pragma omp parallel for collapse(3)
             coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
                 GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-                addValueToConstraintFunction(constraints, pos, cam, centroid);
+                addValueToConstraintFunction(constraints, pos, cam, centroid, GLMVec3(x, y, z));
             }
-            LabelType vals[] = {cam.x, cam.y, cam.z};
-            distances.insert(vals, 0.0);
+            
+            addCameraPointConstrain(distances, cam);
         }
     }
 
-    void BasicGraphicalModel::addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid)
+    void BasicGraphicalModel::addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, GLMVec3 spacePos)
     {
         double B = glm::distance(point, cam);
-        
-        GLMVec3 midPoint = (point + cam) / 2.0f;
-        GLMVec3 center = GLMVec3(centroid[0], centroid[1], centroid[2]);
+        double D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
 
-        double D = glm::distance(midPoint, center);
-
-        if (B / D > 0.7f) {
-            LabelType vals[] = {point.x, point.y, point.z};
+        if (B / D <= BD_TERRESTRIAL_ARCHITECTURAL) {
+            LabelType vals[] = {spacePos.x, spacePos.y, spacePos.z};
             #pragma omp critical
-            function.insert(vals, 1.0);
+            function.insert(vals, -1.0);
+        }
+    }
+
+    void BasicGraphicalModel::addCameraPointConstrain(GMSparseFunction &distances, GLMVec3 &cam)
+    {
+        GLMVec3 discreteSpacePoint = unscalePoint(cam);
+        #pragma omp parallel for collapse(3)
+        coordinatecycles(0, 2, 0, 2, 0, 2) {
+            size_t coords[] = {
+                (x) ? (size_t)std::floor(discreteSpacePoint.x) : (size_t)std::ceil(discreteSpacePoint.x),
+                (y) ? (size_t)std::floor(discreteSpacePoint.y) : (size_t)std::ceil(discreteSpacePoint.y),
+                (z) ? (size_t)std::floor(discreteSpacePoint.z) : (size_t)std::ceil(discreteSpacePoint.z)
+            };
+            #pragma omp critical
+            distances.insert(coords, -100.0);
         }
     }
 
@@ -79,6 +94,12 @@ namespace opview {
         GLMVec3 scaledPoint = point * scale();
         GLMVec3 offset = GLMVec3(offsetX(), offsetY(), offsetZ());
         return scaledPoint + offset;
+    }
+
+    GLMVec3 BasicGraphicalModel::unscalePoint(GLMVec3 point)
+    {
+        GLMVec3 offset = GLMVec3(offsetX(), offsetY(), offsetZ());
+        return (point - offset) / scale();
     }
     
     LabelType BasicGraphicalModel::logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector)
@@ -97,7 +118,7 @@ namespace opview {
     }
 
     LabelType BasicGraphicalModel::logVonMises(double angle)
-    { 
+    {
         return std::cos(angle - vonMisesConfig.goalAngle) * vonMisesConfig.dispersion - std::log(2 * M_PI) - logBessel0(vonMisesConfig.dispersion); 
     }
 
@@ -112,6 +133,21 @@ namespace opview {
         return &vonMisesConfig;
     }
 
+    void BasicGraphicalModel::setVonMisesConfiguration(VonMisesConfiguration vonMisesConfig)
+    {
+        this->vonMisesConfig = vonMisesConfig;
+    }
+
+    GLMVec3List BasicGraphicalModel::getCams()
+    {
+        return cams;
+    }
+    
+    void BasicGraphicalModel::setCams(GLMVec3List &cams)
+    {
+        this->cams = cams;
+    }
+
     size_t BasicGraphicalModel::numVariables()
     {
         return VARS;
@@ -120,6 +156,6 @@ namespace opview {
     size_t BasicGraphicalModel::numLabels()
     {
         return LABELS;
-    }    
+    }   
 
 } // namespace opview

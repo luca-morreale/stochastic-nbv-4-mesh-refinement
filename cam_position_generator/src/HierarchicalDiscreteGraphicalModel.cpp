@@ -2,12 +2,12 @@
 
 namespace opview {
 
-    HierarchicalDiscreteGraphicalModel::HierarchicalDiscreteGraphicalModel(SolverGeneratorPtr solver, size_t depth, size_t labels,
-                                                                            GLMVec3List &cams, double goalAngle, double dispersion)
-                                                                            : BasicGraphicalModel(solver, cams, goalAngle, dispersion)
+    HierarchicalDiscreteGraphicalModel::HierarchicalDiscreteGraphicalModel(SolverGeneratorPtr solver, 
+                                                                HierarchicalDiscretizationConfiguration &config, GLMVec3List &cams, 
+                                                                double goalAngle, double dispersion)
+                                                                : BasicGraphicalModel(solver, cams, goalAngle, dispersion)
     {
-        this->depth = depth;
-        this->labels = labels;
+        this->config = config;
     }
 
     HierarchicalDiscreteGraphicalModel::~HierarchicalDiscreteGraphicalModel()
@@ -17,25 +17,57 @@ namespace opview {
     {
         this->resetPosition();
 
-        LabelList currentOptimal;
-        for (int d = 0; d < this->depth; d++) {
+        LabelList currentOptima = {MIN_COORDINATE, MIN_COORDINATE, MIN_COORDINATE, 0.0, 0.0};
+        
+        for (int d = 0; d < this->getDepth(); d++) {
+            std::cout << "Current depth: " << d << std::endl;
             SimpleSpace space(numVariables(), numLabels());
             GraphicalModelAdder model(space);
 
             this->fillModel(model, centroid, normVector);
+            
+            // get optimal solution, than scale it
+            // before give it to the solver descale it in the current space
 
-            AdderInferencePtr algorithm = solverGenerator()->getOptimizerAlgorithm(model, currentOptimal, numVariables());
+            auto discreteOptima = getOptimaForDiscreteSpace(currentOptima);
+            AdderInferencePtr algorithm = solverGenerator()->getOptimizerAlgorithm(model, discreteOptima, numVariables());
             algorithm->infer();
 
-            currentOptimal = this->extractResults(algorithm);
-            this->reduceScale(currentOptimal);
+            currentOptima = this->extractResults(algorithm);
+
+            this->reduceScale(currentOptima);
         }
     }
 
-    void HierarchicalDiscreteGraphicalModel::reduceScale(LabelList currentOptimal)
+    LabelList HierarchicalDiscreteGraphicalModel::extractResults(AdderInferencePtr algorithm)
+    {
+        LabelList x;
+        algorithm->arg(x);
+
+        std::cout << "Value obtained: " << algorithm->value() << std::endl;
+
+        GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
+        x[0] = realOptima.x;
+        x[1] = realOptima.y;
+        x[2] = realOptima.z;
+
+        std::cout << "Optimal solution: " << x[0] << ' ' << x[1] << ' ' << x[2] << std::endl;
+        std::cout << std::endl << std::endl;
+
+        return x;
+    }
+
+    LabelList HierarchicalDiscreteGraphicalModel::getOptimaForDiscreteSpace(LabelList &currentOptima)
+    {
+        GLMVec3 spaceOptima = unscalePoint(GLMVec3(currentOptima[0], currentOptima[1], currentOptima[2]));
+
+        return {spaceOptima.x, spaceOptima.y, spaceOptima.z};
+    }
+
+    void HierarchicalDiscreteGraphicalModel::reduceScale(LabelList &currentOptimal)
     {
         float currentScale = scale();
-        float halfSize = scale() / 2.0f;
+        float halfSize = currentScale / 2.0f;
         float halfNextScale = halfSize / (float)numLabels();
 
         offsetX = [currentOptimal, halfSize, halfNextScale](){ return currentOptimal[0] - halfSize - halfNextScale; };
@@ -54,9 +86,24 @@ namespace opview {
         offsetZ = [](){ return (float)MIN_COORDINATE; };
     }
 
+    size_t HierarchicalDiscreteGraphicalModel::setNumLabels(size_t labels)
+    {
+        this->config.labels = labels;
+    }
+
     size_t HierarchicalDiscreteGraphicalModel::numLabels()
     {
-        return this->labels;
+        return this->config.labels;
+    }
+
+    size_t HierarchicalDiscreteGraphicalModel::getDepth()
+    {
+        return config.depth;
+    }
+
+    void HierarchicalDiscreteGraphicalModel::setDepth(size_t depth)
+    {
+        this->config.depth = depth;
     }
 
 

@@ -4,8 +4,6 @@ namespace opview {
     
     AdderInferencePtr FlipperSolverGenerator::getOptimizerAlgorithm(GraphicalModelAdder &model, LabelList currentOptimal, size_t numVariables)
     {
-        size_t maxSubgraphSize = 3; // works only if it is 1
-
         LabelList startPoint = (currentOptimal.size() > 0) ? currentOptimal : genStartPoint(numVariables);
         LazyFlipperParameter para(maxSubgraphSize, startPoint.begin(), startPoint.end());
         LazyFlipperPtr algorithm = new LazyFlipper(model, para);

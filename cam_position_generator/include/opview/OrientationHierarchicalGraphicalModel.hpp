@@ -19,7 +19,8 @@ namespace opview {
     class OrientationHierarchicalGraphicalModel : public HierarchicalDiscreteGraphicalModel {
     public:
         OrientationHierarchicalGraphicalModel(SolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config,
-                                            std::string meshFile, GLMVec3List &cams, double goalAngle=55, double dispersion=5);
+                                                    CameraGeneralConfiguration &camConfig, std::string meshFile, 
+                                                    GLMVec3List &cams, double goalAngle=55, double dispersion=5);
         ~OrientationHierarchicalGraphicalModel();
 
         virtual size_t numVariables() override;
@@ -52,7 +53,9 @@ namespace opview {
         float deltaAngle;
         const GLMVec3 zdir = GLMVec3(0.0, 0.0, 1.0);
         std::string meshFilename;
-        Tree *tree;
+        TreePtr tree;
+
+        CameraGeneralConfiguration camConfig;
 
         void fillTree();
         Polyhedron extractPolyhedron();

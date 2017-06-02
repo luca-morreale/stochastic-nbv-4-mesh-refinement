@@ -3,12 +3,14 @@
 namespace opview {
 
     OrientationHierarchicalGraphicalModel::OrientationHierarchicalGraphicalModel(SolverGeneratorPtr solver, 
-                                            OrientationHierarchicalConfiguration &config, std::string meshFile, 
-                                            GLMVec3List &cams, double goalAngle, double dispersion)
+                                            OrientationHierarchicalConfiguration &config, CameraGeneralConfiguration &camConfig,
+                                            std::string meshFile, GLMVec3List &cams, double goalAngle, double dispersion)
                                             : HierarchicalDiscreteGraphicalModel(solver, config.config, cams, goalAngle, dispersion)
     {
         this->deltaAngle = config.deltaAngle;
         this->meshFilename = meshFile;
+        this->camConfig = camConfig;
+
         fillTree();     // called to assure usage of overridden function
         initShapes();
     }
@@ -74,7 +76,7 @@ namespace opview {
                 
                 LabelType val = computeObjectiveFunction(pose, centroid, normVector);
                 size_t coord[] = {(size_t)x, (size_t)y, (size_t)z, (size_t)ptc, (size_t)yaw};
-                
+
                 #pragma omp critical
                 vonMises.insert(coord, val);
             }
@@ -98,9 +100,8 @@ namespace opview {
         GLMVec3 point = GLMVec3(pose[0], pose[1], pose[2]);
 
         if (!isMeaningfulPose(pose, centroid)) {
-            return -1.0;
+            return 0.0;
         }
-
         return -logVonMises(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
     }
 
@@ -125,9 +126,11 @@ namespace opview {
 
     bool OrientationHierarchicalGraphicalModel::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
     {
-        PointD3 cam(pose[0], pose[1], pose[2]);
-        PointD3 point(centroid.x, centroid.y, centroid.z);
+        PointD3 cam((double)pose[0], (double)pose[1], (double)pose[2]);
+
+        PointD3 point((double)centroid.x, (double)centroid.y, (double)centroid.z);
         Segment segment_query(cam, point);
+
         return tree->do_intersect(segment_query);
     }
 
@@ -164,10 +167,9 @@ namespace opview {
 
     CameraMatrix OrientationHierarchicalGraphicalModel::getCameraMatrix(EigVector5 &pose)
     {
-        float f = 16.0f / 9.0f;     // TODO
         RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
         GLMVec3 t = GLMVec3(pose[0], pose[1], pose[2]);
-        CameraMatrix K = glm::scale(GLMVec3(f, f , 1.0f));
+        CameraMatrix K = glm::scale(GLMVec3(camConfig.f, camConfig.f , 1.0f));
 
         CameraMatrix P = CameraMatrix(R);
 

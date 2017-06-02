@@ -63,6 +63,7 @@ namespace opview {
     typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
     typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
     typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
+    typedef Tree* TreePtr;
 
     typedef std::vector<IloNumVar> IloNumVarList;
     typedef std::vector<IloNum> IloNumList;

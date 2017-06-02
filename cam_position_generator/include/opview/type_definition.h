@@ -28,7 +28,7 @@ namespace opview {
 
     typedef std::vector<Face> FaceList;
 
-    typedef float LabelType;
+    typedef double LabelType;
     typedef size_t VariableIndexType;
 
     typedef std::vector<LabelType> LabelList;
@@ -112,6 +112,22 @@ namespace opview {
     } OrientationHierarchicalConfiguration;
 
     typedef OrientationHierarchicalConfiguration* OrientationHierarchicalConfigPtr;
+
+    typedef struct CameraGeneralConfiguration {
+        float f;
+        int size_x;
+        int size_y;
+
+    public:
+        CameraGeneralConfiguration(int size_x, int size_y) : size_x(size_x), size_y(size_y), f(size_x/size_y)
+        { /*    */ }
+
+        CameraGeneralConfiguration() : size_x(1920), size_y(1080), f(16.0/9.0)
+        { /*    */ }
+
+    } CameraGeneralConfiguration;
+
+    typedef CameraGeneralConfiguration* CameraGeneralConfigPtr;
 
 
 }

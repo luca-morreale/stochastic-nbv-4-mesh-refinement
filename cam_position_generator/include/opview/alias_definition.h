@@ -10,10 +10,16 @@
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Vector_3.h>
 
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
 #include <glm/glm.hpp>
+
+#include <boost/function.hpp> 
+#include <boost/bind.hpp>
 
 #include <ilcplex/ilocplexi.h>
 
@@ -24,6 +30,10 @@
 #include <realtimeMR/types_reconstructor.hpp>
 
 namespace opview {
+
+    typedef std::vector<int> IntList;
+    typedef std::vector<double> DoubleList;
+    typedef std::map<int, double> IntDoubleMap;
 
     /* Shortcuts for GLM types */
     typedef glm::vec2 GLMVec2;
@@ -70,6 +80,12 @@ namespace opview {
     typedef std::vector<IloExpr> IloExprList;
     typedef std::vector<IloRange> IloRangeList;
     typedef std::vector<IloConstraint> IloConstraintList;
+
+    typedef std::vector<gsl_vector *> GSLVectorList;
+    typedef std::vector<gsl_matrix *> GSLMatrixList;
+
+    typedef boost::function<double(EigVector5 &, GLMVec3 &, GLMVec3 &)> BoostObjFunction;
+    typedef std::vector<BoostObjFunction> BoostObjFunctionList;
 
 }
 

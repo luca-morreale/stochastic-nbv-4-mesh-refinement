@@ -21,6 +21,8 @@ namespace opview {
     float deg2rad(float deg);
     float rad2deg(float rad);
 
+    double bivariateGuassian(double x, double y, double centerx, double centery, double sigmax, double sigmay);
+
 }
 
 #endif // CAM_POSITION_GENERATOR_UTILITIES_H

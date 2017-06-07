@@ -35,6 +35,8 @@ include_directories(${EIGEN3_INCLUDE_DIR}
                       ${OpenCV_INCLUDE_DIRS} 
                       ${CGAL_INCLUDE_DIRS}
                       ${OPTIMIZER_INCLUDE_DIRS}
+                      ${GSL_INCLUDE_DIRS}
+                      ${GSLCBLAS_INCLUDE_DIRS}
                       )
 
 include_directories(include/)
@@ -66,7 +68,10 @@ target_link_libraries(optimalView ${OpenCV_LIBS}
                                             ${ASSIMP_LIBRARIES}
                                             ${MANIFOLD_LIB}
                                             ${OPTIMIZER_LIBRARIES}
-                                            ${GMP_LIBRARY} )
+                                            ${GMP_LIBRARY}
+                                            ${GSL_LIBRARIES}
+                                            ${GSLCBLAS_LIBRARIES}
+                                            )
 
 # ------------------------ INSTALLATION ------------------------
 

@@ -32,9 +32,15 @@ namespace opview {
 
 
     protected:
+        virtual LabelList extractResults(AdderInferencePtr algorithm) override;
+
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) override;
-        virtual void fillObjectiveFunction(GMSparseFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector);
-        virtual LabelType computeObjectiveFunction(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+
+        virtual void fillSparseObjectivesFromFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void computeDistributionForFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector);
+
+        virtual LabelType estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+        virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
 
         virtual bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid);
         virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
@@ -43,6 +49,7 @@ namespace opview {
 
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
         virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
+        virtual GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid);
 
         virtual EigVector5 getPose(GLMVec3 &scaledPos, GLMVec2 &scaledOri);
 

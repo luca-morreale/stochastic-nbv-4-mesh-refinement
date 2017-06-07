@@ -3,8 +3,6 @@
 
 #include <map>
 
-#include <opview/alias_definition.h>
-
 #include <opengm/functions/sparsemarray.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/graphicalmodel/space/simplediscretespace.hxx>
@@ -18,6 +16,8 @@
 #include <opengm/operations/adder.hxx>
 #include <opengm/operations/multiplier.hxx>
 
+#include <opview/alias_definition.h>
+#include <opview/DimensionDisagreementLists.hpp>
 
 namespace opview {
 
@@ -42,6 +42,8 @@ namespace opview {
     typedef opengm::GraphicalModel<LabelType, opengm::Adder, FunctionTypeList, SimpleSpace> GraphicalModelAdder;
     typedef opengm::GraphicalModel<LabelType, opengm::Multiplier, FunctionTypeList, SimpleSpace> GraphicalModelMultiplier;
 
+    typedef std::vector<GMSparseFunction> GMSparseFunctionList;
+    
     typedef GraphicalModelAdder::FunctionIdentifier GMAdderFID;
     typedef GraphicalModelMultiplier::FunctionIdentifier GMMultFID;
 
@@ -80,7 +82,6 @@ namespace opview {
         VonMisesConfiguration(double goalAngle, double dispersion) : goalAngle(goalAngle), dispersion(dispersion) { }
         VonMisesConfiguration() : goalAngle(45), dispersion(0) { }
     } VonMisesConfiguration;
-
     typedef VonMisesConfiguration * VonMisesConfigurationPtr;
 
     typedef struct HierarchicalDiscretizationConfiguration {
@@ -92,7 +93,6 @@ namespace opview {
         HierarchicalDiscretizationConfiguration() : depth(5), labels(10) { }
 
     } HierarchicalDiscretizationConfiguration;
-
     typedef HierarchicalDiscretizationConfiguration* HierarchicalDiscretizationConfigPtr;
 
     typedef struct OrientationHierarchicalConfiguration {
@@ -110,7 +110,6 @@ namespace opview {
         }
 
     } OrientationHierarchicalConfiguration;
-
     typedef OrientationHierarchicalConfiguration* OrientationHierarchicalConfigPtr;
 
     typedef struct CameraGeneralConfiguration {
@@ -126,9 +125,32 @@ namespace opview {
         { /*    */ }
 
     } CameraGeneralConfiguration;
-
     typedef CameraGeneralConfiguration* CameraGeneralConfigPtr;
 
+    typedef struct MeshConfiguration {
+        std::string filename;
+        GLMVec3List cams;
+        GLMVec3List points;
+        GLMVec3List normals;
+        DoubleList uncertainty;
+
+        MeshConfiguration(std::string &filename, GLMVec3List &cams, GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty)
+                            : filename(filename), cams(cams), points(points), normals(normals), uncertainty(uncertainty)
+        {
+            if (points.size() != uncertainty.size()) {
+                throw DimensionDisagreementLists("Points and Accuracy lists should have the same size. " + 
+                                    std::to_string(points.size()) + " != " + std::to_string(uncertainty.size()) + "\n");
+            }
+            if (points.size() != normals.size()) {
+                throw DimensionDisagreementLists("Points and Normals lists should have the same size. " + 
+                                    std::to_string(points.size()) + " != " + std::to_string(normals.size()) + "\n");
+            }
+        }
+        MeshConfiguration(std::string &filename, GLMVec3List &cams)
+                            : filename(filename), cams(cams), points(GLMVec3List()), uncertainty(DoubleList())
+        { /*    */ }
+    } MeshConfiguration;
+    typedef MeshConfiguration* MeshConfigurationPtr;
 
 }
 

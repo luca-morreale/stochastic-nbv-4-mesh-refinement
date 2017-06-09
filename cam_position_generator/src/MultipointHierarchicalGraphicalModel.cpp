@@ -111,7 +111,7 @@ namespace opview {
 
                 addValueToConstraintFunction(constraints, pos, cam, centroids, GLMVec3(x, y, z));
             }
-            addCameraPointConstrain(distances, cam);
+            addCameraPointConstraint(distances, cam);
         }
     }
 

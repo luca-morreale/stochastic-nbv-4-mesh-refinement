@@ -88,6 +88,7 @@ namespace opview {
         fillConstraintFunction(constraints, distances, centroid);
 
         addFunctionTo(vonMises, model, variableIndices);
+        addFunctionTo(projectionWeight, model, variableIndices);
         addFunctionTo(constraints, model, variableIndices);
         addFunctionTo(distances, model, variableIndices);
     }

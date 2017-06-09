@@ -26,6 +26,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <queue>
 
 #include <realtimeMR/types_reconstructor.hpp>
 

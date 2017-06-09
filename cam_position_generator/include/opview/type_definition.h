@@ -15,6 +15,7 @@
 #include <opengm/inference/loc.hxx>
 #include <opengm/operations/adder.hxx>
 #include <opengm/operations/multiplier.hxx>
+#include <opengm/inference/listbruteforce.hxx>
 
 #include <opview/alias_definition.h>
 #include <opview/DimensionDisagreementLists.hpp>
@@ -62,6 +63,7 @@ namespace opview {
     typedef LazyFlipper::Parameter LazyFlipperParameter;
     typedef opengm::LOC<GraphicalModelAdder, opengm::Maximizer> LOC;
     typedef opengm::Bruteforce<GraphicalModelAdder, opengm::Maximizer> Bruteforce;
+    typedef opengm::MultiBruteforce<GraphicalModelAdder, opengm::Maximizer> MultiBruteforce;
 
 
     typedef AdderInference* AdderInferencePtr;
@@ -72,6 +74,7 @@ namespace opview {
     typedef LazyFlipper* LazyFlipperPtr;
     typedef LOC* LOCPtr;
     typedef Bruteforce* BruteforcePtr;
+    typedef MultiBruteforce* MultiBruteforcePtr;
     
 
     typedef struct VonMisesConfiguration {
@@ -134,6 +137,7 @@ namespace opview {
         GLMVec3List normals;
         DoubleList uncertainty;
 
+    public:
         MeshConfiguration(std::string &filename, GLMVec3List &cams, GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty)
                             : filename(filename), cams(cams), points(points), normals(normals), uncertainty(uncertainty)
         {
@@ -151,6 +155,19 @@ namespace opview {
         { /*    */ }
     } MeshConfiguration;
     typedef MeshConfiguration* MeshConfigurationPtr;
+
+    typedef struct MCConfiguration {
+        size_t resamplingNum;
+        size_t particles;
+
+    public:
+        MCConfiguration(size_t resamplingNum, size_t particles) : resamplingNum(resamplingNum), particles(particles)
+        { /*    */ }
+        MCConfiguration() : resamplingNum(10), particles(1000)
+        { /*    */ }
+        
+    } MCConfiguration;
+    typedef MCConfiguration* MCConfigurationPtr;
 
 }
 

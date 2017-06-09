@@ -27,8 +27,8 @@ namespace opview {
     void BasicGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector)
     {
         GMExplicitFunction vonMises(shape.begin(), shape.end());
-        GMSparseFunction constraints(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction distances(shape.begin(), shape.end(), 0.0);
+        GMSparseFunction constraints(shape.begin(), shape.end()-2, 0.0);    // -2 because do not care about orientation
+        GMSparseFunction distances(shape.begin(), shape.end()-2, 0.0);    // -2 because do not care about orientation
 
         fillObjectiveFunction(vonMises, centroid, normVector);
         addFunctionTo(vonMises, model, variableIndices);
@@ -54,27 +54,27 @@ namespace opview {
         for (GLMVec3 cam : cams) {
             #pragma omp parallel for collapse(3)
             coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
+                size_t coords[] = {(size_t)x, (size_t)y, (size_t)z};
                 GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-                addValueToConstraintFunction(constraints, pos, cam, centroid, GLMVec3(x, y, z));
+                addValueToConstraintFunction(constraints, pos, cam, centroid, coords);
             }
             
-            addCameraPointConstrain(distances, cam);
+            addCameraPointConstraint(distances, cam);
         }
     }
 
-    void BasicGraphicalModel::addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, GLMVec3 spacePos)
+    void BasicGraphicalModel::addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[])
     {
         double B = glm::distance(point, cam);
         double D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
 
         if (B / D <= BD_TERRESTRIAL_ARCHITECTURAL) {
-            LabelType vals[] = {spacePos.x, spacePos.y, spacePos.z};
             #pragma omp critical
-            function.insert(vals, -1.0);
+            function.insert(coords, -1.0);
         }
     }
 
-    void BasicGraphicalModel::addCameraPointConstrain(GMSparseFunction &distances, GLMVec3 &cam)
+    void BasicGraphicalModel::addCameraPointConstraint(GMSparseFunction &distances, GLMVec3 &cam)
     {
         GLMVec3 discreteSpacePoint = unscalePoint(cam);
         #pragma omp parallel for collapse(3)

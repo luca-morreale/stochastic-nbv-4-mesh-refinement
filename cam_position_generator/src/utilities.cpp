@@ -64,8 +64,7 @@ namespace opview {
 
     // sigmax = 640 sigmay = 360
     double bivariateGuassian(double x, double y, double centerx, double centery, double sigmax, double sigmay) {
-        return std::exp(-0.5 * std::pow((x-centerx), 2) / std::pow(sigmax, 2) - 0.5 * std::pow((x-centerx), 2) / std::pow(sigmay, 2)) 
-                    / (2.0 * M_PI * std::abs(sigmax) * std::abs(sigmay));
+        return std::exp(- 0.5 * std::pow((x-centerx), 2) / std::pow(sigmax, 2) - 0.5 * std::pow((y-centery), 2) / std::pow(sigmay, 2));
     }
 
 } // namespace opview

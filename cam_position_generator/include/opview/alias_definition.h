@@ -32,8 +32,20 @@
 namespace opview {
 
     typedef std::vector<int> IntList;
+    typedef std::vector<size_t> SizeTList;
     typedef std::vector<double> DoubleList;
     typedef std::map<int, double> IntDoubleMap;
+    typedef std::map<double, int> DoubleIntMap;
+    typedef std::vector<DoubleIntMap> DoubleIntMapList;
+
+    typedef std::set<double> DoubleSet;
+    typedef std::vector<DoubleSet> DoubleSetList;
+    typedef DoubleSet::iterator DoubleSetIterator;
+    typedef std::pair<double, double> DoublePair;
+    typedef std::vector<DoublePair> DoublePairList;
+    typedef std::pair<double, DoubleList> DoubleDoubleListPair;
+
+    typedef std::priority_queue<DoubleDoubleListPair> OrderedStates;
 
     /* Shortcuts for GLM types */
     typedef glm::vec2 GLMVec2;
@@ -86,6 +98,9 @@ namespace opview {
 
     typedef boost::function<double(EigVector5 &, GLMVec3 &, GLMVec3 &)> BoostObjFunction;
     typedef std::vector<BoostObjFunction> BoostObjFunctionList;
+
+    typedef std::function<float()> LambdaFloat;
+    typedef std::function<GLMVec3List(OrderedStates&)> LambdaGLMPointsList;
 
 }
 

@@ -78,10 +78,10 @@ namespace opview {
     void MCMCCamGenerator::generalStep(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector, OrderedStates &currentOptima, LambdaGLMPointsList &getPoints)
     {
         GMSparseFunction vonMises(shape.begin(), shape.end(), 0.0);
+        GMSparseFunction visibility(shape.begin(), shape.end(), -1.0);
         GMSparseFunction projectionWeight(shape.begin(), shape.end(), 0.0);
         GMSparseFunction constraints(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction distances(shape.begin(), shape.end(), 0.0);
-
+        
         GLMVec3List points = getPoints(currentOptima);
 
         std::vector<std::map<double, int>> mapping = getPointMapping(points);
@@ -108,8 +108,6 @@ namespace opview {
 
                 for (GLMVec3 cam : getCams()) {
                     addValueToConstraintFunction(constraints, glmPoint, cam, centroid, coord);
-                    
-                    addCameraPointConstraint(distances, cam);
                 }
             }
         }
@@ -117,7 +115,6 @@ namespace opview {
         addFunctionTo(vonMises, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
         addFunctionTo(constraints, model, variableIndices);
-        addFunctionTo(distances, model, variableIndices);
     }
     
 

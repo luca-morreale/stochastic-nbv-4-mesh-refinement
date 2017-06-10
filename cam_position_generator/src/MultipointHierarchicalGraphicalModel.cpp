@@ -53,25 +53,26 @@ namespace opview {
     
     void MultipointHierarchicalGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3List &centroids, GLMVec3List &normVectors)
     {
-        GMSparseFunction vonMises(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction projectionWeight(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction constraints(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction distances(shape.begin(), shape.end(), 0.0);
+        GMExplicitFunction vonMises(coordinateShape.begin(), coordinateShape.end());
+        GMSparseFunction visibility(shape.begin(), shape.end(), -1.0);
+        GMSparseFunction projectionWeight(shape.begin(), shape.end(), -1.0);
+        GMSparseFunction constraints(coordinateShape.begin(), coordinateShape.end(), 0.0);
 
-        GMSparseFunctionList modelFunctions = {vonMises, projectionWeight};
+        GMSparseFunctionList modelFunctions = {visibility, projectionWeight};
         BoostObjFunctionList evals = {
-                                    boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToObjEstimation, this, _1, _2, _3),
+                                    boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3),
                                     boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3)
                                 };
-        fillSparseObjectivesFromFunctions(modelFunctions, evals, centroids, normVectors);
-        fillConstraintFunction(constraints, distances, centroids);
+        fillSparseFunctions(modelFunctions, evals, centroids, normVectors);
+        fillObjectiveFunction(vonMises, centroids, normVectors);
+        fillConstraintFunction(constraints, centroids);
 
         addFunctionTo(vonMises, model, variableIndices);
-        addFunctionTo(constraints, model, variableIndices);
-        addFunctionTo(distances, model, variableIndices);
+        addFunctionTo(projectionWeight, model, variableIndices);
+        addFunctionTo(constraints, model, coordinateIndices);
     }
 
-    void MultipointHierarchicalGraphicalModel::fillSparseObjectivesFromFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3List &centroids, GLMVec3List &normVectors) 
+    void MultipointHierarchicalGraphicalModel::fillSparseFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3List &centroids, GLMVec3List &normVectors) 
     {
         #pragma omp parallel for collapse(5)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
@@ -82,6 +83,22 @@ namespace opview {
             }
         }
     }
+
+    void MultipointHierarchicalGraphicalModel::fillObjectiveFunction(GMExplicitFunction &objFunction, GLMVec3List &centroids, GLMVec3List &normVectors)
+    {
+        #pragma omp parallel for collapse(3)
+        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
+
+            GLMVec3 scaledPos = scalePoint(GLMVec3(x, y, z));
+
+            LabelType val = 0.0;
+            for (int p = 0; p < centroids.size(); p++) {
+                val += -logVonMises(scaledPos, centroids[p], normVectors[p]);
+            }
+            #pragma omp critical
+            objFunction(x, y, z) = val; 
+        }
+    }  
 
     void MultipointHierarchicalGraphicalModel::computeDistributionForList(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3List &centroids, GLMVec3List &normVectors)
     {
@@ -94,7 +111,6 @@ namespace opview {
         for (int f = 0; f < modelFunctions.size(); f++) {
             LabelType val = 0.0;
             for (int p = 0; p < centroids.size(); p++) {
-
                 val += evals[f](pose, centroids[p], normVectors[p]);
             }
             #pragma omp critical
@@ -102,7 +118,7 @@ namespace opview {
         }
     }
 
-    void MultipointHierarchicalGraphicalModel::fillConstraintFunction(GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3List &centroids)
+    void MultipointHierarchicalGraphicalModel::fillConstraintFunction(GMSparseFunction &constraints, GLMVec3List &centroids)
     {
         for (GLMVec3 cam : this->getCams()) {
             #pragma omp parallel for collapse(3)
@@ -111,7 +127,6 @@ namespace opview {
 
                 addValueToConstraintFunction(constraints, pos, cam, centroids, GLMVec3(x, y, z));
             }
-            addCameraPointConstraint(distances, cam);
         }
     }
 
@@ -131,26 +146,13 @@ namespace opview {
         function.insert(coords, val);        
     }
 
-    LabelType MultipointHierarchicalGraphicalModel::estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    LabelType MultipointHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        if (!isPointInsideImage(pose, centroid)) {  // fast rejection, fast to compute.
-            return 0.0;
-        }
-        if (!isMeaningfulPose(pose, centroid)) {
-            return 0.0;
-        }
-        return getWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToObjEstimation, this, _1, _2, _3));
+        return getWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3));
     }
 
     LabelType MultipointHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        if (!isPointInsideImage(pose, centroid)) {  // fast rejection, fast to compute.
-            return 0.0;
-        }
-        if (!isMeaningfulPose(pose, centroid)) {
-            return 0.0;
-        }
-
         return getWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3));
     }
 
@@ -178,9 +180,9 @@ namespace opview {
     }
 
     // private utils, used to indirectly call the parent and cheat boost
-    LabelType MultipointHierarchicalGraphicalModel::parentCallToObjEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    LabelType MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        return super::estimateObjDistribution(pose, centroid, normalVector);
+        return super::visibilityDistribution(pose, centroid, normalVector);
     }
 
     LabelType MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)

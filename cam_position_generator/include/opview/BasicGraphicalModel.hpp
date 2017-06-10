@@ -37,10 +37,9 @@ namespace opview {
     protected:
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) override;
         virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector);
-        virtual void fillConstraintFunction(GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3 &centroid);
+        virtual void fillConstraintFunction(GMSparseFunction &constraints, GLMVec3 &centroid);
         virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[]);
-        virtual void addCameraPointConstraint(GMSparseFunction &distances, GLMVec3 &cam);
-
+        
         virtual LabelType logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector);
         virtual LabelType logVonMises(GLMVec3 &v, GLMVec3 &normalVector);
         virtual LabelType logVonMises(double angle);
@@ -53,9 +52,9 @@ namespace opview {
         
         
         LambdaFloat scale = [this](){ return 2.0 / (float)numLabels(); };
-        LambdaFloat offsetX = [](){ return -1.0; };
-        LambdaFloat offsetY = [](){ return -1.0; };
-        LambdaFloat offsetZ = [](){ return -1.0; };
+        LambdaFloat offsetX = [](){ return -2.0; };
+        LambdaFloat offsetY = [](){ return -2.0; };
+        LambdaFloat offsetZ = [](){ return 1.0; };
 
         SizeTList variableIndices;
         SizeTList shape;

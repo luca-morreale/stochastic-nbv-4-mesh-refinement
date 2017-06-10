@@ -28,14 +28,12 @@ namespace opview {
     {
         GMExplicitFunction vonMises(shape.begin(), shape.end());
         GMSparseFunction constraints(shape.begin(), shape.end()-2, 0.0);    // -2 because do not care about orientation
-        GMSparseFunction distances(shape.begin(), shape.end()-2, 0.0);    // -2 because do not care about orientation
-
+        
         fillObjectiveFunction(vonMises, centroid, normVector);
         addFunctionTo(vonMises, model, variableIndices);
         
-        fillConstraintFunction(constraints, distances, centroid);
+        fillConstraintFunction(constraints, centroid);
         addFunctionTo(constraints, model, variableIndices);
-        addFunctionTo(distances, model, variableIndices);
     }
 
     void BasicGraphicalModel::fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector)
@@ -49,7 +47,7 @@ namespace opview {
         }
     }
 
-    void BasicGraphicalModel::fillConstraintFunction(GMSparseFunction &constraints, GMSparseFunction &distances, GLMVec3 &centroid)
+    void BasicGraphicalModel::fillConstraintFunction(GMSparseFunction &constraints, GLMVec3 &centroid)
     {
         for (GLMVec3 cam : cams) {
             #pragma omp parallel for collapse(3)
@@ -58,8 +56,6 @@ namespace opview {
                 GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
                 addValueToConstraintFunction(constraints, pos, cam, centroid, coords);
             }
-            
-            addCameraPointConstraint(distances, cam);
         }
     }
 
@@ -68,24 +64,9 @@ namespace opview {
         double B = glm::distance(point, cam);
         double D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
 
-        if (B / D <= BD_TERRESTRIAL_ARCHITECTURAL) {
+        if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {
             #pragma omp critical
             function.insert(coords, -1.0);
-        }
-    }
-
-    void BasicGraphicalModel::addCameraPointConstraint(GMSparseFunction &distances, GLMVec3 &cam)
-    {
-        GLMVec3 discreteSpacePoint = unscalePoint(cam);
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, 2, 0, 2, 0, 2) {
-            size_t coords[] = {
-                (x) ? (size_t)std::floor(discreteSpacePoint.x) : (size_t)std::ceil(discreteSpacePoint.x),
-                (y) ? (size_t)std::floor(discreteSpacePoint.y) : (size_t)std::ceil(discreteSpacePoint.y),
-                (z) ? (size_t)std::floor(discreteSpacePoint.z) : (size_t)std::ceil(discreteSpacePoint.z)
-            };
-            #pragma omp critical
-            distances.insert(coords, -100.0);
         }
     }
 

@@ -36,9 +36,11 @@ namespace opview {
 
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) override;
 
-        virtual void fillSparseObjectivesFromFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void fillSparseOrientationFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void fillSparseCoordinatesFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void computeDistributionForFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector);
 
+        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         virtual LabelType estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
 
@@ -55,6 +57,11 @@ namespace opview {
 
         virtual GLMVec2 scaleOrientation(GLMVec2 orientation);
 
+        virtual void initShapes() override;
+
+        SizeTList coordinateIndices;
+        SizeTList coordinateShape;
+
 
     private:
         float deltaAngle;
@@ -67,6 +74,8 @@ namespace opview {
         void fillTree();
         Polyhedron extractPolyhedron();
         TriangleList getTriangleList(Polyhedron &poly);
+
+        typedef HierarchicalDiscreteGraphicalModel super;
 
     };
 

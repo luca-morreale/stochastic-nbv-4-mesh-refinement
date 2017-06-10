@@ -18,6 +18,18 @@ namespace opview {
     OrientationHierarchicalGraphicalModel::~OrientationHierarchicalGraphicalModel()
     { /*    */ }
 
+    void OrientationHierarchicalGraphicalModel::initShapes()
+    {
+        super::initShapes();
+
+        coordinateIndices.clear();
+        coordinateShape.clear();
+        for (size_t i = 0; i < numVariables() - 2; i++) {
+            this->coordinateIndices.push_back(i);
+            this->coordinateShape.push_back(numLabels());
+        }
+    }
+
     void OrientationHierarchicalGraphicalModel::fillTree()
     {
         Polyhedron poly = extractPolyhedron();
@@ -58,11 +70,10 @@ namespace opview {
         std::cout << "Value obtained: " << algorithm->value() << std::endl;
 
         GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
+        GLMVec2 orientOptima = scaleOrientation(GLMVec2(x[3], x[4]));
         x[0] = realOptima.x;
         x[1] = realOptima.y;
         x[2] = realOptima.z;
-
-        GLMVec2 orientOptima = scaleOrientation(GLMVec2(x[3], x[4]));
         x[3] = orientOptima.x;
         x[4] = orientOptima.y;
 
@@ -74,26 +85,27 @@ namespace opview {
 
     void OrientationHierarchicalGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        GMSparseFunction vonMises(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction projectionWeight(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction constraints(shape.begin(), shape.end(), 0.0);
-        GMSparseFunction distances(shape.begin(), shape.end(), 0.0);
+        GMExplicitFunction vonMises(coordinateShape.begin(), coordinateShape.end());
+        GMSparseFunction visibility(shape.begin(), shape.end(), -1.0);
+        GMSparseFunction projectionWeight(shape.begin(), shape.end(), -1.0);
+        GMSparseFunction constraints(coordinateShape.begin(), coordinateShape.end(), 0.0);
 
-        GMSparseFunctionList modelFunctions = {vonMises, projectionWeight};
+        GMSparseFunctionList modelFunctions = {visibility, projectionWeight};
         BoostObjFunctionList evals = {
-                                boost::bind(&OrientationHierarchicalGraphicalModel::estimateObjDistribution, this, _1, _2, _3),
+                                boost::bind(&OrientationHierarchicalGraphicalModel::visibilityDistribution, this, _1, _2, _3),
                                 boost::bind(&OrientationHierarchicalGraphicalModel::imagePlaneWeight, this, _1, _2, _3)
                             };
-        fillSparseObjectivesFromFunctions(modelFunctions, evals, centroid, normVector);
-        fillConstraintFunction(constraints, distances, centroid);
+        fillSparseOrientationFunctions(modelFunctions, evals, centroid, normVector);
+        fillObjectiveFunction(vonMises, centroid, normVector);
+        fillConstraintFunction(constraints, centroid);
 
-        addFunctionTo(vonMises, model, variableIndices);
+        addFunctionTo(vonMises, model, coordinateIndices);
+        addFunctionTo(visibility, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
-        addFunctionTo(constraints, model, variableIndices);
-        addFunctionTo(distances, model, variableIndices);
+        addFunctionTo(constraints, model, coordinateIndices);
     }
 
-    void OrientationHierarchicalGraphicalModel::fillSparseObjectivesFromFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector) 
+    void OrientationHierarchicalGraphicalModel::fillSparseOrientationFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector) 
     {
         #pragma omp parallel for collapse(5)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
@@ -101,6 +113,15 @@ namespace opview {
                 size_t coord[] = {(size_t)x, (size_t)y, (size_t)z, (size_t)ptc, (size_t)yaw};
                 computeDistributionForFunctions(modelFunctions, evals, coord, centroid, normVector);
             }
+        }
+    }
+
+    void OrientationHierarchicalGraphicalModel::fillSparseCoordinatesFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector)
+    {
+        #pragma omp parallel for collapse(3)
+        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
+            size_t coord[] = {(size_t)x, (size_t)y, (size_t)z};
+            computeDistributionForFunctions(modelFunctions, evals, coord, centroid, normVector);
         }
     }
 
@@ -119,16 +140,13 @@ namespace opview {
         }
     }
 
-    LabelType OrientationHierarchicalGraphicalModel::estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    LabelType OrientationHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        if (!isPointInsideImage(pose, centroid)) {  // fast rejection, fast to compute.
-            return 0.0;
-        }
+        return isPointInsideImage(pose, centroid) && isMeaningfulPose(pose, centroid);
+    }
 
-        if (!isMeaningfulPose(pose, centroid)) {
-            return 0.0;
-        }
-
+    LabelType OrientationHierarchicalGraphicalModel::estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    {        
         GLMVec3 point = GLMVec3(pose[0], pose[1], pose[2]);
         return -logVonMises(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
     }
@@ -143,10 +161,10 @@ namespace opview {
         }
 
         GLMVec2 point = getProjectedPoint(pose, centroid);
-        double centerx = camConfig.size_x / 2.0;
-        double centery = camConfig.size_y / 2.0;
-        double sigma_x = camConfig.size_x / 3.0;
-        double sigma_y = camConfig.size_y / 2.0;
+        double centerx = (double)camConfig.size_x / 2.0;
+        double centery = (double)camConfig.size_y / 2.0;
+        double sigma_x = (double)camConfig.size_x / 3.0;
+        double sigma_y = (double)camConfig.size_y / 2.0;
 
         return bivariateGuassian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
     }

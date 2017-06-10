@@ -11,6 +11,7 @@ find_package(OpenCV REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Cplex REQUIRED)
+find_package(GSL REQUIRED)
 
 find_library(GMP_LIBRARY gmp /usr/lib)
 
@@ -37,6 +38,8 @@ include_directories(${EIGEN3_INCLUDE_DIR}
                       ${OpenCV_INCLUDE_DIRS} 
                       ${CGAL_INCLUDE_DIRS}
                       ${OPTIMIZER_INCLUDE_DIRS}
+                      ${GSL_INCLUDE_DIRS}
+                      ${GSLCBLAS_INCLUDE_DIRS}
                       )
 
 include_directories(include/)
@@ -67,10 +70,13 @@ target_link_libraries(view ${OpenCV_LIBS}
                                             ${ASSIMP_LIBRARIES}
                                             ${MANIFOLD_LIB}
                                             ${OPTIMIZER_LIBRARIES}
-                                            ${OPTIMAL_VIEW_LIB}
                                             ${GMP_LIBRARY}
                                             ${MAXFLOW_LIB}
-                                            ${AD3_LIB} )
+                                            ${AD3_LIB}
+                                            ${OPTIMAL_VIEW_LIB}
+                                            ${GSL_LIBRARIES}
+                                            ${GSLCBLAS_LIBRARIES}
+                                            )
 
 target_link_libraries(gview ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
@@ -82,10 +88,13 @@ target_link_libraries(gview ${OpenCV_LIBS}
                                             ${ASSIMP_LIBRARIES}
                                             ${MANIFOLD_LIB}
                                             ${OPTIMIZER_LIBRARIES}
-                                            ${OPTIMAL_VIEW_LIB}
                                             ${GMP_LIBRARY}
                                             ${MAXFLOW_LIB}
-                                            ${AD3_LIB} )
+                                            ${AD3_LIB}
+                                            ${OPTIMAL_VIEW_LIB}
+                                            ${GSL_LIBRARIES}
+                                            ${GSLCBLAS_LIBRARIES}
+                                            )
 
 # ------------------------ INSTALLATION ------------------------
 

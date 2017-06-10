@@ -72,23 +72,23 @@ namespace opview {
         float nextSize = currentSize * 0.75f;
         float halfNextSize = nextSize / 2.0f;
 
-        float nextScale = currentScale * 0.75f;
-        float halfNextScale = nextScale / 2.0f;
+        float nextScale = currentScale * 0.75f; // 3/4 of the current scale
 
-        offsetX = [currentOptimal, halfNextSize, halfNextScale](){ return currentOptimal[0] - halfNextSize - halfNextScale; };
-        offsetY = [currentOptimal, halfNextSize, halfNextScale](){ return currentOptimal[1] - halfNextSize - halfNextScale; };
-        offsetZ = [currentOptimal, halfNextSize, halfNextScale](){ return currentOptimal[2] - halfNextSize - halfNextScale; };
+        offsetX = [currentOptimal, halfNextSize, nextScale](){ return currentOptimal[0] - halfNextSize; };
+        offsetY = [currentOptimal, halfNextSize, nextScale](){ return currentOptimal[1] - halfNextSize; };
+        // std::max to force z to stay in the positive space
+        offsetZ = [currentOptimal, halfNextSize, nextScale](){ return std::max(currentOptimal[2] - halfNextSize, 1.0); };
 
         scale = [nextScale](){ return nextScale; };
     }
 
     void HierarchicalDiscreteGraphicalModel::resetPosition()
     {
-        scale = [this](){ return (float)ORIGINAL_SIDE_SIZE / (float)numLabels(); };
+        scale = [this](){ return 2.0 * (float)ORIGINAL_SIDE_SIZE / (float)numLabels(); };
 
         offsetX = [](){ return (float)MIN_COORDINATE; };
         offsetY = [](){ return (float)MIN_COORDINATE; };
-        offsetZ = [](){ return (float)MIN_COORDINATE; };
+        offsetZ = [](){ return (float)1.0; };
     }
 
     size_t HierarchicalDiscreteGraphicalModel::setNumLabels(size_t labels)

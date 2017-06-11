@@ -151,7 +151,7 @@ namespace opview {
             }
         }
         MeshConfiguration(std::string &filename, GLMVec3List &cams)
-                            : filename(filename), cams(cams), points(GLMVec3List()), uncertainty(DoubleList())
+                            : filename(filename), cams(cams), points(GLMVec3List()), normals(GLMVec3List()), uncertainty(DoubleList())
         { /*    */ }
     } MeshConfiguration;
     typedef MeshConfiguration* MeshConfigurationPtr;

@@ -6,8 +6,6 @@
 #include <opview/type_definition.h>
 
 namespace opview {
-
-    #define UNCERTAINTY_THRESHOLD 1    // TODO put this as input flag or % of given point
     
     // in case of single point it just estimate the best point using a weighted function that consider all visible points
     
@@ -18,9 +16,11 @@ namespace opview {
                                                         GLMVec3List &cams, double goalAngle=55, double dispersion=5);
         MultipointHierarchicalGraphicalModel(SolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config,
                                                         CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                        double goalAngle=55, double dispersion=5);
+                                                        size_t maxPoints, long double maxUncertainty, double goalAngle=55, double dispersion=5);
         ~MultipointHierarchicalGraphicalModel();
 
+        // bring up overloaded function from parent
+        using OrientationHierarchicalGraphicalModel::estimateBestCameraPosition;
         virtual void estimateBestCameraPosition(GLMVec3List &centroids, GLMVec3List &normVector);
 
         void updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double accuracy);
@@ -41,7 +41,7 @@ namespace opview {
         virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
         virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
 
-        virtual double getWorstPointSeen(EigVector5 &pose, BoostObjFunction function);
+        virtual double estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function);
         virtual double computeWeightForPoint(int pointIndex);
     
     private:
@@ -50,6 +50,8 @@ namespace opview {
         DoubleList uncertainty;
 
         long double SUM_UNCERTAINTY;
+        long double maxUncertainty;
+        size_t maxPoints;
 
         typedef OrientationHierarchicalGraphicalModel super;
 

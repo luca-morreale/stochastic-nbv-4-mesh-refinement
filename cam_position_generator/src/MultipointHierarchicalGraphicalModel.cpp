@@ -8,12 +8,15 @@ namespace opview {
                                             : OrientationHierarchicalGraphicalModel(solver, config, camConfig, meshFile, cams, goalAngle, dispersion)
     { /*    */ }
 
-    MultipointHierarchicalGraphicalModel::MultipointHierarchicalGraphicalModel(SolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config,
-                                            CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, double goalAngle, double dispersion)
+    MultipointHierarchicalGraphicalModel::MultipointHierarchicalGraphicalModel(SolverGeneratorPtr solver, 
+                                            OrientationHierarchicalConfiguration &config, CameraGeneralConfiguration &camConfig, 
+                                            MeshConfiguration &meshConfig, size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
                                             : OrientationHierarchicalGraphicalModel(solver, config, camConfig, meshConfig.filename, meshConfig.cams, goalAngle, dispersion)
     {
-        points = meshConfig.points;
-        uncertainty = meshConfig.uncertainty;
+        this->points = meshConfig.points;
+        this->maxPoints = maxPoints;
+        this->maxUncertainty = maxUncertainty;
+        this->uncertainty = meshConfig.uncertainty;
         for (int p = 0; p < uncertainty.size(); p++) {
             SUM_UNCERTAINTY += uncertainty[p];
         }
@@ -67,7 +70,8 @@ namespace opview {
         fillObjectiveFunction(vonMises, centroids, normVectors);
         fillConstraintFunction(constraints, centroids);
 
-        addFunctionTo(vonMises, model, variableIndices);
+        addFunctionTo(vonMises, model, coordinateIndices);
+        addFunctionTo(visibility, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
         addFunctionTo(constraints, model, coordinateIndices);
     }
@@ -98,7 +102,7 @@ namespace opview {
             #pragma omp critical
             objFunction(x, y, z) = val; 
         }
-    }  
+    }
 
     void MultipointHierarchicalGraphicalModel::computeDistributionForList(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3List &centroids, GLMVec3List &normVectors)
     {
@@ -124,7 +128,6 @@ namespace opview {
             #pragma omp parallel for collapse(3)
             coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
                 GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-
                 addValueToConstraintFunction(constraints, pos, cam, centroids, GLMVec3(x, y, z));
             }
         }
@@ -148,20 +151,20 @@ namespace opview {
 
     LabelType MultipointHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        return getWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3));
+        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3));
     }
 
     LabelType MultipointHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        return getWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3));
+        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3));
     }
 
-    double MultipointHierarchicalGraphicalModel::getWorstPointSeen(EigVector5 &pose, BoostObjFunction function)
+    double MultipointHierarchicalGraphicalModel::estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function)
     {
         DoubleList uncertaintyList;
         #pragma omp parallel for
         for (int p = 0; p < points.size(); p++) {
-            if (uncertainty[p] >= UNCERTAINTY_THRESHOLD) {    // TODO look at definition of UNCERTAINTY_THRESHOLD
+            if (uncertainty[p] >= this->maxUncertainty) {    // TODO look at definition of UNCERTAINTY_THRESHOLD
                 double normalizedWeight = computeWeightForPoint(p);     // more the uncertainty is high more important it is seen
                 LabelType local_val = function(pose, points[p], normals[p]);
 
@@ -173,10 +176,15 @@ namespace opview {
         std::sort(uncertaintyList.rbegin(), uncertaintyList.rend());
 
         LabelType val = 0.0;
-        for (int i = 0; i < std::min((size_t)10, uncertaintyList.size()); i++) {
+        for (int i = 0; i < std::min(this->maxPoints, uncertaintyList.size()); i++) {
             val += uncertaintyList[i];
         }
         return val;
+    }
+
+    double MultipointHierarchicalGraphicalModel::computeWeightForPoint(int pointIndex)
+    {
+        return uncertainty[pointIndex] / SUM_UNCERTAINTY;
     }
 
     // private utils, used to indirectly call the parent and cheat boost
@@ -188,11 +196,6 @@ namespace opview {
     LabelType MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         return super::imagePlaneWeight(pose, centroid, normalVector);
-    }
-
-    double MultipointHierarchicalGraphicalModel::computeWeightForPoint(int pointIndex)
-    {
-        return uncertainty[pointIndex] / SUM_UNCERTAINTY;
     }
 
     void MultipointHierarchicalGraphicalModel::updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double uncertainty)

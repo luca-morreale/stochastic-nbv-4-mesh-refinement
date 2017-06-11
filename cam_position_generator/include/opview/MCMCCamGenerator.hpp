@@ -11,7 +11,6 @@
 
 namespace opview {
 
-    #define PARTICLES 1000
     #define OFFSPRING 0.1   // 10% of the total
 
     class MCMCCamGenerator : public OrientationHierarchicalGraphicalModel {
@@ -34,6 +33,10 @@ namespace opview {
             virtual void generalStep(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector, OrderedStates &currentOptima, LambdaGLMPointsList &getPoints);
             virtual OrderedStates uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector);
             virtual OrderedStates resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedStates &currentOptima);
+            
+            virtual void fillObjectiveFunction(GMExplicitFunction &objFunction, GLMVec3 &centroid, GLMVec3 &normVector, GLMVec3List &points, DoubleIntMapList &mapping);
+            virtual void computeDistributionForList(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroids, GLMVec3 &normVectors, GLMVec3List &points, DoubleIntMapList &mapping);
+            virtual void fillConstraintFunction(GMSparseFunction &constraint, GLMVec3 &centroid, GLMVec3List &points, DoubleIntMapList &mapping);
             
             virtual GLMVec3List getCentersFromOptima(OrderedStates currentOptima);
             virtual DoubleList getWeightsFromOptima(OrderedStates currentOptima);

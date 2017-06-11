@@ -116,15 +116,6 @@ namespace opview {
         }
     }
 
-    void OrientationHierarchicalGraphicalModel::fillSparseCoordinatesFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector)
-    {
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
-            size_t coord[] = {(size_t)x, (size_t)y, (size_t)z};
-            computeDistributionForFunctions(modelFunctions, evals, coord, centroid, normVector);
-        }
-    }
-
     void OrientationHierarchicalGraphicalModel::computeDistributionForFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector)
     {
         GLMVec3 scaledPos = scalePoint(GLMVec3(coord[0], coord[1], coord[2]));

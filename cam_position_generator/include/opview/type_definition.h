@@ -159,11 +159,13 @@ namespace opview {
     typedef struct MCConfiguration {
         size_t resamplingNum;
         size_t particles;
+        size_t particleUniform;
 
     public:
-        MCConfiguration(size_t resamplingNum, size_t particles) : resamplingNum(resamplingNum), particles(particles)
+        MCConfiguration(size_t resamplingNum, size_t particles, size_t particleUniform) 
+                        : resamplingNum(resamplingNum), particles(particles), particleUniform(particleUniform)
         { /*    */ }
-        MCConfiguration() : resamplingNum(10), particles(1000)
+        MCConfiguration() : resamplingNum(10), particles(1000), particleUniform(10)
         { /*    */ }
         
     } MCConfiguration;

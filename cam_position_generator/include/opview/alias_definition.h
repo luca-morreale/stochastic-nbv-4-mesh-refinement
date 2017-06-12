@@ -38,15 +38,13 @@ namespace opview {
     typedef std::map<int, double> IntDoubleMap;
     typedef std::map<double, int> DoubleIntMap;
     typedef std::vector<DoubleIntMap> DoubleIntMapList;
+    typedef std::vector<IntDoubleMap> IntDoubleMapList;
 
     typedef std::set<double> DoubleSet;
     typedef std::vector<DoubleSet> DoubleSetList;
     typedef DoubleSet::iterator DoubleSetIterator;
     typedef std::pair<double, double> DoublePair;
     typedef std::vector<DoublePair> DoublePairList;
-    typedef std::pair<double, DoubleList> DoubleDoubleListPair;
-
-    typedef std::priority_queue<DoubleDoubleListPair> OrderedStates;
 
     /* Shortcuts for GLM types */
     typedef glm::vec2 GLMVec2;
@@ -58,6 +56,16 @@ namespace opview {
 
     /* Shortcuts for Eigen types */
     typedef Eigen::Matrix<float, 5, 1> EigVector5;
+    typedef std::vector<EigVector5> EigVector5List;
+
+    typedef std::pair<double, EigVector5> ValuePose;
+    struct ComparePoses{
+        bool operator()(ValuePose const& lhs, ValuePose const& rhs){
+            return lhs.first < rhs.first;
+        }
+    };
+
+    typedef std::priority_queue<ValuePose, std::vector<ValuePose>, ComparePoses> OrderedPose;
 
 
     /* Shortcuts for CGAL types */
@@ -101,7 +109,7 @@ namespace opview {
     typedef std::vector<BoostObjFunction> BoostObjFunctionList;
 
     typedef std::function<float()> LambdaFloat;
-    typedef std::function<GLMVec3List(OrderedStates&)> LambdaGLMPointsList;
+    typedef std::function<GLMVec3List(OrderedPose&)> LambdaGLMPointsList;
 
 }
 

@@ -39,14 +39,11 @@ namespace opview {
         virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void fillConstraintFunction(GMSparseFunction &constraints, GLMVec3 &centroid);
         virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[]);
-        
-        virtual LabelType logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector);
-        virtual LabelType logVonMises(GLMVec3 &v, GLMVec3 &normalVector);
-        virtual LabelType logVonMises(double angle);
-        virtual LabelType logBessel0(double K);
 
         virtual GLMVec3 scalePoint(GLMVec3 point);
         virtual GLMVec3 unscalePoint(GLMVec3 point);
+
+        virtual double logVonMisesWrapper(GLMVec3 &pos, GLMVec3 &centroid, GLMVec3 &normVector);
         
         virtual void initShapes();
         

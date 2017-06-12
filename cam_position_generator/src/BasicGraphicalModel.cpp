@@ -41,7 +41,7 @@ namespace opview {
         #pragma omp parallel for collapse(3)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-            LabelType val = -logVonMises(pos, centroid, normVector);
+            LabelType val = -logVonMisesWrapper(pos, centroid, normVector);
             #pragma omp critical
             vonMises(x, y, z) = val;
         }
@@ -83,35 +83,14 @@ namespace opview {
         return (point - offset) / scale();
     }
     
-    LabelType BasicGraphicalModel::logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        GLMVec3 v = point - centroid;
-        return logVonMises(v, normalVector);
-    }
-
-    LabelType BasicGraphicalModel::logVonMises(GLMVec3 &v, GLMVec3 &normalVector)
-    { 
-        double dotProduct = glm::dot(normalVector, v);
-        double normProduct = glm::l2Norm(normalVector) * glm::l2Norm(v);
-        double angle = dotProduct / normProduct;
- 
-        return logVonMises(angle);
-    }
-
-    LabelType BasicGraphicalModel::logVonMises(double angle)
-    {
-        return std::cos(angle - vonMisesConfig.goalAngle) * vonMisesConfig.dispersion - std::log(2 * M_PI) - logBessel0(vonMisesConfig.dispersion); 
-    }
-
-    LabelType BasicGraphicalModel::logBessel0(double k)   // log of I0(x) as approximately x − 1/2 log(2 *pi * x)     https://math.stackexchange.com/questions/376758/exponential-approximation-of-the-modified-bessel-function-of-first-kind-equatio 
-    { 
-        double logArg = 2.0f * M_PI * k; 
-        return k - 0.5f * std::log(logArg);
-    }
-
     VonMisesConfigurationPtr BasicGraphicalModel::vonMisesConfiguration()
     {
         return &vonMisesConfig;
+    }
+
+    double BasicGraphicalModel::logVonMisesWrapper(GLMVec3 &pos, GLMVec3 &centroid, GLMVec3 &normVector)
+    {
+        return logVonMises(pos, centroid, normVector, vonMisesConfig);
     }
 
     void BasicGraphicalModel::setVonMisesConfiguration(VonMisesConfiguration vonMisesConfig)

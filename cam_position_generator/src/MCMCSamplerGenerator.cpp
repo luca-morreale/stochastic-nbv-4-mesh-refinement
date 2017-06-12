@@ -7,7 +7,7 @@ namespace opview {
     {
         randGen = gsl_rng_alloc(gsl_rng_mt19937); /*Define random number t*/
         gsl_rng_set(randGen, SEED); /*Initiate the random number generator with seed*/
-        std = 1.0;    // standard deviation
+        std = 0.5;    // standard deviation
     }
 
     MCMCSamplerGenerator::~MCMCSamplerGenerator()
@@ -22,8 +22,11 @@ namespace opview {
         double stepy = (limits[1].second - limits[1].first) / qt;
         double stepz = (limits[2].second - limits[2].first) / qt;
 
+        #pragma omp parallel for
         for (int i = 0; i < qt; i++) {
-            pointList.push_back(GLMVec3(limits[0].first + i * stepx, limits[0].first + i * stepy, limits[0].first + i * stepz));
+            GLMVec3 point = GLMVec3(limits[0].first + i * stepx, limits[0].first + i * stepy, limits[0].first + i * stepz);
+            #pragma omp critical
+            pointList.push_back(point);
         }
 
         return pointList;
@@ -91,7 +94,7 @@ namespace opview {
         }
      
         gsl_blas_dtrmv(CblasLower, CblasNoTrans, CblasNonUnit, L, results);
-        gsl_vector_add(results, mus);
+        //gsl_vector_add(results, mus);
      
         gsl_matrix_free(L);
     }

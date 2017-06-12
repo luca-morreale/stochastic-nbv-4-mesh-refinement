@@ -137,12 +137,12 @@ int main(int argc, char **argv) {
     // // centroid, normal
     // // model.estimateBestCameraPosition(centroid, normal);
 
-
-    opview::MCConfiguration mcConfig(10, 100); // size_t resamplingNum, size_t particles
+    opview::MCConfiguration mcConfig(10, 10000, 100); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    // maybe is better if less point in uniform? and then increase in the case of mc?
 
     opview::MultiBruteForceSolverGeneratorPtr solver = new opview::MultiBruteForceSolverGenerator();
     
-    opview::MCMCCamGenerator model(solver, config, camConfig, meshFile, cams, mcConfig);
+    opview::MCMCCamGenerator model(camConfig, meshFile, cams, mcConfig);
 
     model.estimateBestCameraPosition(centroid, normal);
 

@@ -229,7 +229,10 @@ namespace opview {
 
     LabelType MCMCCamGenerator::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        return isPointInsideImage(pose, centroid) && isMeaningfulPose(pose, centroid);
+        if (isPointInsideImage(pose, centroid) && isMeaningfulPose(pose, centroid)){
+            return 1.0;
+        }
+        return 0.0;
     }
 
     LabelType MCMCCamGenerator::imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)

@@ -7,7 +7,7 @@ namespace opview {
     {
         randGen = gsl_rng_alloc(gsl_rng_mt19937); /*Define random number t*/
         gsl_rng_set(randGen, SEED); /*Initiate the random number generator with seed*/
-        std = 1.5;    // standard deviation
+        std = 1.0;    // standard deviation
     }
 
     MCMCSamplerGenerator::~MCMCSamplerGenerator()
@@ -18,32 +18,15 @@ namespace opview {
     GLMVec3List MCMCSamplerGenerator::getUniformSamples(DoublePairList limits, size_t qt)
     {
         GLMVec3List pointList;
-        double stepx = limits[0].second - limits[0].first / qt;
-        double stepy = limits[1].second - limits[1].first / qt;
-        double stepz = limits[2].second - limits[2].first / qt;
+        double stepx = (limits[0].second - limits[0].first) / qt;
+        double stepy = (limits[1].second - limits[1].first) / qt;
+        double stepz = (limits[2].second - limits[2].first) / qt;
 
         for (int i = 0; i < qt; i++) {
-            pointList.push_back(GLMVec3(limits[0].first + i * stepx,
-                                        limits[0].first + i * stepy,
-                                        limits[0].first + i * stepz));
+            pointList.push_back(GLMVec3(limits[0].first + i * stepx, limits[0].first + i * stepy, limits[0].first + i * stepz));
         }
 
         return pointList;
-    }
-
-    IntList MCMCSamplerGenerator::computeWeightedSampleQuantity(DoubleList &weights, size_t qt)
-    {
-        IntList sampleQt;
-        double sum = 0.0;
-
-        for (int i = 0; i < weights.size(); i++) {
-            sum += weights[i];
-        }
-        for (int i = 0; i < weights.size(); i++) {
-            sampleQt.push_back(ceil(qt * weights[i] / sum));
-        }
-
-        return sampleQt;
     }
 
     GLMVec3List MCMCSamplerGenerator::getWeightedSamples(GLMVec3List &centers, DoubleList &weights, size_t qt)
@@ -65,7 +48,6 @@ namespace opview {
             GLMVec3 point = getSample(center);
             points.push_back(point);
         }
-
         return points;
     }
 
@@ -118,9 +100,14 @@ namespace opview {
     {
         //set up variance matrix
         gsl_matrix_set(var, 0, 0, pow(std,2));
-        gsl_matrix_set(var, 1, 1, pow(std,2));
         gsl_matrix_set(var, 0, 1, 0);
+        gsl_matrix_set(var, 0, 2, 0);
+        gsl_matrix_set(var, 1, 1, pow(std,2));
         gsl_matrix_set(var, 1, 0, 0);
+        gsl_matrix_set(var, 1, 2, 0);
+        gsl_matrix_set(var, 2, 2, pow(std,2));
+        gsl_matrix_set(var, 2, 0, 0);
+        gsl_matrix_set(var, 2, 1, 0);
     }
 
     void MCMCSamplerGenerator::setupMusVector(gsl_vector *mus, GLMVec3 &center)
@@ -140,6 +127,26 @@ namespace opview {
         for (int i = 0; i < mats.size(); i++) {
             gsl_matrix_free(mats[i]);
         }
+    }
+
+    IntList MCMCSamplerGenerator::computeWeightedSampleQuantity(DoubleList &weights, size_t qt)
+    {
+        // if there is a negative value translate all up and then compute the weights
+        double minWeight = *std::min_element(std::begin(weights), std::end(weights));
+
+        IntList sampleQt;
+        double sum = 0.0;
+
+        for (int i = 0; i < weights.size(); i++) {
+            weights[i] -= minWeight;
+            sum += weights[i];
+        }
+
+        for (int i = 0; i < weights.size(); i++) {
+            sampleQt.push_back(ceil(qt * weights[i] / sum));
+        }
+
+        return sampleQt;
     }
 
 } // namespace opview

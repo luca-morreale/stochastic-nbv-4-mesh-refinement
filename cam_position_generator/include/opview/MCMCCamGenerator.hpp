@@ -60,8 +60,8 @@ namespace opview {
         LambdaGLMPointsList uniformPointGetter;
         LambdaGLMPointsList resamplingPointGetter;
 
-        LambdaFloat offsetX = [](){ return -2.0; };
-        LambdaFloat offsetY = [](){ return -2.0; };
+        LambdaFloat offsetX = [](){ return -4.0; };
+        LambdaFloat offsetY = [](){ return -4.0; };
         LambdaFloat offsetZ = [](){ return 1.0; };
 
     private:

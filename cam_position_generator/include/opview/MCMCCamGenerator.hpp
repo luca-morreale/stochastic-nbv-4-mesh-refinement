@@ -2,52 +2,85 @@
 #define CAM_POSITION_GENERATOR_MCMC_CAM_GENERATOR_H
 
 #include <glm/gtx/norm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <opview/type_definition.h>
 #include <opview/alias_definition.h>
 #include <opview/MCMCSamplerGenerator.hpp>
-#include <opview/OrientationHierarchicalGraphicalModel.hpp>
-#include <opview/MultiBruteForceSolverGenerator.hpp>
+#include <opview/utilities.hpp>
 
 namespace opview {
 
     #define OFFSPRING 0.1   // 10% of the total
+    #define ORIENTATION 10
+    #define orientationCycles() for(int ptc = 0; ptc < 360; ptc+=ORIENTATION) for(int yaw = 0; yaw < 360; yaw+=ORIENTATION)
 
-    class MCMCCamGenerator : public OrientationHierarchicalGraphicalModel {
+    #define BD_AERIAL 0.2f
+    #define BD_TERRESTRIAL_PROSPECTIVE 0.25f
+    #define BD_TERRESTRIAL_ARCHITECTURAL 0.33f 
+
+    class MCMCCamGenerator {
     public:
-        MCMCCamGenerator(MultiBruteForceSolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config, CameraGeneralConfiguration &camConfig,
-                                            std::string meshFile, GLMVec3List &cams, MCConfiguration &mcConfig, double goalAngle=55, double dispersion=5);
+        MCMCCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
+                                            MCConfiguration &mcConfig, double goalAngle=55, double dispersion=8);
+
         ~MCMCCamGenerator();
 
         virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
-        virtual OrderedStates extractBestResults(AdderInferencePtr algorithm);
-
-        VonMisesConfigurationPtr vonMisesConfiguration();
-        void setVonMisesConfiguration(VonMisesConfiguration vonMisesConfig);
-
     protected:
-            virtual void initLambdas();
-            virtual DoubleIntMapList getPointMapping(GLMVec3List &points);
-            
-            virtual void generalStep(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector, OrderedStates &currentOptima, LambdaGLMPointsList &getPoints);
-            virtual OrderedStates uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector);
-            virtual OrderedStates resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedStates &currentOptima);
-            
-            virtual void fillObjectiveFunction(GMExplicitFunction &objFunction, GLMVec3 &centroid, GLMVec3 &normVector, GLMVec3List &points, DoubleIntMapList &mapping);
-            virtual void computeDistributionForList(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroids, GLMVec3 &normVectors, GLMVec3List &points, DoubleIntMapList &mapping);
-            virtual void fillConstraintFunction(GMSparseFunction &constraint, GLMVec3 &centroid, GLMVec3List &points, DoubleIntMapList &mapping);
-            
-            virtual GLMVec3List getCentersFromOptima(OrderedStates currentOptima);
-            virtual DoubleList getWeightsFromOptima(OrderedStates currentOptima);
+        virtual void initLambdas();
+        virtual EigVector5List insertOrientation(GLMVec3List &points);
+        virtual OrderedPose uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual OrderedPose resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima);
+        virtual OrderedPose generalStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, LambdaGLMPointsList &getPoints);
+        virtual OrderedPose orderPoses(EigVector5List &orientedPoints, DoubleList &values);
+        virtual void computeObjectiveFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual double logVonMisesWrapper(EigVector5 &newCamPose, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void computeProjectionFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void computeVisibilityFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void computeConstraintFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual double computeBDConstraint(EigVector5 &newCamPose, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual OrderedPose extractBestResults(OrderedPose &poses);
+        virtual GLMVec3List getCentersFromOptima(OrderedPose currentOptima);
+        virtual DoubleList getWeightsFromOptima(OrderedPose currentOptima);
 
-            LambdaGLMPointsList uniformPointGetter;
-            LambdaGLMPointsList resamplingPointGetter;
+        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+        virtual LabelType imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+        virtual bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid);
+        virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
+        virtual bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid);
+        virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
+        virtual GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid);
+        virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
+        virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
+
+        LambdaGLMPointsList uniformPointGetter;
+        LambdaGLMPointsList resamplingPointGetter;
+
+        LambdaFloat offsetX = [](){ return -2.0; };
+        LambdaFloat offsetY = [](){ return -2.0; };
+        LambdaFloat offsetZ = [](){ return 1.0; };
 
     private:
         MCMCSamplerGeneratorPtr sampler;
         MCConfiguration mcConfig;
+        GLMVec3List cams;
+        VonMisesConfiguration vonMisesConfig;
+        std::string meshFile;
 
+        float deltaAngle;
+        const GLMVec3 zdir = GLMVec3(0.0, 0.0, 1.0);
+        std::string meshFilename;
+        TreePtr tree;
+
+        CameraGeneralConfiguration camConfig;
+
+        void fillTree();
+        Polyhedron extractPolyhedron();
+        TriangleList getTriangleList(Polyhedron &poly);
 
     };
 

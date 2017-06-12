@@ -139,7 +139,7 @@ namespace opview {
     LabelType OrientationHierarchicalGraphicalModel::estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {        
         GLMVec3 point = GLMVec3(pose[0], pose[1], pose[2]);
-        return -logVonMises(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
+        return -logVonMisesWrapper(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
     }
 
     LabelType OrientationHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
@@ -162,10 +162,7 @@ namespace opview {
 
     bool OrientationHierarchicalGraphicalModel::isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid)
     {
-        return isPointInsideImage(pose, centroid) 
-        && !isIntersecting(pose, centroid) 
-        && !isOppositeView(pose, centroid)
-        ;
+        return isPointInsideImage(pose, centroid) && !isIntersecting(pose, centroid) && !isOppositeView(pose, centroid);
     }
 
     bool OrientationHierarchicalGraphicalModel::isOppositeView(EigVector5 &pose, GLMVec3 &centroid)

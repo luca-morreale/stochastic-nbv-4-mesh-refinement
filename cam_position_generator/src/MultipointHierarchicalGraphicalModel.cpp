@@ -97,7 +97,7 @@ namespace opview {
 
             LabelType val = 0.0;
             for (int p = 0; p < centroids.size(); p++) {
-                val += -logVonMises(scaledPos, centroids[p], normVectors[p]);
+                val += -logVonMisesWrapper(scaledPos, centroids[p], normVectors[p]);
             }
             #pragma omp critical
             objFunction(x, y, z) = val; 

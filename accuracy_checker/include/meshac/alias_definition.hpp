@@ -32,6 +32,9 @@ namespace meshac {
     typedef cv::line_descriptor::KeyLine CVSegment;
     typedef std::vector<CVSegment> CVSegmentList;
     typedef cv::Point2f CVPoint2;
+    typedef cv::Vec3f CVVector3;
+    typedef cv::Vec3f CVLine;
+    typedef std::vector<CVLine> CVLineList;
 
     /* Shortcuts for GLM types */
     typedef glm::vec3 GLMVec3;

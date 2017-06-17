@@ -1,4 +1,5 @@
 #include <opview/OrientationHierarchicalGraphicalModel.hpp>
+#include <CGAL/exceptions.h>
 
 namespace opview {
 
@@ -28,6 +29,16 @@ namespace opview {
             this->coordinateIndices.push_back(i);
             this->coordinateShape.push_back(numLabels());
         }
+        shape.clear();
+        variableIndices.clear();
+        for (size_t i = 0; i < numVariables() - 2; i++) {
+            this->variableIndices.push_back(i);
+            this->shape.push_back(numLabels());
+        }
+        this->variableIndices.push_back(3);
+        this->shape.push_back(orientationLabels());
+        this->variableIndices.push_back(4);
+        this->shape.push_back(orientationLabels());
     }
 
     void OrientationHierarchicalGraphicalModel::fillTree()
@@ -57,8 +68,13 @@ namespace opview {
             Vertex_handle p1 = (++p)->vertex();
             Vertex_handle p2 = (++p)->vertex();
 
-            triangles.push_back(Triangle(p0->point(), p1->point(), p2->point()));
+            Triangle t = Triangle(p0->point(), p1->point(), p2->point());
+            if (t.is_degenerate()) {
+                throw std::runtime_error("A triangle is degenerate.");
+            }
+            triangles.push_back(t);
         }
+
         return triangles;
     }
 
@@ -84,28 +100,28 @@ namespace opview {
     }
 
     void OrientationHierarchicalGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector)
-    {
+    {        
         GMExplicitFunction vonMises(coordinateShape.begin(), coordinateShape.end());
-        GMSparseFunction visibility(shape.begin(), shape.end(), -1.0);
-        GMSparseFunction projectionWeight(shape.begin(), shape.end(), -1.0);
-        GMSparseFunction constraints(coordinateShape.begin(), coordinateShape.end(), 0.0);
+        GMExplicitFunction visibility(shape.begin(), shape.end());
+        GMExplicitFunction projectionWeight(shape.begin(), shape.end());
+        GMExplicitFunction constraints(coordinateShape.begin(), coordinateShape.end());
 
-        GMSparseFunctionList modelFunctions = {visibility, projectionWeight};
+        GMExplicitFunctionList modelFunctions = {visibility, projectionWeight};
         BoostObjFunctionList evals = {
                                 boost::bind(&OrientationHierarchicalGraphicalModel::visibilityDistribution, this, _1, _2, _3),
                                 boost::bind(&OrientationHierarchicalGraphicalModel::imagePlaneWeight, this, _1, _2, _3)
                             };
-        fillSparseOrientationFunctions(modelFunctions, evals, centroid, normVector);
+        fillExplicitOrientationFunctions(modelFunctions, evals, centroid, normVector);
         fillObjectiveFunction(vonMises, centroid, normVector);
         fillConstraintFunction(constraints, centroid);
-
+        
         addFunctionTo(vonMises, model, coordinateIndices);
         addFunctionTo(visibility, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
         addFunctionTo(constraints, model, coordinateIndices);
     }
 
-    void OrientationHierarchicalGraphicalModel::fillSparseOrientationFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector) 
+    void OrientationHierarchicalGraphicalModel::fillExplicitOrientationFunctions(GMExplicitFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector) 
     {
         #pragma omp parallel for collapse(5)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
@@ -116,7 +132,7 @@ namespace opview {
         }
     }
 
-    void OrientationHierarchicalGraphicalModel::computeDistributionForFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector)
+    void OrientationHierarchicalGraphicalModel::computeDistributionForFunctions(GMExplicitFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector)
     {
         GLMVec3 scaledPos = scalePoint(GLMVec3(coord[0], coord[1], coord[2]));
         GLMVec2 scaledOri = scaleOrientation(GLMVec2(coord[3], coord[4]));
@@ -125,15 +141,19 @@ namespace opview {
         
         for (int f = 0; f < modelFunctions.size(); f++) {
             LabelType val = evals[f](pose, centroid, normVector);
+            auto coords = coord;
         
             #pragma omp critical
-            modelFunctions[f].insert(coord, val);
+            (modelFunctions[f])(coords) = val;
         }
     }
 
     LabelType OrientationHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        return isPointInsideImage(pose, centroid) && isMeaningfulPose(pose, centroid);
+        if (isPointInsideImage(pose, centroid) && isMeaningfulPose(pose, centroid)) {
+            return 1.0;
+        }
+        return -10.0;
     }
 
     LabelType OrientationHierarchicalGraphicalModel::estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
@@ -145,10 +165,10 @@ namespace opview {
     LabelType OrientationHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         if (!isPointInsideImage(pose, centroid)) {  // fast rejection, fast to compute.
-            return 0.0;
+            return -10.0;
         }
         if (!isMeaningfulPose(pose, centroid)) {
-            return 0.0;
+            return -10.0;
         }
 
         GLMVec2 point = getProjectedPoint(pose, centroid);
@@ -176,7 +196,7 @@ namespace opview {
         RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
         GLMVec3 zDirection = R * zdir;
 
-        return glm::dot(ray, zDirection) < 0.0;
+        return glm::dot(ray, zDirection) > 0.0f;
     }
 
     bool OrientationHierarchicalGraphicalModel::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
@@ -185,27 +205,24 @@ namespace opview {
         PointD3 point(centroid.x, centroid.y, centroid.z);
         
         Segment segment_query(cam, point);
-        //return false;
-        // std::cout << segment_query << std::endl;
-        // -4.84375 -9.53125 6.09375 -0.40168 -0.0697156 2.3197
-        // -6.09375 -9.53125 7.65625 -0.405273 -0.0428495 2.34096
-        // -6.09375 -9.84375 7.03125 -0.443026 -0.075465 2.31818
-        // -4.21875 -10.1562 7.03125 -0.4016 -0.0697 2.3197
-        // -4.53125 -9.84375 8.28125 -0.4016 -0.0697 2.3197
-        // -4.84375 -9.53125 6.71875 -0.4052 -0.0428 2.3409
-        return tree->do_intersect(segment_query);
+        try {
+            return tree->do_intersect(segment_query);
+        } catch (CGAL::Failure_exception e) {
+            std::cout << e.what() << std::endl;
+            return true;
+        }
     }
 
     bool OrientationHierarchicalGraphicalModel::isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid)
     {
         GLMVec2 point2D = getProjectedPoint(pose, centroid);
 
-        return point2D.x < camConfig.size_x && point2D.x > 0.0 && point2D.y < camConfig.size_y && point2D.y > 0.0;
+        return point2D.x < (float)camConfig.size_x && point2D.x > 0.0f && point2D.y < (float)camConfig.size_y && point2D.y > 0.0f;
     }
 
     GLMVec2 OrientationHierarchicalGraphicalModel::getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid)
     {
-        GLMVec4 point3D = GLMVec4(centroid, 1.0);
+        GLMVec4 point3D = GLMVec4(centroid, 1.0f);
         CameraMatrix P = getCameraMatrix(pose);
         GLMVec4 point2D = P * point3D;
 
@@ -228,9 +245,6 @@ namespace opview {
                                         GLMVec3(sin(yaw), cos(yaw), 0),
                                         GLMVec3(0, 0, 1));
         return Rz * Ry * Rx;
-
-        // glm::vec3 myRotationAxis( ??, ??, ??);
-        // glm::rotate( angle_in_degrees, myRotationAxis );
     }
 
     CameraMatrix OrientationHierarchicalGraphicalModel::getCameraMatrix(EigVector5 &pose)
@@ -242,8 +256,8 @@ namespace opview {
         CameraMatrix P = CameraMatrix(R);
 
         P = glm::translate(P, t);
-        P[4][3] = 1.0;  // fourth column, third row
-        P[4][4] = 0.0;  // fourth column, fourth row
+        P[2][3] = 1.0f;  // fourth column, third row
+        P[3][3] = 0.0f;  // fourth column, fourth row
 
         return K * P;
     }

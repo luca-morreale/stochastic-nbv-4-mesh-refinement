@@ -65,9 +65,9 @@ namespace meshac {
     void ComputerVisionAccuracyModel::iterativeEstimationOfCovariance(EigMatrixList &destList, EigMatrixList &pointMatrixList, EigMatrix &jacobian)
     {
         for (EigMatrix mat : pointMatrixList) {
-            EigMatrix cov = EigZeros(jacobian.cols());
-            cov.block(0, 0, jacobian.cols(), jacobian.cols()) += mat;
-            destList.push_back(jacobian * mat * jacobian.transpose());
+            EigMatrix cov = EigIdentity(jacobian.cols());
+            cov.block(0, 0, mat.cols(), mat.cols()) += mat;
+            destList.push_back(jacobian * cov * jacobian.transpose());
         }
     }
 

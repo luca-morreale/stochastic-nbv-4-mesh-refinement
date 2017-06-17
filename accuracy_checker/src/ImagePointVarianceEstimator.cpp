@@ -63,7 +63,6 @@ namespace meshac {
         for (int i = 0; i < variances.size(); i++) {
             appendMatrixDiagonalToVector(variances[i], covariancePointMatrix);
         }
-
         return generateDiagonalMatrix(covariancePointMatrix);
     }
 

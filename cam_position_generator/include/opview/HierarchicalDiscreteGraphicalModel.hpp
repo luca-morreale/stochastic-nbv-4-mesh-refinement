@@ -11,8 +11,8 @@
 
 namespace opview {
     
-    #define ORIGINAL_SIDE_SIZE 3.0
-    #define MIN_COORDINATE -3.0
+    #define ORIGINAL_SIDE_SIZE 1.0
+    #define MIN_COORDINATE -1.0
     
     class HierarchicalDiscreteGraphicalModel : public BasicGraphicalModel {
     public:

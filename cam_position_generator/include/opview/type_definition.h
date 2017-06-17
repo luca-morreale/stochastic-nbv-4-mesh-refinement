@@ -44,6 +44,7 @@ namespace opview {
     typedef opengm::GraphicalModel<LabelType, opengm::Multiplier, FunctionTypeList, SimpleSpace> GraphicalModelMultiplier;
 
     typedef std::vector<GMSparseFunction> GMSparseFunctionList;
+    typedef std::vector<GMExplicitFunction> GMExplicitFunctionList;
     
     typedef GraphicalModelAdder::FunctionIdentifier GMAdderFID;
     typedef GraphicalModelMultiplier::FunctionIdentifier GMMultFID;

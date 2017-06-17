@@ -144,8 +144,107 @@ namespace meshac {
 
     void CRTuplesGenerator::extractSegmentsFromEdges(CVMat &edges, CVSegmentList &segments)
     {
+        CVSegmentList allSegments;
         cv::Ptr<cv::line_descriptor::LSDDetector> segmentDetector = cv::line_descriptor::LSDDetector::createLSDDetector();
-        segmentDetector->detect(edges, segments, 2, 2);
+        segmentDetector->detect(edges, allSegments, 2, 2);
+
+        collapseSegments(allSegments, segments);
+    }
+
+    void CRTuplesGenerator::collapseSegments(CVSegmentList &allSegments, CVSegmentList &segments) // TODO
+    {
+        // cos(angle) between two normalized lines is dot product of just the two main components
+        // this angle might be obtuse or acute so must be checked and take the minimum!
+        CVLineList lines;
+
+        getLines(allSegments, lines);
+        joinSegments(allSegments, segments, lines);
+    
+    }
+
+    void CRTuplesGenerator::getLines(CVSegmentList &segments, CVLineList &lines)
+    {
+        #pragma omp parallel for
+        for (unsigned int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++) {   // precomputes all the lines
+            CVSegment segment = segments[segmentIndex];
+            CVPoint2 start = segment.getStartPoint();
+            CVPoint2 end = segment.getEndPoint();
+            
+            CVVector3 s = CVVector3(start.x, start.y, 1.0);
+            CVVector3 t = CVVector3(end.x, end.y, 1.0);
+
+            CVLine line = s.cross(t);
+            line /= std::sqrt(std::pow(line[0], 2) + std::pow(line[1], 2));
+
+            #pragma omp critical
+            lines.push_back(line);
+        }
+    }
+
+    void CRTuplesGenerator::joinSegments(CVSegmentList &allSegments, CVSegmentList &segments, CVLineList &lines)
+    {
+        IntList groups(allSegments.size(), -1);
+        // hard to parallelize
+        for (int lineIndex = 0; lineIndex < lines.size() - 1; lineIndex++) {
+            for (int secondLineIndex = lineIndex + 1; secondLineIndex < lines.size(); secondLineIndex++) {
+                if (cosTheta(lines[lineIndex], lines[secondLineIndex]) <= angleThreshold) {
+                    setProperGroup(groups, allSegments, segments, lineIndex, secondLineIndex);
+                    setLongestSegment(allSegments, segments, groups[lineIndex], secondLineIndex);
+                }
+            }
+        }
+    }
+
+    void CRTuplesGenerator::setProperGroup(IntList &groups, CVSegmentList &allSegments, CVSegmentList &segments, int lineIndex, int secondLineIndex)
+    {
+        if (groups[lineIndex] == -1) {
+            segments.push_back(allSegments[lineIndex]);
+            groups[lineIndex] = segments.size()-1;
+            groups[secondLineIndex] = segments.size()-1;
+        }
+    }
+
+    void CRTuplesGenerator::setLongestSegment(CVSegmentList &allSegments, CVSegmentList &segments, int lineIndex, int secondLineIndex)
+    {
+        CVPoint2 startOld = segments[lineIndex].getStartPoint();
+        CVPoint2 endOld = segments[lineIndex].getEndPoint();
+        CVPoint2 startNew = allSegments[secondLineIndex].getStartPoint();
+        CVPoint2 endNew = allSegments[secondLineIndex].getEndPoint();
+
+        float refDistance = segments[lineIndex].lineLength;
+        if (refDistance < cv::norm(startNew - endOld)) {
+            segments[lineIndex].lineLength = cv::norm(startNew - endOld);
+            refDistance = segments[lineIndex].lineLength;
+            segments[lineIndex].startPointX = startNew.x;
+            segments[lineIndex].startPointY = startNew.y;
+        }
+        if (refDistance < cv::norm(startOld - endNew)) {
+            segments[lineIndex].lineLength = cv::norm(startOld - endNew);
+            refDistance = segments[lineIndex].lineLength;
+            segments[lineIndex].endPointX = endNew.x;
+            segments[lineIndex].endPointY = endNew.y;
+        }
+        if (refDistance < allSegments[secondLineIndex].lineLength) {
+            segments[lineIndex] = allSegments[secondLineIndex];
+            refDistance = segments[lineIndex].lineLength;
+        }
+        if (refDistance < cv::norm(startNew - startOld)) {
+            segments[lineIndex].lineLength = cv::norm(startOld - startNew);
+            refDistance = segments[lineIndex].lineLength;
+            segments[lineIndex].endPointX = startNew.x;
+            segments[lineIndex].endPointY = startNew.y;
+        }
+        if (refDistance < cv::norm(endNew - endOld)) {
+            segments[lineIndex].lineLength = cv::norm(endOld - endNew);
+            refDistance = segments[lineIndex].lineLength;
+            segments[lineIndex].startPointX = endNew.x;
+            segments[lineIndex].startPointY = endNew.y;
+        }
+    }
+
+    float CRTuplesGenerator::cosTheta(CVLine &a, CVLine &b)
+    {
+        return std::fabs(a[0] * b[0] + a[1] * b[1]);
     }
 
     void CRTuplesGenerator::generateCorrespondances(CVSegmentList &segments, GLMVec2List &points2D, IntArrayList &quadruplets)
@@ -175,6 +274,7 @@ namespace meshac {
         }
     }
 
+    
     CrossRatioTupleSet CRTuplesGenerator::collapseListSet(ListCrossRatioTupleSet &tupleSetPerCam)
     {
         CrossRatioTupleSet tupleSet;
@@ -184,6 +284,7 @@ namespace meshac {
 
         return tupleSet;
     }
+
 
     /*
      * Getter and setter for computed tuples.

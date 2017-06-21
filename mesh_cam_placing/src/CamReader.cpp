@@ -56,8 +56,7 @@ namespace camplacing {
         auto Rx = GLMMat3(1, 0, 0,
                         0, std::cos(radians(0)), -std::sin(radians(0)),
                         0, std::sin(radians(0)), std::cos(radians(0)));
-
-        return Rz * Ry * Rx;
+        return (Rz * Ry) * Rx;
     }
 
     double CamReader::radians(double deg)

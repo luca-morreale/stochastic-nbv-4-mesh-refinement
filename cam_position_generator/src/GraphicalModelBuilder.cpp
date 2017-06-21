@@ -20,12 +20,12 @@ namespace opview {
 
     void GraphicalModelBuilder::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        SimpleSpace space(numVariables(), numLabels());
+        SimpleSpace space(shape.begin(), shape.end());
         GraphicalModelAdder model(space);
 
         this->fillModel(model, centroid, normVector);
 
-        AdderInferencePtr algorithm = solver->getOptimizerAlgorithm(model, LabelList(), numVariables());
+        AdderInferencePtr algorithm = solver->getOptimizerAlgorithm(model, VarIndexList(), numVariables());
         algorithm->infer();
 
         LabelList x = this->extractResults(algorithm);
@@ -33,18 +33,21 @@ namespace opview {
 
     LabelList GraphicalModelBuilder::extractResults(AdderInferencePtr algorithm)
     {
-        LabelList x;
+        VarIndexList x;
         algorithm->arg(x);
         
         std::cout << "Value obtained: " << algorithm->value() << std::endl;
         
+        LabelList optima;
+        optima.insert(optima.end(), x.begin(), x.end());
+
         std::cout << "Optimal solution: ";
         for (size_t j = 0; j < x.size(); ++j) {
             std::cout << x[j] << ' ';
         }
         
         std::cout << std::endl << std::endl;
-        return x;
+        return optima;
     }
 
     void GraphicalModelBuilder::addFunctionTo(GMExplicitFunction &fun, GraphicalModelAdder &model, VarIndexList &variableIndices)

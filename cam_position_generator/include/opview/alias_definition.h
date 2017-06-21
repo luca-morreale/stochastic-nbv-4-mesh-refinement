@@ -34,6 +34,7 @@ namespace opview {
 
     typedef std::vector<int> IntList;
     typedef std::vector<size_t> SizeTList;
+    typedef std::vector<float> FloatList;
     typedef std::vector<double> DoubleList;
     typedef std::map<int, double> IntDoubleMap;
     typedef std::map<double, int> DoubleIntMap;
@@ -43,6 +44,8 @@ namespace opview {
     typedef std::set<double> DoubleSet;
     typedef std::vector<DoubleSet> DoubleSetList;
     typedef DoubleSet::iterator DoubleSetIterator;
+    typedef std::pair<double, int> DoubleIntPair;
+    typedef std::vector<DoubleIntPair> DoubleIntList;
     typedef std::pair<double, double> DoublePair;
     typedef std::vector<DoublePair> DoublePairList;
 

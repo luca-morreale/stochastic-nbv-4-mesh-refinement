@@ -155,8 +155,8 @@ void appendOrientation(GLMVec3List &cams, GLMVec3List &points, AxesList &axes, G
         int camIndex = points.size() - 1;
 
         Axes ax;
-        points.push_back(rotatePoint(GLMVec3(cam.x - shift, cam.y, cam.z-shift/3), cam, R));
-        points.push_back(rotatePoint(GLMVec3(cam.x - shift, cam.y, cam.z+shift/3), cam, R));
+        points.push_back(rotatePoint(GLMVec3(cam.x + shift, cam.y, cam.z-shift/3), cam, R));
+        points.push_back(rotatePoint(GLMVec3(cam.x + shift, cam.y, cam.z+shift/3), cam, R));
         ax[0] = camIndex;
         ax[1] = points.size()-2;
         ax[2] = points.size()-1;
@@ -171,8 +171,8 @@ void appendOrientation(GLMVec3List &cams, GLMVec3List &points, AxesList &axes, G
         axes.push_back(ax);
 
         ax = Axes();
-        points.push_back(rotatePoint(GLMVec3(cam.x-shift/3, cam.y, cam.z-shift), cam, R));
-        points.push_back(rotatePoint(GLMVec3(cam.x+shift/3, cam.y, cam.z-shift), cam, R));
+        points.push_back(rotatePoint(GLMVec3(cam.x-shift/3, cam.y, cam.z + shift), cam, R));
+        points.push_back(rotatePoint(GLMVec3(cam.x+shift/3, cam.y, cam.z + shift), cam, R));
         ax[0] = camIndex;
         ax[1] = points.size()-2;
         ax[2] = points.size()-1;

@@ -122,10 +122,10 @@ namespace opview {
         int size_y;
 
     public:
-        CameraGeneralConfiguration(int size_x, int size_y) : size_x(size_x), size_y(size_y), f(size_x/size_y)
+        CameraGeneralConfiguration(int size_x, int size_y, double f) : size_x(size_x), size_y(size_y), f(f)
         { /*    */ }
 
-        CameraGeneralConfiguration() : size_x(1920), size_y(1080), f(16.0/9.0)
+        CameraGeneralConfiguration() : size_x(1920), size_y(1080), f(959.9965)
         { /*    */ }
 
     } CameraGeneralConfiguration;

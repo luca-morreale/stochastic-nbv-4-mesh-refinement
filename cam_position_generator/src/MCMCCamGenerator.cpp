@@ -25,14 +25,14 @@ namespace opview {
     { 
         this->uniformPointGetter = [this](OrderedPose &currentOptima)  
                 {  
-                    return sampler->getUniformSamples({std::make_pair(offsetX(), 5.0f), std::make_pair(offsetY(), 5.0f), std::make_pair(offsetZ(), 5.0f)}, mcConfig.particles);  
+                    return sampler->getUniformSamples({std::make_pair(offsetX(), 1.0f), std::make_pair(offsetY(), 1.0f), std::make_pair(offsetZ(), 1.0f)}, mcConfig.particles);  
                 };
         this->resamplingPointGetter = [this](OrderedPose &currentOptima)
                 {  
                     GLMVec3List centers = getCentersFromOptima(currentOptima); 
                     DoubleList weights = getWeightsFromOptima(currentOptima); 
                     return sampler->getWeightedSamples(centers, weights, mcConfig.particles);  
-                }; 
+                };
     }
 
     void MCMCCamGenerator::fillTree()
@@ -93,17 +93,37 @@ namespace opview {
     OrderedPose MCMCCamGenerator::generalStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, LambdaGLMPointsList &getPoints)
     {
         GLMVec3List points = getPoints(currentOptima);
-        
         EigVector5List orientedPoints = insertOrientation(points);
 
+        DoubleList visibility(orientedPoints.size(), 0.0);
+        DoubleList vonMises(orientedPoints.size(), 0.0);
+        DoubleList projection(orientedPoints.size(), 0.0);
+        DoubleList constraints(orientedPoints.size(), 0.0);
         DoubleList values(orientedPoints.size(), 0.0);
         
-        computeObjectiveFunction(values, orientedPoints, centroid, normVector);
-        computeVisibilityFunction(values, orientedPoints, centroid, normVector);
-        computeProjectionFunction(values, orientedPoints, centroid, normVector);
-        computeConstraintFunction(values, orientedPoints, centroid, normVector);
+        #pragma omp sections 
+        {
+            #pragma omp section
+            computeObjectiveFunction(vonMises, orientedPoints, centroid, normVector);
+            #pragma omp section
+            computeVisibilityFunction(visibility, orientedPoints, centroid, normVector);
+            #pragma omp section
+            computeProjectionFunction(projection, orientedPoints, centroid, normVector);
+            #pragma omp section
+            computeConstraintFunction(constraints, orientedPoints, centroid, normVector);
+        }
+
+        sumUpAll(values, visibility, vonMises, projection, constraints);
 
         return orderPoses(orientedPoints, values);
+    }
+
+    void MCMCCamGenerator::sumUpAll(DoubleList &dest, DoubleList &visibility, DoubleList &vonMises, DoubleList &projection, DoubleList &constraints)
+    {
+        #pragma omp parallel
+        for (int i = 0; i < dest.size(); i++) {
+            dest[i] = visibility[i] + vonMises[i] + projection[i] + constraints[i];
+        }
     }
 
     EigVector5List MCMCCamGenerator::insertOrientation(GLMVec3List &points)
@@ -114,7 +134,7 @@ namespace opview {
         for (int p = 0; p < points.size(); p++) {
             orientationCycles() {
                 EigVector5 pose;
-                pose << points[p].x, points[p].y, points[p].z,  (float)ptc, (float)yaw;
+                pose << points[p].x, points[p].y, points[p].z, (float)ptc, (float)yaw;
                 #pragma omp critical
                 orientedPoints.push_back(pose);
             }
@@ -172,9 +192,15 @@ namespace opview {
     double MCMCCamGenerator::computeBDConstraint(EigVector5 &newCamPose, GLMVec3 &centroid, GLMVec3 &cam)
     {
         GLMVec3 point = GLMVec3(newCamPose[0], newCamPose[1], newCamPose[2]);
-        double B = glm::distance(point, cam);
-        double D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
-
+        double D, B;
+        #pragma omp sections
+        {
+            #pragma omp section
+            B = glm::distance(point, cam);
+            #pragma omp section
+            D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
+        }
+        
         if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {
             return -1.0;
         }
@@ -185,7 +211,7 @@ namespace opview {
     {
         OrderedPose optima;
         std::cout << "Best Value: " << poses.top().first << std::endl;
-        std::cout << "Best Pose: " << poses.top().second.transpose() << std::endl;
+        std::cout << "Best Pose: " << poses.top().second.transpose() << std::endl << std::endl;
 
         int c = 0;
         while(!poses.empty() && c < (size_t)(OFFSPRING*mcConfig.particles)) {
@@ -268,10 +294,10 @@ namespace opview {
         CGALVec3 rayVector = Ray(cam, point).to_vector();
         GLMVec3 ray = GLMVec3(rayVector[0], rayVector[1], rayVector[2]);
         
-        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
+        RotationMatrix R = getRotationMatrix(0, -pose[3], -pose[4]);
         GLMVec3 zDirection = R * zdir;
 
-        return glm::dot(ray, zDirection) < 0.0;
+        return glm::dot(ray, zDirection) > 0.0;
     }
 
     bool MCMCCamGenerator::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
@@ -280,14 +306,6 @@ namespace opview {
         PointD3 point(centroid.x, centroid.y, centroid.z);
         
         Segment segment_query(cam, point);
-        //return false;
-        // std::cout << segment_query << std::endl;
-        // -4.84375 -9.53125 6.09375 -0.40168 -0.0697156 2.3197
-        // -6.09375 -9.53125 7.65625 -0.405273 -0.0428495 2.34096
-        // -6.09375 -9.84375 7.03125 -0.443026 -0.075465 2.31818
-        // -4.21875 -10.1562 7.03125 -0.4016 -0.0697 2.3197
-        // -4.53125 -9.84375 8.28125 -0.4016 -0.0697 2.3197
-        // -4.84375 -9.53125 6.71875 -0.4052 -0.0428 2.3409
         return tree->do_intersect(segment_query);
     }
 
@@ -300,7 +318,7 @@ namespace opview {
 
     GLMVec2 MCMCCamGenerator::getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid)
     {
-        GLMVec4 point3D = GLMVec4(centroid, 1.0);
+        GLMVec4 point3D = GLMVec4(centroid, 1.0f);
         CameraMatrix P = getCameraMatrix(pose);
         GLMVec4 point2D = P * point3D;
 
@@ -311,34 +329,36 @@ namespace opview {
     RotationMatrix MCMCCamGenerator::getRotationMatrix(float roll, float pitch, float yaw)
     {
         // Calculate rotation about x axis
-        RotationMatrix Rx = RotationMatrix(GLMVec3(1, 0, 0), 
-                                        GLMVec3(0, cos(roll), -sin(roll)),
-                                        GLMVec3(0, sin(roll), cos(roll)));
+        RotationMatrix Rx = RotationMatrix(1, 0, 0, 
+                                        0, std::cos(roll), -std::sin(roll),
+                                        0, std::sin(roll), std::cos(roll));
         // Calculate rotation about y axis
-        RotationMatrix Ry = RotationMatrix(GLMVec3(cos(pitch), 0, sin(pitch)), 
-                                        GLMVec3(0, 1, 0),
-                                        GLMVec3(-sin(pitch), 0, cos(pitch)));
+        RotationMatrix Ry = RotationMatrix(std::cos(pitch), 0, std::sin(pitch), 
+                                        0, 1, 0,
+                                        -std::sin(pitch), 0, std::cos(pitch));
         // Calculate rotation about z axis
-        RotationMatrix Rz = RotationMatrix(GLMVec3(cos(yaw), -sin(yaw), 0), 
-                                        GLMVec3(sin(yaw), cos(yaw), 0),
-                                        GLMVec3(0, 0, 1));
-        return Rz * Ry * Rx;
-
-        // glm::vec3 myRotationAxis( ??, ??, ??);
-        // glm::rotate( angle_in_degrees, myRotationAxis );
+        RotationMatrix Rz = RotationMatrix(std::cos(yaw), -std::sin(yaw), 0, 
+                                        std::sin(yaw), std::cos(yaw), 0,
+                                        0, 0, 1);
+        return (Rz * Ry) * Rx;
     }
 
     CameraMatrix MCMCCamGenerator::getCameraMatrix(EigVector5 &pose)
     {
-        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
-        GLMVec3 t = GLMVec3(pose[0], pose[1], pose[2]);
-        CameraMatrix K = glm::scale(GLMVec3(camConfig.f, camConfig.f , 1.0f));
+        RotationMatrix R = getRotationMatrix(0, -pose[3], -pose[4]);  // already radians
+        R = glm::transpose(R);
+        CameraMatrix K = glm::scale(GLMVec3(camConfig.f, -camConfig.f , 1.0f));  // correct
+        K[3][0] = (double)camConfig.size_x / 2.0;
+        K[3][1] = (double)camConfig.size_y / 2.0;
 
         CameraMatrix P = CameraMatrix(R);
 
-        P = glm::translate(P, t);
-        P[4][3] = 1.0;  // fourth column, third row
-        P[4][4] = 0.0;  // fourth column, fourth row
+        GLMVec3 t(pose[0], pose[1], pose[2]);
+        t = -R * t;
+
+        P[3][0] = t[0];
+        P[3][1] = t[1];
+        P[3][2] = t[2];
 
         return K * P;
     }

@@ -57,12 +57,14 @@ namespace opview {
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
         virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
 
+        virtual void sumUpAll(DoubleList &dest, DoubleList &visibility, DoubleList &vonMises, DoubleList &projection, DoubleList &constraints);
+        
         LambdaGLMPointsList uniformPointGetter;
         LambdaGLMPointsList resamplingPointGetter;
 
-        LambdaFloat offsetX = [](){ return -4.0; };
-        LambdaFloat offsetY = [](){ return -4.0; };
-        LambdaFloat offsetZ = [](){ return 1.0; };
+        LambdaFloat offsetX = [](){ return -1.0; };
+        LambdaFloat offsetY = [](){ return -1.0; };
+        LambdaFloat offsetZ = [](){ return -1.0; };
 
     private:
         MCMCSamplerGeneratorPtr sampler;

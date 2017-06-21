@@ -36,8 +36,8 @@ namespace opview {
     typedef std::vector<size_t> VarIndexList;
 
 
-    typedef opengm::SimpleDiscreteSpace<VariableIndexType, LabelType> SimpleSpace;
-    typedef opengm::ExplicitFunction<LabelType> GMExplicitFunction;
+    typedef opengm::DiscreteSpace<> SimpleSpace;
+    typedef opengm::ExplicitFunction<LabelType, size_t, VariableIndexType> GMExplicitFunction;
     typedef opengm::SparseFunction<LabelType, VariableIndexType, LabelType> GMSparseFunction;
     typedef OPENGM_TYPELIST_2(GMExplicitFunction, GMSparseFunction) FunctionTypeList;
     typedef opengm::GraphicalModel<LabelType, opengm::Adder, FunctionTypeList, SimpleSpace> GraphicalModelAdder;

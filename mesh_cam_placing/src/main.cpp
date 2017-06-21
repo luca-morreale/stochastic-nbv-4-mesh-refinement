@@ -191,7 +191,7 @@ void printPoints(std::ofstream &off, GLMVec3List &points)
 void printCube(std::ofstream &off, Cube &cube, int offset, std::string color)
 {
     off << "4  " << cube[0]+offset << "  " << cube[1]+offset << "  " << cube[3]+offset << "  " << cube[2]+offset << "  " << color << std::endl;
-    off << "4  " << cube[0]+offset << "  " << cube[4]+offset << "  " << cube[5]+offset << "  " << cube[3]+offset << "  " << color << std::endl;
+    off << "4  " << cube[0]+offset << "  " << cube[4]+offset << "  " << cube[5]+offset << "  " << cube[2]+offset << "  " << color << std::endl;
     off << "4  " << cube[4]+offset << "  " << cube[6]+offset << "  " << cube[7]+offset << "  " << cube[5]+offset << "  " << color << std::endl;
     off << "4  " << cube[0]+offset << "  " << cube[4]+offset << "  " << cube[6]+offset << "  " << cube[2]+offset << "  " << color << std::endl;
     off << "4  " << cube[2]+offset << "  " << cube[6]+offset << "  " << cube[7]+offset << "  " << cube[3]+offset << "  " << color << std::endl;
@@ -206,5 +206,5 @@ void printAxes(std::ofstream &off, Axes &ax, int offset, std::string color)
 GLMVec3 rotatePoint(GLMVec3 point, GLMVec3 &cam, GLMMat3 &R)
 {
     auto v = point - cam;
-    return cam - R * v;
+    return cam + R * v;
 }

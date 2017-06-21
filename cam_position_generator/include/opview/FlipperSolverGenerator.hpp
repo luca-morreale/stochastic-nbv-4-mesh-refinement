@@ -10,8 +10,8 @@ namespace opview {
         FlipperSolverGenerator() : SolverGenerator() { /*    */ }
         ~FlipperSolverGenerator() { /*    */ }
 
-        virtual AdderInferencePtr getOptimizerAlgorithm(GraphicalModelAdder &model, LabelList currentOptimal, size_t numVariables);
-        // virtual MultiplierInferencePtr getOptimizerAlgorithm(GraphicalModelMultiplier &model, LabelList currentOptimal, size_t numVariables);
+        virtual AdderInferencePtr getOptimizerAlgorithm(GraphicalModelAdder &model, VarIndexList currentOptimal, size_t numVariables);
+        // virtual MultiplierInferencePtr getOptimizerAlgorithm(GraphicalModelMultiplier &model, VarIndexList currentOptimal, size_t numVariables);
     
     private:
         size_t maxSubgraphSize = 5; // works only if it is 1

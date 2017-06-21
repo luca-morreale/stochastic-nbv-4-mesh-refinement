@@ -9,6 +9,7 @@ namespace opview {
                                             : HierarchicalDiscreteGraphicalModel(solver, config.config, cams, goalAngle, dispersion)
     {
         this->deltaAngle = config.deltaAngle;
+        this->orientConfig = config;
         this->meshFilename = meshFile;
         this->camConfig = camConfig;
 
@@ -23,12 +24,6 @@ namespace opview {
     {
         super::initShapes();
 
-        coordinateIndices.clear();
-        coordinateShape.clear();
-        for (size_t i = 0; i < numVariables() - 2; i++) {
-            this->coordinateIndices.push_back(i);
-            this->coordinateShape.push_back(numLabels());
-        }
         shape.clear();
         variableIndices.clear();
         for (size_t i = 0; i < numVariables() - 2; i++) {
@@ -78,74 +73,146 @@ namespace opview {
         return triangles;
     }
 
+    void OrientationHierarchicalGraphicalModel::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
+    {
+        this->resetPosition();
+
+        LabelList currentOptima = {MIN_COORDINATE, MIN_COORDINATE, MIN_COORDINATE, 0, 0};
+        
+        for (int d = 0; d < this->getDepth(); d++) {
+            std::cout << "Current depth: " << d << std::endl;
+            SimpleSpace space(shape.begin(), shape.end());
+            GraphicalModelAdder model(space);
+
+            this->fillModel(model, centroid, normVector);
+            
+            // get optimal solution, than scale it
+            // before give it to the solver descale it in the current space
+
+            auto discreteOptima = getOptimaForDiscreteSpace(currentOptima);
+            AdderInferencePtr algorithm = solverGenerator()->getOptimizerAlgorithm(model, discreteOptima, numVariables());
+            algorithm->infer();
+
+            currentOptima = this->extractResults(algorithm);
+
+            this->reduceScale(currentOptima, d+1);
+        }
+    }
+
     LabelList OrientationHierarchicalGraphicalModel::extractResults(AdderInferencePtr algorithm)
     {
-        LabelList x;
+        VarIndexList x;
         algorithm->arg(x);
 
         std::cout << "Value obtained: " << algorithm->value() << std::endl;
 
+        LabelList convertedOpt(x.size());
         GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
         GLMVec2 orientOptima = scaleOrientation(GLMVec2(x[3], x[4]));
-        x[0] = realOptima.x;
-        x[1] = realOptima.y;
-        x[2] = realOptima.z;
-        x[3] = orientOptima.x;
-        x[4] = orientOptima.y;
+        convertedOpt[0] = realOptima.x;
+        convertedOpt[1] = realOptima.y;
+        convertedOpt[2] = realOptima.z;
+        convertedOpt[3] = orientOptima.x;
+        convertedOpt[4] = orientOptima.y;
 
-        std::cout << "Optimal solution: " << x[0] << ' ' << x[1] << ' ' << x[2] << ' ';
-        std::cout << x[3] << ' ' << x[4] << std::endl << std::endl;
+        std::cout << "Optimal solution: " << convertedOpt[0] << ", " << convertedOpt[1] << ", " << convertedOpt[2] << ", ";
+        std::cout << convertedOpt[3] << ", " << convertedOpt[4] << std::endl << std::endl;
 
-        return x;
+        return convertedOpt;
+    }
+
+    VarIndexList OrientationHierarchicalGraphicalModel::getOptimaForDiscreteSpace(LabelList &currentOptima)
+    {
+        GLMVec3 spaceOptima = unscalePoint(GLMVec3(currentOptima[0], currentOptima[1], currentOptima[2]));
+        GLMVec2 spaceOrient = unscaleOrientation(GLMVec2(currentOptima[3], currentOptima[4]));
+
+        return {(VariableIndexType)spaceOptima.x, (VariableIndexType)spaceOptima.y, (VariableIndexType)spaceOptima.z, 
+                    (VariableIndexType)spaceOrient.x, (VariableIndexType)spaceOrient.y};
     }
 
     void OrientationHierarchicalGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector)
-    {        
-        GMExplicitFunction vonMises(coordinateShape.begin(), coordinateShape.end());
+    {
+        GMExplicitFunction vonMises(shape.begin(), shape.end());
         GMExplicitFunction visibility(shape.begin(), shape.end());
         GMExplicitFunction projectionWeight(shape.begin(), shape.end());
-        GMExplicitFunction constraints(coordinateShape.begin(), coordinateShape.end());
+        GMExplicitFunction constraints(shape.begin(), shape.end());
 
-        GMExplicitFunctionList modelFunctions = {visibility, projectionWeight};
-        BoostObjFunctionList evals = {
-                                boost::bind(&OrientationHierarchicalGraphicalModel::visibilityDistribution, this, _1, _2, _3),
-                                boost::bind(&OrientationHierarchicalGraphicalModel::imagePlaneWeight, this, _1, _2, _3)
-                            };
-        fillExplicitOrientationFunctions(modelFunctions, evals, centroid, normVector);
-        fillObjectiveFunction(vonMises, centroid, normVector);
-        fillConstraintFunction(constraints, centroid);
+        #pragma omp parallel sections 
+        {
+            #pragma omp section
+            fillExplicitOrientationFunction(visibility, boost::bind(&OrientationHierarchicalGraphicalModel::visibilityDistribution, this, _1, _2, _3), centroid, normVector);
+            #pragma omp section
+            fillExplicitOrientationFunction(projectionWeight, boost::bind(&OrientationHierarchicalGraphicalModel::imagePlaneWeight, this, _1, _2, _3), centroid, normVector);
+            #pragma omp section
+            fillObjectiveFunction(vonMises, centroid, normVector);
+            #pragma omp section
+            fillConstraintFunction(constraints, centroid);
+        }
         
-        addFunctionTo(vonMises, model, coordinateIndices);
+        addFunctionTo(vonMises, model, variableIndices);
         addFunctionTo(visibility, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
-        addFunctionTo(constraints, model, coordinateIndices);
+        addFunctionTo(constraints, model, variableIndices);
     }
 
-    void OrientationHierarchicalGraphicalModel::fillExplicitOrientationFunctions(GMExplicitFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector) 
+    void OrientationHierarchicalGraphicalModel::fillExplicitOrientationFunction(GMExplicitFunction &modelFunction, BoostObjFunction evals, GLMVec3 &centroid, GLMVec3 &normVector) 
     {
         #pragma omp parallel for collapse(5)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
             orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
                 size_t coord[] = {(size_t)x, (size_t)y, (size_t)z, (size_t)ptc, (size_t)yaw};
-                computeDistributionForFunctions(modelFunctions, evals, coord, centroid, normVector);
+                computeDistributionForFunction(modelFunction, evals, coord, centroid, normVector);
             }
         }
     }
 
-    void OrientationHierarchicalGraphicalModel::computeDistributionForFunctions(GMExplicitFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector)
+    void OrientationHierarchicalGraphicalModel::fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector)
+    {
+        #pragma omp parallel for collapse(3)
+        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
+            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+            LabelType val = -logVonMisesWrapper(pos, centroid, normVector);
+            orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+                #pragma omp critical
+                vonMises(x, y, z, ptc, yaw) = val;
+            }
+        }
+    }
+
+    // quite heavy as function, parallelism?
+    void OrientationHierarchicalGraphicalModel::addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[])
+    {
+        double B, D;
+        #pragma omp sections 
+        {
+            #pragma omp section
+            B = glm::distance(point, cam);
+            #pragma omp section
+            D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
+        }
+
+        LabelType val = 0.0;
+        if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {
+            val = -10.0;
+        }
+
+        orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+            #pragma omp critical
+            function(coords[0], coords[1], coords[2], ptc, yaw) = val;
+        }
+    }
+
+    void OrientationHierarchicalGraphicalModel::computeDistributionForFunction(GMExplicitFunction &modelFunctions, BoostObjFunction &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector)
     {
         GLMVec3 scaledPos = scalePoint(GLMVec3(coord[0], coord[1], coord[2]));
         GLMVec2 scaledOri = scaleOrientation(GLMVec2(coord[3], coord[4]));
 
         EigVector5 pose = getPose(scaledPos, scaledOri);
         
-        for (int f = 0; f < modelFunctions.size(); f++) {
-            LabelType val = evals[f](pose, centroid, normVector);
-            auto coords = coord;
+        LabelType val = evals(pose, centroid, normVector);
         
-            #pragma omp critical
-            (modelFunctions[f])(coords) = val;
-        }
+        #pragma omp critical
+        modelFunctions(coord[0], coord[1], coord[2], coord[3], coord[4]) = val;
     }
 
     LabelType OrientationHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
@@ -187,16 +254,12 @@ namespace opview {
 
     bool OrientationHierarchicalGraphicalModel::isOppositeView(EigVector5 &pose, GLMVec3 &centroid)
     {
-        PointD3 cam(pose[0], pose[1], pose[2]);
-        PointD3 point(centroid.x, centroid.y, centroid.z);
+        GLMVec3 ray = GLMVec3(pose[0]-centroid.x, pose[1]-centroid.y, pose[3]-centroid.z);
         
-        CGALVec3 rayVector = Ray(cam, point).to_vector();
-        GLMVec3 ray = GLMVec3(rayVector[0], rayVector[1], rayVector[2]);
-        
-        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
+        RotationMatrix R = getRotationMatrix(0, -pose[3], -pose[4]);
         GLMVec3 zDirection = R * zdir;
 
-        return glm::dot(ray, zDirection) > 0.0f;
+        return glm::dot(ray, zDirection) > 0.0f;    // if < 0.0 than it sees the object, but we want to know when it is opposite.
     }
 
     bool OrientationHierarchicalGraphicalModel::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
@@ -233,33 +296,50 @@ namespace opview {
     RotationMatrix OrientationHierarchicalGraphicalModel::getRotationMatrix(float roll, float pitch, float yaw)
     {
         // Calculate rotation about x axis
-        RotationMatrix Rx = RotationMatrix(GLMVec3(1, 0, 0), 
-                                        GLMVec3(0, cos(roll), -sin(roll)),
-                                        GLMVec3(0, sin(roll), cos(roll)));
+        RotationMatrix Rx = RotationMatrix(1, 0, 0, 
+                                        0, std::cos(roll), -std::sin(roll),
+                                        0, std::sin(roll), std::cos(roll));
         // Calculate rotation about y axis
-        RotationMatrix Ry = RotationMatrix(GLMVec3(cos(pitch), 0, sin(pitch)), 
-                                        GLMVec3(0, 1, 0),
-                                        GLMVec3(-sin(pitch), 0, cos(pitch)));
+        RotationMatrix Ry = RotationMatrix(std::cos(pitch), 0, std::sin(pitch), 
+                                        0, 1, 0,
+                                        -std::sin(pitch), 0, std::cos(pitch));
         // Calculate rotation about z axis
-        RotationMatrix Rz = RotationMatrix(GLMVec3(cos(yaw), -sin(yaw), 0), 
-                                        GLMVec3(sin(yaw), cos(yaw), 0),
-                                        GLMVec3(0, 0, 1));
-        return Rz * Ry * Rx;
+        RotationMatrix Rz = RotationMatrix(std::cos(yaw), -std::sin(yaw), 0, 
+                                        std::sin(yaw), std::cos(yaw), 0,
+                                        0, 0, 1);
+        return (Rz * Ry) * Rx;
     }
 
     CameraMatrix OrientationHierarchicalGraphicalModel::getCameraMatrix(EigVector5 &pose)
     {
-        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
-        GLMVec3 t = GLMVec3(pose[0], pose[1], pose[2]);
-        CameraMatrix K = glm::scale(GLMVec3(camConfig.f, camConfig.f , 1.0f));
+        RotationMatrix R = getRotationMatrix(0, -pose[3], -pose[4]);  // already radians
+        R = glm::transpose(R);
+        CameraMatrix K = glm::scale(GLMVec3(camConfig.f, -camConfig.f , 1.0f));  // correct
+        K[3][0] = (double)camConfig.size_x / 2.0;
+        K[3][1] = (double)camConfig.size_y / 2.0;
 
         CameraMatrix P = CameraMatrix(R);
 
-        P = glm::translate(P, t);
-        P[2][3] = 1.0f;  // fourth column, third row
-        P[3][3] = 0.0f;  // fourth column, fourth row
+        GLMVec3 t(pose[0], pose[1], pose[2]);
+        t = -R * t;
+
+        P[3][0] = t[0];
+        P[3][1] = t[1];
+        P[3][2] = t[2];
 
         return K * P;
+    }
+
+    void OrientationHierarchicalGraphicalModel::reduceScale(LabelList &currentOptimal, int depth)
+    {
+        super::reduceScale(currentOptimal);
+        this->deltaAngle = (depth < orientConfig.deltaAngles.size()) ? orientConfig.deltaAngles[depth] : orientConfig.deltaAngles[orientConfig.deltaAngles.size()-1];
+    }
+
+    void OrientationHierarchicalGraphicalModel::resetPosition()
+    {
+        super::resetPosition();
+        this->deltaAngle = orientConfig.deltaAngles[0];
     }
 
     EigVector5 OrientationHierarchicalGraphicalModel::getPose(GLMVec3 &scaledPos, GLMVec2 &scaledOri)
@@ -272,6 +352,11 @@ namespace opview {
     GLMVec2 OrientationHierarchicalGraphicalModel::scaleOrientation(GLMVec2 orientation)
     {
         return orientation * 360.0f / (float)orientationLabels();
+    }
+
+    GLMVec2 OrientationHierarchicalGraphicalModel::unscaleOrientation(GLMVec2 orientation)
+    {
+        return orientation * (float)orientationLabels() / 360.0f;
     }
 
     size_t OrientationHierarchicalGraphicalModel::numVariables()

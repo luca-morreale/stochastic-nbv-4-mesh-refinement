@@ -24,6 +24,8 @@ namespace opview {
                                                     GLMVec3List &cams, double goalAngle=55, double dispersion=5);
         ~OrientationHierarchicalGraphicalModel();
 
+        void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
+
         virtual size_t numVariables() override;
         virtual size_t orientationLabels();
         float getDeltaAngle();
@@ -37,8 +39,8 @@ namespace opview {
 
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) override;
 
-        virtual void fillExplicitOrientationFunctions(GMExplicitFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3 &centroid, GLMVec3 &normVector);
-        virtual void computeDistributionForFunctions(GMExplicitFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void fillExplicitOrientationFunction(GMExplicitFunction &modelFunction, BoostObjFunction evals, GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void computeDistributionForFunction(GMExplicitFunction &modelFunction, BoostObjFunction &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector);
 
         virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         virtual LabelType estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
@@ -53,15 +55,22 @@ namespace opview {
         virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
         virtual GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid);
 
+        virtual void reduceScale(LabelList &currentOptimal, int depth);
+        virtual void resetPosition() override;
+
         virtual EigVector5 getPose(GLMVec3 &scaledPos, GLMVec2 &scaledOri);
 
         virtual GLMVec2 scaleOrientation(GLMVec2 orientation);
+        virtual GLMVec2 unscaleOrientation(GLMVec2 orientation);
 
         virtual void initShapes() override;
 
+        virtual VarIndexList getOptimaForDiscreteSpace(LabelList &currentOptima) override;
+        virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector) override;
+        virtual void addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[]) override;
+
         SizeTList coordinateIndices;
         SizeTList coordinateShape;
-
 
     private:
         float deltaAngle;
@@ -70,6 +79,7 @@ namespace opview {
         TreePtr tree;
 
         CameraGeneralConfiguration camConfig;
+        OrientationHierarchicalConfiguration orientConfig;
 
         void fillTree();
         Polyhedron extractPolyhedron();

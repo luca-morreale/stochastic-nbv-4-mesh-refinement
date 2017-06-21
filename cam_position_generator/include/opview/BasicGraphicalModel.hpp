@@ -1,5 +1,5 @@
-#ifndef CAM_POSITION_BASIC_GRAPHICAL_MODEL_H
-#define CAM_POSITION_BASIC_GRAPHICAL_MODEL_H
+#ifndef CAM_POSITION_GENERATOR_BASIC_GRAPHICAL_MODEL_H
+#define CAM_POSITION_GENERATOR_BASIC_GRAPHICAL_MODEL_H
 
 #include <cmath>
 #include <cstdlib>
@@ -52,9 +52,6 @@ namespace opview {
         LambdaFloat offsetX = [](){ return -1.0; };
         LambdaFloat offsetY = [](){ return -1.0; };
         LambdaFloat offsetZ = [](){ return -1.0; };
-
-        SizeTList variableIndices;
-        SizeTList shape;
 
     private:
         GLMVec3List cams;

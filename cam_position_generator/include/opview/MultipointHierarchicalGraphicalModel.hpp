@@ -31,12 +31,12 @@ namespace opview {
     protected:
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3List &centroids, GLMVec3List &normVectors);
     
-        virtual void fillSparseFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3List &centroids, GLMVec3List &normVectors);
+        virtual void fillExplicitOrientationFunction(GMExplicitFunction &modelFunction, BoostObjFunction evals, GLMVec3List &centroids, GLMVec3List &normVectors);
         virtual void fillObjectiveFunction(GMExplicitFunction &objFunction, GLMVec3List &centroids, GLMVec3List &normVectors);
-        virtual void computeDistributionForList(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3List &centroids, GLMVec3List &normVectors);
+        virtual void computeDistribution(GMExplicitFunction &modelFunctions, BoostObjFunction &evals, size_t coord[], GLMVec3List &centroids, GLMVec3List &normVectors);
     
-        virtual void fillConstraintFunction(GMSparseFunction &constraints, GLMVec3List &centroids);
-        virtual void addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3List &centroids, GLMVec3 spacePos);
+        virtual void fillConstraintFunction(GMExplicitFunction &constraints, GLMVec3List &centroids);
+        virtual void addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3List &centroids, GLMVec3 spacePos);
 
         virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
         virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;

@@ -17,6 +17,7 @@ namespace opview {
         this->maxPoints = maxPoints;
         this->maxUncertainty = maxUncertainty;
         this->uncertainty = meshConfig.uncertainty;
+        SUM_UNCERTAINTY = 0.0;
         for (int p = 0; p < uncertainty.size(); p++) {
             SUM_UNCERTAINTY += uncertainty[p];
         }
@@ -38,7 +39,7 @@ namespace opview {
         
         for (int d = 0; d < this->getDepth(); d++) {
             std::cout << "Current depth: " << d << std::endl;
-            SimpleSpace space(numVariables(), numLabels());
+            SimpleSpace space(shape.begin(), shape.end());
             GraphicalModelAdder model(space);
 
             this->fillModel(model, centroids, normVectors);
@@ -49,41 +50,43 @@ namespace opview {
 
             currentOptima = this->extractResults(algorithm);
 
-            this->reduceScale(currentOptima);
+            this->reduceScale(currentOptima, d+1);
         }
     }
 
     
     void MultipointHierarchicalGraphicalModel::fillModel(GraphicalModelAdder &model, GLMVec3List &centroids, GLMVec3List &normVectors)
     {
-        GMExplicitFunction vonMises(coordinateShape.begin(), coordinateShape.end());
-        GMSparseFunction visibility(shape.begin(), shape.end(), -1.0);
-        GMSparseFunction projectionWeight(shape.begin(), shape.end(), -1.0);
-        GMSparseFunction constraints(coordinateShape.begin(), coordinateShape.end(), 0.0);
+        GMExplicitFunction vonMises(shape.begin(), shape.end());
+        GMExplicitFunction visibility(shape.begin(), shape.end());
+        GMExplicitFunction projectionWeight(shape.begin(), shape.end());
+        GMExplicitFunction constraints(shape.begin(), shape.end());
 
-        GMSparseFunctionList modelFunctions = {visibility, projectionWeight};
-        BoostObjFunctionList evals = {
-                                    boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3),
-                                    boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3)
-                                };
-        fillSparseFunctions(modelFunctions, evals, centroids, normVectors);
-        fillObjectiveFunction(vonMises, centroids, normVectors);
-        fillConstraintFunction(constraints, centroids);
+        #pragma omp parallel sections 
+        {
+            #pragma omp section
+            fillExplicitOrientationFunction(visibility, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3), centroids, normVectors);
+            #pragma omp section
+            fillExplicitOrientationFunction(projectionWeight, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3), centroids, normVectors);
+            #pragma omp section
+            fillObjectiveFunction(vonMises, centroids, normVectors);
+            #pragma omp section
+            fillConstraintFunction(constraints, centroids);
+        }
 
-        addFunctionTo(vonMises, model, coordinateIndices);
+        addFunctionTo(vonMises, model, variableIndices);
         addFunctionTo(visibility, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
-        addFunctionTo(constraints, model, coordinateIndices);
+        addFunctionTo(constraints, model, variableIndices);
     }
 
-    void MultipointHierarchicalGraphicalModel::fillSparseFunctions(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, GLMVec3List &centroids, GLMVec3List &normVectors) 
+    void MultipointHierarchicalGraphicalModel::fillExplicitOrientationFunction(GMExplicitFunction &modelFunction, BoostObjFunction evals, GLMVec3List &centroids, GLMVec3List &normVectors) 
     {
         #pragma omp parallel for collapse(5)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
             orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
                 size_t coord[] = {(size_t)x, (size_t)y, (size_t)z, (size_t)ptc, (size_t)yaw};
-
-                computeDistributionForList(modelFunctions, evals, coord, centroids, normVectors);
+                computeDistribution(modelFunction, evals, coord, centroids, normVectors);
             }
         }
     }
@@ -99,30 +102,28 @@ namespace opview {
             for (int p = 0; p < centroids.size(); p++) {
                 val += -logVonMisesWrapper(scaledPos, centroids[p], normVectors[p]);
             }
-            #pragma omp critical
-            objFunction(x, y, z) = val; 
+            orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+                #pragma omp critical
+                objFunction(x, y, z, ptc, yaw) = val;
+            }
         }
     }
 
-    void MultipointHierarchicalGraphicalModel::computeDistributionForList(GMSparseFunctionList &modelFunctions, BoostObjFunctionList &evals, size_t coord[], GLMVec3List &centroids, GLMVec3List &normVectors)
+    void MultipointHierarchicalGraphicalModel::computeDistribution(GMExplicitFunction &modelFunction, BoostObjFunction &evals, size_t coord[], GLMVec3List &centroids, GLMVec3List &normVectors)
     {
         GLMVec3 scaledPos = scalePoint(GLMVec3(coord[0], coord[1], coord[2]));
         GLMVec2 scaledOri = scaleOrientation(GLMVec2(coord[3], coord[4]));
 
         EigVector5 pose = getPose(scaledPos, scaledOri);
 
-        #pragma omp parallel for
-        for (int f = 0; f < modelFunctions.size(); f++) {
-            LabelType val = 0.0;
-            for (int p = 0; p < centroids.size(); p++) {
-                val += evals[f](pose, centroids[p], normVectors[p]);
-            }
-            #pragma omp critical
-            modelFunctions[f].insert(coord, val);
+        LabelType val = 0.0;
+        for (int p = 0; p < centroids.size(); p++) {
+            val += evals(pose, centroids[p], normVectors[p]);
         }
+        modelFunction(coord) = val;
     }
 
-    void MultipointHierarchicalGraphicalModel::fillConstraintFunction(GMSparseFunction &constraints, GLMVec3List &centroids)
+    void MultipointHierarchicalGraphicalModel::fillConstraintFunction(GMExplicitFunction &constraints, GLMVec3List &centroids)
     {
         for (GLMVec3 cam : this->getCams()) {
             #pragma omp parallel for collapse(3)
@@ -133,20 +134,24 @@ namespace opview {
         }
     }
 
-    void MultipointHierarchicalGraphicalModel::addValueToConstraintFunction(GMSparseFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3List &centroids, GLMVec3 spacePos)
+    void MultipointHierarchicalGraphicalModel::addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3List &centroids, GLMVec3 spacePos)
     {
         double B = glm::distance(point, cam);
         double val = 0.0;
 
         // #pragma omp parallel for    can not perform reduction because of floating point variable
+        #pragma omp parallel for
         for (int i = 0; i < centroids.size(); i++) {
             double D = std::min(glm::distance(cam, centroids[i]), glm::distance(point, centroids[i]));
-            val += (B / D <= BD_TERRESTRIAL_ARCHITECTURAL) ? -1.0 : 0.0;
+            LabelType local_val = (B / D <= BD_TERRESTRIAL_ARCHITECTURAL) ? -1.0 : 0.0;
+            #pragma omp critical
+            val += local_val;
         }
 
-        LabelType coords[] = {spacePos.x, spacePos.y, spacePos.z};
-        #pragma omp critical
-        function.insert(coords, val);        
+        orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+            #pragma omp critical
+            function(spacePos.x, spacePos.y, spacePos.z, ptc, yaw) = val;
+        }
     }
 
     LabelType MultipointHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
@@ -161,30 +166,33 @@ namespace opview {
 
     double MultipointHierarchicalGraphicalModel::estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function)
     {
-        DoubleList uncertaintyList;
-        #pragma omp parallel for
+        // NOTE less straigth forward but more efficient version
+        DoubleIntList pointsList;
+        #pragma omp parallel for        // not much to gain using parallelism
         for (int p = 0; p < points.size(); p++) {
-            if (uncertainty[p] >= this->maxUncertainty) {    // TODO look at definition of UNCERTAINTY_THRESHOLD
-                double normalizedWeight = computeWeightForPoint(p);     // more the uncertainty is high more important it is seen
-                LabelType local_val = function(pose, points[p], normals[p]);
-
+            if (uncertainty[p] > this->maxUncertainty) {    // NOTE look at definition of UNCERTAINTY_THRESHOLD
                 #pragma omp critical
-                uncertaintyList.push_back(local_val * normalizedWeight);
+                pointsList.push_back(std::make_pair(uncertainty[p], p));
             }
         }
 
-        std::sort(uncertaintyList.rbegin(), uncertaintyList.rend());
+        std::sort(pointsList.rbegin(), pointsList.rend());
 
         LabelType val = 0.0;
-        for (int i = 0; i < std::min(this->maxPoints, uncertaintyList.size()); i++) {
-            val += uncertaintyList[i];
+        for (int i = 0; i < std::min(this->maxPoints, pointsList.size()); i++) {
+            DoubleIntPair el = pointsList[i];
+            double normalizedWeight = computeWeightForPoint(el.second);     // more the uncertainty is high more important it is seen
+            LabelType local_val = function(pose, points[el.second], normals[el.second]);
+
+            #pragma omp critical
+            val += local_val * normalizedWeight;
         }
         return val;
     }
 
     double MultipointHierarchicalGraphicalModel::computeWeightForPoint(int pointIndex)
     {
-        return uncertainty[pointIndex] / SUM_UNCERTAINTY;
+        return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
     }
 
     // private utils, used to indirectly call the parent and cheat boost

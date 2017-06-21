@@ -31,10 +31,13 @@ namespace opview {
     protected:
 
         virtual LabelList extractResults(AdderInferencePtr algorithm) override;
-        virtual LabelList getOptimaForDiscreteSpace(LabelList &currentOptima);
+        virtual VarIndexList getOptimaForDiscreteSpace(LabelList &currentOptima);
 
         virtual void reduceScale(LabelList &currentOptimal);
         virtual void resetPosition();
+
+        virtual int getXScalingFactor(float currentOptima, float halfNextSize, float scale);
+        virtual int getYScalingFactor(float currentOptima, float halfNextSize, float scale);
 
     private:
         HierarchicalDiscretizationConfiguration config;

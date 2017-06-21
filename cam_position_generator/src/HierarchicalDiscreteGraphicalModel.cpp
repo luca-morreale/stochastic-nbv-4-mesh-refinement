@@ -8,6 +8,7 @@ namespace opview {
                                                                 : BasicGraphicalModel(solver, cams, goalAngle, dispersion)
     {
         this->config = config;
+        this->initShapes();
     }
 
     HierarchicalDiscreteGraphicalModel::~HierarchicalDiscreteGraphicalModel()
@@ -21,7 +22,7 @@ namespace opview {
         
         for (int d = 0; d < this->getDepth(); d++) {
             std::cout << "Current depth: " << d << std::endl;
-            SimpleSpace space(numVariables(), numLabels());
+            SimpleSpace space(shape.begin(), shape.end());
             GraphicalModelAdder model(space);
 
             this->fillModel(model, centroid, normVector);
@@ -41,27 +42,28 @@ namespace opview {
 
     LabelList HierarchicalDiscreteGraphicalModel::extractResults(AdderInferencePtr algorithm)
     {
-        LabelList x;
+        VarIndexList x;
         algorithm->arg(x);
 
         std::cout << "Value obtained: " << algorithm->value() << std::endl;
 
+        LabelList convertedOpt(x.size());
         GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
-        x[0] = realOptima.x;
-        x[1] = realOptima.y;
-        x[2] = realOptima.z;
+        convertedOpt[0] = realOptima.x;
+        convertedOpt[1] = realOptima.y;
+        convertedOpt[2] = realOptima.z;
 
-        std::cout << "Optimal solution: " << x[0] << ' ' << x[1] << ' ' << x[2] << std::endl;
+        std::cout << "Optimal solution: " << convertedOpt[0] << ' ' << convertedOpt[1] << ' ' << convertedOpt[2] << std::endl;
         std::cout << std::endl << std::endl;
 
-        return x;
+        return convertedOpt;
     }
 
-    LabelList HierarchicalDiscreteGraphicalModel::getOptimaForDiscreteSpace(LabelList &currentOptima)
+    VarIndexList HierarchicalDiscreteGraphicalModel::getOptimaForDiscreteSpace(LabelList &currentOptima)
     {
         GLMVec3 spaceOptima = unscalePoint(GLMVec3(currentOptima[0], currentOptima[1], currentOptima[2]));
 
-        return {spaceOptima.x, spaceOptima.y, spaceOptima.z};
+        return {(VariableIndexType)spaceOptima.x, (VariableIndexType)spaceOptima.y, (VariableIndexType)spaceOptima.z};
     }
 
     void HierarchicalDiscreteGraphicalModel::reduceScale(LabelList &currentOptimal)
@@ -70,16 +72,47 @@ namespace opview {
         float currentScale = scale();
 
         float nextSize = currentSize * 0.75f;
-        float halfNextSize = nextSize / 2.0f;
 
-        float nextScale = currentScale * 0.75f; // 3/4 of the current scale
+        float nextScale = nextSize / (float)numLabels(); // 3/4 of the current scale
+        float halfNextSize = (float)numLabels() * nextScale / 2.0f;
 
-        offsetX = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[0] - halfNextSize, 1.0-halfNextSize), -0.5+halfNextSize); };
-        offsetY = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[1] - halfNextSize, 1.0-halfNextSize), -0.5+halfNextSize); };
+        // offset = optima - halfNextSize + x * scale - y * scale
+        float tmpOffsetX = currentOptimal[0] - halfNextSize + getXScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale 
+                                                            - getYScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale;
+        float tmpOffsetY = currentOptimal[1] - halfNextSize + getXScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale 
+                                                            - getYScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale;
+        float tmpOffsetZ = currentOptimal[2] - halfNextSize + getXScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale 
+                                                            - getYScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale;
+
+        offsetX = [tmpOffsetX](){ return tmpOffsetX; };
+        offsetY = [tmpOffsetY](){ return tmpOffsetY; };
         // std::max to force z to stay in the positive space
-        offsetZ = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[2] - halfNextSize, 1.0-halfNextSize), -0.5+halfNextSize); };
+        offsetZ = [tmpOffsetZ](){ return tmpOffsetZ; };
+
+        // offsetX = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[0] - halfNextSize, 3.0-halfNextSize), -3.0+halfNextSize); };
+        // offsetY = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[1] - halfNextSize, 3.0-halfNextSize), -3.0+halfNextSize); };
+        // // std::max to force z to stay in the positive space
+        // offsetZ = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[2] - halfNextSize, 3.0-halfNextSize), -3.0+halfNextSize); };
 
         scale = [nextScale](){ return nextScale; };
+    }
+
+    int HierarchicalDiscreteGraphicalModel::getXScalingFactor(float currentOptima, float halfNextSize, float scale)
+    {
+        int x = 0;
+        while (currentOptima - halfNextSize + x * scale <  -0.5) {
+            x++;
+        }
+        return x;
+    }
+
+    int HierarchicalDiscreteGraphicalModel::getYScalingFactor(float currentOptima, float halfNextSize, float scale)
+    {
+        int y = 0;
+        while (currentOptima - halfNextSize - y * scale >  1.0) {
+            y++;
+        }
+        return y;
     }
 
     void HierarchicalDiscreteGraphicalModel::resetPosition()

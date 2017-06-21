@@ -32,8 +32,11 @@ namespace opview {
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) = 0;
 
         void addFunctionTo(GMExplicitFunction &fun, GraphicalModelAdder &model, VarIndexList &variableIndices);
-        void addFunctionTo(GMSparseFunction &fun, GraphicalModelAdder &model, VarIndexList &variableIndices);  
+        void addFunctionTo(GMSparseFunction &fun, GraphicalModelAdder &model, VarIndexList &variableIndices);
 
+        SizeTList variableIndices;
+        SizeTList shape;
+        
     private:
         SolverGeneratorPtr solver;
         

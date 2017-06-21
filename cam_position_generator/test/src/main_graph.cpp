@@ -90,18 +90,18 @@ int main(int argc, char **argv) {
     // opview::SolverGeneratorPtr solver = new opview::LOCSolverGenerator();
     opview::SolverGeneratorPtr solver = new opview::BruteForceSolverGenerator();
 
-    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, 10);
-    opview::CameraGeneralConfiguration camConfig(1920, 1080);
+    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, {30, 30, 20, 20, 10});
+    opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
     // GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty
-    // opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty);   // FIXME missing points and accuracy
+    // opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty); 
 
     // size_t maxPoints = 10;
     // long double maxUncertainty = 100;
 
     // opview::BasicGraphicalModel model(solver, cams);
     // opview::HierarchicalDiscreteGraphicalModel model(solver, DEPTH, DISCRETE_LABELS, cams);
-    // opview::OrientationHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458, -0.462458, 0.462458
-    opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458 -0.462458 0.712458
+    opview::OrientationHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458, -0.462458, 0.462458
+    // opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458 -0.462458 0.712458
     // opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, maxUncertainty);
 
     // v1 = -0.443026, -0.075465, 2.31818
@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
                     };
 
     // centroid, normal
-    model.estimateBestCameraPosition(centroids, normals);
-    // model.estimateBestCameraPosition(centroid, normal);
+    // model.estimateBestCameraPosition(centroids, normals);
+    model.estimateBestCameraPosition(centroid, normal);
 
 
     return 0;

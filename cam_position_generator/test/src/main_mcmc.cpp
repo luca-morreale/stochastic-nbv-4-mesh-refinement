@@ -45,14 +45,14 @@ int main(int argc, char **argv) {
         cams.push_back(cam.center);
     }
 
-    opview::CameraGeneralConfiguration camConfig(1920, 1080);
+    opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
 
     glm::vec3 centroid(-0.402134, -0.0704882, 2.31928);
 
     glm::vec3 normal(-0.14341, 0.238821, -0.960416);
     // // centroid, normal
 
-    opview::MCConfiguration mcConfig(10, 10000, 100); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    opview::MCConfiguration mcConfig(30, 1000, 100); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
     
     opview::MCMCCamGenerator model(camConfig, meshFile, cams, mcConfig);

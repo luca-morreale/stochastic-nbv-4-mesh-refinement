@@ -94,13 +94,13 @@ int main(int argc, char **argv) {
     // opview::SolverGeneratorPtr solver = new opview::LOCSolverGenerator();
     opview::SolverGeneratorPtr solver = new opview::BruteForceSolverGenerator();
 
-    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, 10);
-    opview::CameraGeneralConfiguration camConfig(1920, 1080);
+    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, {30, 30, 20, 20, 10});
+    opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
     // GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty
     opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty);
 
     size_t maxPoints = 10;
-    long double thresholdUncertainty = 1000;
+    long double thresholdUncertainty = 100000;
 
     // opview::BasicGraphicalModel model(solver, cams);
     // opview::HierarchicalDiscreteGraphicalModel model(solver, DEPTH, DISCRETE_LABELS, cams);

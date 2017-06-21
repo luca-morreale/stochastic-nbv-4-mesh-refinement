@@ -102,11 +102,18 @@ namespace opview {
     typedef struct OrientationHierarchicalConfiguration {
         HierarchicalDiscretizationConfiguration config;
         float deltaAngle;
+        FloatList deltaAngles;
 
     public:
         OrientationHierarchicalConfiguration(size_t depth, size_t labels, float deltaAngle) : deltaAngle(deltaAngle)
         {
             config = {depth, labels};
+            deltaAngles.push_back(deltaAngle);
+        }
+        OrientationHierarchicalConfiguration(size_t depth, size_t labels, FloatList deltaAngles) : deltaAngles(deltaAngles)
+        {
+            config = {depth, labels};
+            deltaAngle = deltaAngles[deltaAngles.size() - 1];
         }
         OrientationHierarchicalConfiguration() : deltaAngle(10)
         {

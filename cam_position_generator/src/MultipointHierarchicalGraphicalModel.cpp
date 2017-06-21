@@ -100,7 +100,7 @@ namespace opview {
 
             LabelType val = 0.0;
             for (int p = 0; p < centroids.size(); p++) {
-                val += -logVonMisesWrapper(scaledPos, centroids[p], normVectors[p]);
+                val += -super::logVonMisesWrapper(scaledPos, centroids[p], normVectors[p]);
             }
             orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
                 #pragma omp critical
@@ -154,6 +154,13 @@ namespace opview {
         }
     }
 
+    LabelType MultipointHierarchicalGraphicalModel::logVonMisesWrapper(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normal)
+    {
+        EigVector5 pose;
+        pose << point.x, point.y, point.z, 0, 0;
+        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVonMisesWrapper, this, _1, _2, _3));
+    }
+
     LabelType MultipointHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3));
@@ -196,6 +203,12 @@ namespace opview {
     }
 
     // private utils, used to indirectly call the parent and cheat boost
+    LabelType MultipointHierarchicalGraphicalModel::parentCallToVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    {
+        GLMVec3 scaledPos(pose[0], pose[1], pose[2]);
+        return -super::logVonMisesWrapper(scaledPos, centroid, normalVector);
+    }
+
     LabelType MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         return super::visibilityDistribution(pose, centroid, normalVector);
@@ -230,6 +243,19 @@ namespace opview {
         this->normals.push_back(normal);
         this->uncertainty.push_back(uncertainty);
         SUM_UNCERTAINTY += uncertainty;
+    }
+
+    GLMVec3List MultipointHierarchicalGraphicalModel::getPoints()
+    {
+        return points;
+    }
+    GLMVec3List MultipointHierarchicalGraphicalModel::getNormals()
+    {
+        return normals;
+    }
+    DoubleList MultipointHierarchicalGraphicalModel::getUncertainties()
+    {
+        return uncertainty;
     }
 
 } // namespace opview

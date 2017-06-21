@@ -23,10 +23,10 @@ namespace opview {
         using OrientationHierarchicalGraphicalModel::estimateBestCameraPosition;
         virtual void estimateBestCameraPosition(GLMVec3List &centroids, GLMVec3List &normVector);
 
-        void updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double accuracy);
-        void updateMeshInfo(int pointIndex, GLMVec3 normal, double accuracy);
-        void updateMeshInfo(int pointIndex, double accuracy);
-        void addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty);
+        virtual void updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double accuracy);
+        virtual void updateMeshInfo(int pointIndex, GLMVec3 normal, double accuracy);
+        virtual void updateMeshInfo(int pointIndex, double accuracy);
+        virtual void addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty);
 
     protected:
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3List &centroids, GLMVec3List &normVectors);
@@ -38,11 +38,16 @@ namespace opview {
         virtual void fillConstraintFunction(GMExplicitFunction &constraints, GLMVec3List &centroids);
         virtual void addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3List &centroids, GLMVec3 spacePos);
 
+        virtual LabelType logVonMisesWrapper(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normal) override;
         virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
         virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
 
         virtual double estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function);
         virtual double computeWeightForPoint(int pointIndex);
+
+        virtual GLMVec3List getPoints();
+        virtual GLMVec3List getNormals();
+        virtual DoubleList getUncertainties();
     
     private:
         GLMVec3List points;
@@ -53,11 +58,11 @@ namespace opview {
         long double maxUncertainty;
         size_t maxPoints;
 
-        typedef OrientationHierarchicalGraphicalModel super;
-
+        LabelType parentCallToVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         LabelType parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         LabelType parentCallToPlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
 
+        typedef OrientationHierarchicalGraphicalModel super;
     };
 
 

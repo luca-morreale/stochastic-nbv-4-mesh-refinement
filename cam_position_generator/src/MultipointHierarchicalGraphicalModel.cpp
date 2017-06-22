@@ -14,13 +14,16 @@ namespace opview {
                                             : OrientationHierarchicalGraphicalModel(solver, config, camConfig, meshConfig.filename, meshConfig.cams, goalAngle, dispersion)
     {
         this->points = meshConfig.points;
+        this->normals = meshConfig.normals;
+        this->uncertainty = meshConfig.uncertainty;
+
         this->maxPoints = maxPoints;
         this->maxUncertainty = maxUncertainty;
-        this->uncertainty = meshConfig.uncertainty;
-        SUM_UNCERTAINTY = 0.0;
-        for (int p = 0; p < uncertainty.size(); p++) {
-            SUM_UNCERTAINTY += uncertainty[p];
-        }
+
+        getLogger()->resetFile("multipoint.json");
+        
+        precomputeSumUncertainty();
+        setupWorstPoints();
     }
         
     MultipointHierarchicalGraphicalModel::~MultipointHierarchicalGraphicalModel()
@@ -157,43 +160,36 @@ namespace opview {
     LabelType MultipointHierarchicalGraphicalModel::logVonMisesWrapper(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normal)
     {
         EigVector5 pose;
-        pose << point.x, point.y, point.z, 0, 0;
-        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVonMisesWrapper, this, _1, _2, _3));
+        pose << point.x, point.y, point.z, 0.0, 0.0;
+        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVonMisesWrapper, this, _1, _2, _3))
+                + parentCallToVonMisesWrapper(pose, centroid, normal);
     }
 
     LabelType MultipointHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3));
+        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation, this, _1, _2, _3))
+                + parentCallToVisibilityEstimation(pose, centroid, normalVector);
     }
 
     LabelType MultipointHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3));
+        return estimateForWorstPointSeen(pose, boost::bind(&MultipointHierarchicalGraphicalModel::parentCallToPlaneWeight, this, _1, _2, _3))
+                + parentCallToPlaneWeight(pose, centroid, normalVector);
     }
 
     double MultipointHierarchicalGraphicalModel::estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function)
     {
-        // NOTE less straigth forward but more efficient version
-        DoubleIntList pointsList;
-        #pragma omp parallel for        // not much to gain using parallelism
-        for (int p = 0; p < points.size(); p++) {
-            if (uncertainty[p] > this->maxUncertainty) {    // NOTE look at definition of UNCERTAINTY_THRESHOLD
-                #pragma omp critical
-                pointsList.push_back(std::make_pair(uncertainty[p], p));
-            }
-        }
-
-        std::sort(pointsList.rbegin(), pointsList.rend());
-
         LabelType val = 0.0;
-        for (int i = 0; i < std::min(this->maxPoints, pointsList.size()); i++) {
-            DoubleIntPair el = pointsList[i];
+        #pragma omp parallel for
+        for (int i = 0; i < worstPointsList.size(); i++) {
+            DoubleIntPair el = worstPointsList[i];
             double normalizedWeight = computeWeightForPoint(el.second);     // more the uncertainty is high more important it is seen
             LabelType local_val = function(pose, points[el.second], normals[el.second]);
-
+            
             #pragma omp critical
             val += local_val * normalizedWeight;
         }
+        
         return val;
     }
 
@@ -205,7 +201,7 @@ namespace opview {
     // private utils, used to indirectly call the parent and cheat boost
     LabelType MultipointHierarchicalGraphicalModel::parentCallToVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        GLMVec3 scaledPos(pose[0], pose[1], pose[2]);
+        GLMVec3 scaledPos = GLMVec3(pose[0], pose[1], pose[2]);
         return -super::logVonMisesWrapper(scaledPos, centroid, normalVector);
     }
 
@@ -235,6 +231,7 @@ namespace opview {
     {
         SUM_UNCERTAINTY += this->uncertainty[pointIndex] - uncertainty;
         this->uncertainty[pointIndex] = uncertainty;
+        updateWorstPoints(pointIndex, uncertainty);
     }
 
     void MultipointHierarchicalGraphicalModel::addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty)
@@ -243,6 +240,45 @@ namespace opview {
         this->normals.push_back(normal);
         this->uncertainty.push_back(uncertainty);
         SUM_UNCERTAINTY += uncertainty;
+    }
+
+    void MultipointHierarchicalGraphicalModel::precomputeSumUncertainty()
+    {
+        SUM_UNCERTAINTY = 0.0;
+        for (int p = 0; p < this->uncertainty.size(); p++) {
+            SUM_UNCERTAINTY += uncertainty[p];
+        }
+    }
+
+    void MultipointHierarchicalGraphicalModel::setupWorstPoints()
+    {
+        worstPointsList.clear();
+        #pragma omp parallel for        // not much to gain using parallelism
+        for (int p = 0; p < points.size(); p++) {
+            if (uncertainty[p] > this->maxUncertainty) {    // NOTE look at definition of UNCERTAINTY_THRESHOLD
+                #pragma omp critical
+                worstPointsList.push_back(std::make_pair(uncertainty[p], p));
+            }
+        }
+        retainWorst();
+    }
+
+    void MultipointHierarchicalGraphicalModel::updateWorstPoints(int index, long double uncertainty)
+    {
+        worstPointsList.push_back(std::make_pair(uncertainty, index));
+        retainWorst();
+    }
+
+    void MultipointHierarchicalGraphicalModel::retainWorst()
+    {
+        std::sort(worstPointsList.rbegin(), worstPointsList.rend());
+        int eraseFrom = std::min(this->maxPoints, worstPointsList.size());
+        worstPointsList.erase(worstPointsList.begin() + eraseFrom, worstPointsList.end());
+    }
+
+    DoubleIntList MultipointHierarchicalGraphicalModel::getWorstPointsList()
+    {
+        return worstPointsList;
     }
 
     GLMVec3List MultipointHierarchicalGraphicalModel::getPoints()

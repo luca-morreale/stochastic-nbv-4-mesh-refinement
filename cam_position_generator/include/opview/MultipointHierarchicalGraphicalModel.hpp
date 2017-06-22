@@ -45,6 +45,10 @@ namespace opview {
         virtual double estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function);
         virtual double computeWeightForPoint(int pointIndex);
 
+        virtual void setupWorstPoints();
+        virtual void updateWorstPoints(int index, long double uncertainty);
+        DoubleIntList getWorstPointsList();
+
         virtual GLMVec3List getPoints();
         virtual GLMVec3List getNormals();
         virtual DoubleList getUncertainties();
@@ -54,9 +58,13 @@ namespace opview {
         GLMVec3List normals;
         DoubleList uncertainty;
 
+        DoubleIntList worstPointsList;
         long double SUM_UNCERTAINTY;
         long double maxUncertainty;
         size_t maxPoints;
+
+        void precomputeSumUncertainty();
+        void retainWorst();
 
         LabelType parentCallToVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         LabelType parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);

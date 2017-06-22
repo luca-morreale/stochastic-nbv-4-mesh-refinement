@@ -92,7 +92,8 @@ int main(int argc, char **argv)
     size_t faces = (cubeQt * 6) + axes.size() + defaultAxes.size();
     size_t edges = (cubeQt * 12) + axes.size() * 3 + defaultAxes.size() * 3;
 
-    std::ofstream off("../cams_file.off");
+    std::string outname = cams_file.substr(0, cams_file.find_last_of(".json")-4);
+    std::ofstream off(outname + ".off");
     off << "OFF" << std::endl;
     off << pointQt << " " << faces << " " << edges << std::endl;
     

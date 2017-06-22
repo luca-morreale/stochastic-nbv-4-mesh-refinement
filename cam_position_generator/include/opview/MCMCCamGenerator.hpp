@@ -10,6 +10,7 @@
 #include <opview/alias_definition.h>
 #include <opview/MCMCSamplerGenerator.hpp>
 #include <opview/utilities.hpp>
+#include <opview/ReportWriter.hpp>
 
 namespace opview {
 
@@ -59,6 +60,9 @@ namespace opview {
 
         virtual void sumUpAll(DoubleList &dest, DoubleList &visibility, DoubleList &vonMises, DoubleList &projection, DoubleList &constraints);
         
+        ReportWriterPtr getLogger();
+        void setLogger(ReportWriterPtr log);
+
         LambdaGLMPointsList uniformPointGetter;
         LambdaGLMPointsList resamplingPointGetter;
 
@@ -79,6 +83,8 @@ namespace opview {
         TreePtr tree;
 
         CameraGeneralConfiguration camConfig;
+
+        ReportWriterPtr log;
 
         void fillTree();
         Polyhedron extractPolyhedron();

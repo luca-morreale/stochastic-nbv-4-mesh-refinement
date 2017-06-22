@@ -12,6 +12,8 @@ namespace opview {
         this->cams = cams;
         this->meshFile = meshFile;
         this->mcConfig = mcConfig;
+        this->log = new ReportWriter("mcmc.json");
+
         this->initLambdas();
         this->fillTree();     // called to assure usage of overridden function
     }
@@ -19,19 +21,21 @@ namespace opview {
     MCMCCamGenerator::~MCMCCamGenerator()
     {
         delete sampler;
+        delete log;
     }
 
     void MCMCCamGenerator::initLambdas() 
     { 
         this->uniformPointGetter = [this](OrderedPose &currentOptima)  
                 {  
-                    return sampler->getUniformSamples({std::make_pair(offsetX(), 1.0f), std::make_pair(offsetY(), 1.0f), std::make_pair(offsetZ(), 1.0f)}, mcConfig.particles);  
+                    return sampler->getUniformSamples({std::make_pair(offsetX(), 1.0f), std::make_pair(offsetY(), 1.0f), std::make_pair(offsetZ(), 1.0f)}, mcConfig.particleUniform);  
                 };
         this->resamplingPointGetter = [this](OrderedPose &currentOptima)
                 {  
                     GLMVec3List centers = getCentersFromOptima(currentOptima); 
                     DoubleList weights = getWeightsFromOptima(currentOptima); 
-                    return sampler->getWeightedSamples(centers, weights, mcConfig.particles);  
+                    GLMVec3List newCenters = sampler->getWeightedSamples(centers, weights, mcConfig.particles * 0.9);
+                    return concatLists(newCenters, centers);
                 };
     }
 
@@ -74,7 +78,6 @@ namespace opview {
         for (int d = 0; d < mcConfig.resamplingNum; d++) {
             currentOptima = resamplingMCStep(centroid, normVector, currentOptima);
         }
-
     }
 
     OrderedPose MCMCCamGenerator::uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector)
@@ -181,7 +184,7 @@ namespace opview {
 
     void MCMCCamGenerator::computeConstraintFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for
         for (int p = 0; p < points.size(); p++) {
             for (int c = 0; c < cams.size(); c++) {
                 values[p] += computeBDConstraint(points[p], centroid, cams[c]);
@@ -219,6 +222,7 @@ namespace opview {
             poses.pop();
             c++;
         }
+        this->log->append(optima);
 
         return optima;
     }
@@ -258,16 +262,16 @@ namespace opview {
         if (isPointInsideImage(pose, centroid) && isMeaningfulPose(pose, centroid)){
             return 1.0;
         }
-        return 0.0;
+        return -10.0;
     }
 
     LabelType MCMCCamGenerator::imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         if (!isPointInsideImage(pose, centroid)) {  // fast rejection, fast to compute.
-            return 0.0;
+            return -10.0;
         }
         if (!isMeaningfulPose(pose, centroid)) {
-            return 0.0;
+            return -10.0;
         }
 
         GLMVec2 point = getProjectedPoint(pose, centroid);
@@ -288,16 +292,12 @@ namespace opview {
 
     bool MCMCCamGenerator::isOppositeView(EigVector5 &pose, GLMVec3 &centroid)
     {
-        PointD3 cam(pose[0], pose[1], pose[2]);
-        PointD3 point(centroid.x, centroid.y, centroid.z);
-        
-        CGALVec3 rayVector = Ray(cam, point).to_vector();
-        GLMVec3 ray = GLMVec3(rayVector[0], rayVector[1], rayVector[2]);
+        GLMVec3 ray = GLMVec3(pose[0]-centroid.x, pose[1]-centroid.y, pose[3]-centroid.z);
         
         RotationMatrix R = getRotationMatrix(0, -pose[3], -pose[4]);
         GLMVec3 zDirection = R * zdir;
 
-        return glm::dot(ray, zDirection) > 0.0;
+        return glm::dot(ray, zDirection) > 0.0f;    // if < 0.0 than it sees the object, but we want to know when it is opposite.
     }
 
     bool MCMCCamGenerator::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
@@ -361,6 +361,17 @@ namespace opview {
         P[3][2] = t[2];
 
         return K * P;
+    }
+
+    ReportWriterPtr MCMCCamGenerator::getLogger()
+    {
+        return log;
+    }
+
+    void MCMCCamGenerator::setLogger(ReportWriterPtr log)
+    {
+        delete this->log;
+        this->log  = log;
     }
 
 } // namespace opview

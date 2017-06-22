@@ -19,6 +19,7 @@ namespace opview {
     CGALVec3List convertListToCGALVecList(GLMVec3List &inList);
 
     double distanceCGALVec3(CGALVec3 &a, CGALVec3 &b);
+    GLMVec3List concatLists(GLMVec3List &a, GLMVec3List &b);
 
     float deg2rad(float deg);
     float rad2deg(float rad);

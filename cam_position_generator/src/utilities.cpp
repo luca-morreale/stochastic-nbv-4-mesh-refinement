@@ -52,6 +52,12 @@ namespace opview {
         return distance;
     }
 
+    GLMVec3List concatLists(GLMVec3List &a, GLMVec3List &b)
+    {
+        a.insert(a.end(), b.begin(), b.end());
+        return a;
+    }
+
     float deg2rad(float deg)
     {
         return deg * M_PI / 180.0;
@@ -74,7 +80,7 @@ namespace opview {
     }
 
     double logVonMises(GLMVec3 &v, GLMVec3 &normalVector, VonMisesConfiguration &config)
-    { 
+    {
         double dotProduct = glm::dot(normalVector, v);
         double normProduct = glm::l2Norm(normalVector) * glm::l2Norm(v);
         double angle = dotProduct / normProduct;

@@ -12,13 +12,16 @@ namespace opview {
         this->orientConfig = config;
         this->meshFilename = meshFile;
         this->camConfig = camConfig;
+        log = new ReportWriter("orientation_log.json");
 
         fillTree();     // called to assure usage of overridden function
         initShapes();
     }
 
     OrientationHierarchicalGraphicalModel::~OrientationHierarchicalGraphicalModel()
-    { /*    */ }
+    {
+        delete log;
+    }
 
     void OrientationHierarchicalGraphicalModel::initShapes()
     {
@@ -85,9 +88,6 @@ namespace opview {
             GraphicalModelAdder model(space);
 
             this->fillModel(model, centroid, normVector);
-            
-            // get optimal solution, than scale it
-            // before give it to the solver descale it in the current space
 
             auto discreteOptima = getOptimaForDiscreteSpace(currentOptima);
             AdderInferencePtr algorithm = solverGenerator()->getOptimizerAlgorithm(model, discreteOptima, numVariables());
@@ -117,6 +117,8 @@ namespace opview {
 
         std::cout << "Optimal solution: " << convertedOpt[0] << ", " << convertedOpt[1] << ", " << convertedOpt[2] << ", ";
         std::cout << convertedOpt[3] << ", " << convertedOpt[4] << std::endl << std::endl;
+
+        log->append(convertedOpt, algorithm->value());
 
         return convertedOpt;
     }
@@ -382,6 +384,17 @@ namespace opview {
     void OrientationHierarchicalGraphicalModel::setMeshFilename(std::string filename)
     {
         this->meshFilename = filename;
+    }
+
+    ReportWriterPtr OrientationHierarchicalGraphicalModel::getLogger()
+    {
+        return log;
+    }
+
+    void OrientationHierarchicalGraphicalModel::setLogger(ReportWriterPtr log)
+    {
+        delete this->log;
+        this->log  = log;
     }
 
 } // namespace opview

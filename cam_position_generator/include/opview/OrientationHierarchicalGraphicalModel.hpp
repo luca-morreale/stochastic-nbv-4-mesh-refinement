@@ -11,6 +11,7 @@
 
 #include <opview/HierarchicalDiscreteGraphicalModel.hpp>
 #include <opview/type_definition.h>
+#include <opview/ReportWriter.hpp>
 
 namespace opview {
 
@@ -69,6 +70,9 @@ namespace opview {
         virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector) override;
         virtual void addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[]) override;
 
+        ReportWriterPtr getLogger();
+        void setLogger(ReportWriterPtr log);
+
         SizeTList coordinateIndices;
         SizeTList coordinateShape;
 
@@ -80,6 +84,8 @@ namespace opview {
 
         CameraGeneralConfiguration camConfig;
         OrientationHierarchicalConfiguration orientConfig;
+
+        ReportWriterPtr log;
 
         void fillTree();
         Polyhedron extractPolyhedron();

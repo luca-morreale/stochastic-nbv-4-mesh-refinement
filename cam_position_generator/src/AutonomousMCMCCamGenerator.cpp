@@ -16,10 +16,20 @@ namespace opview {
         }
 
         setWorstPoint();
+
+        this->getLogger()->resetFile("auto_mcmc.json");
     }
     
     AutonomousMCMCCamGenerator::~AutonomousMCMCCamGenerator()
     { /*    */ }
+
+    void AutonomousMCMCCamGenerator::precomputeSumUncertainty()
+    {
+        SUM_UNCERTAINTY = 0.0;
+        for (int p = 0; p < uncertainty.size(); p++) {
+            SUM_UNCERTAINTY += uncertainty[p];
+        }
+    }
 
     void AutonomousMCMCCamGenerator::updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double uncertainty)
     {

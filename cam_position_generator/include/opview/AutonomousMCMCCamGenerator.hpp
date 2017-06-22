@@ -43,6 +43,8 @@ namespace opview {
         long double worstUncertainty;
         int worstPointIndex;
 
+        void precomputeSumUncertainty();
+
         typedef MCMCCamGenerator super;
 
     };

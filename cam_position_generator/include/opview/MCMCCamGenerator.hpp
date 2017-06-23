@@ -32,11 +32,10 @@ namespace opview {
         virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
     protected:
-        virtual void initLambdas();
         virtual EigVector5List insertOrientation(GLMVec3List &points);
         virtual OrderedPose uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector);
         virtual OrderedPose resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima);
-        virtual OrderedPose generalStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, LambdaGLMPointsList &getPoints);
+        virtual OrderedPose generalStep(GLMVec3 &centroid, GLMVec3 &normVector, EigVector5List &orientedPoints);
         virtual OrderedPose orderPoses(EigVector5List &orientedPoints, DoubleList &values);
         virtual void computeObjectiveFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual double logVonMisesWrapper(EigVector5 &newCamPose, GLMVec3 &centroid, GLMVec3 &normVector);
@@ -45,7 +44,7 @@ namespace opview {
         virtual void computeConstraintFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual double computeBDConstraint(EigVector5 &newCamPose, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual OrderedPose extractBestResults(OrderedPose &poses);
-        virtual GLMVec3List getCentersFromOptima(OrderedPose currentOptima);
+        virtual EigVector5List getCentersFromOptima(OrderedPose currentOptima);
         virtual DoubleList getWeightsFromOptima(OrderedPose currentOptima);
 
         virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
@@ -58,13 +57,13 @@ namespace opview {
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
         virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
 
+        virtual EigVector5List uniformPointsGetter();
+        virtual EigVector5List resamplingPointsGetter(OrderedPose &currentOptima);
+
         virtual void sumUpAll(DoubleList &dest, DoubleList &visibility, DoubleList &vonMises, DoubleList &projection, DoubleList &constraints);
         
         ReportWriterPtr getLogger();
         void setLogger(ReportWriterPtr log);
-
-        LambdaGLMPointsList uniformPointGetter;
-        LambdaGLMPointsList resamplingPointGetter;
 
         LambdaFloat offsetX = [](){ return -1.0; };
         LambdaFloat offsetY = [](){ return -1.0; };
@@ -89,6 +88,7 @@ namespace opview {
         void fillTree();
         Polyhedron extractPolyhedron();
         TriangleList getTriangleList(Polyhedron &poly);
+        OrderedPose convertAngles(OrderedPose poses);
 
     };
 

@@ -14,7 +14,6 @@ namespace opview {
         this->mcConfig = mcConfig;
         this->log = new ReportWriter("mcmc.json");
 
-        this->initLambdas();
         this->fillTree();     // called to assure usage of overridden function
     }
 
@@ -22,21 +21,6 @@ namespace opview {
     {
         delete sampler;
         delete log;
-    }
-
-    void MCMCCamGenerator::initLambdas() 
-    { 
-        this->uniformPointGetter = [this](OrderedPose &currentOptima)  
-                {  
-                    return sampler->getUniformSamples({std::make_pair(offsetX(), 1.0f), std::make_pair(offsetY(), 1.0f), std::make_pair(offsetZ(), 1.0f)}, mcConfig.particleUniform);  
-                };
-        this->resamplingPointGetter = [this](OrderedPose &currentOptima)
-                {  
-                    GLMVec3List centers = getCentersFromOptima(currentOptima); 
-                    DoubleList weights = getWeightsFromOptima(currentOptima); 
-                    GLMVec3List newCenters = sampler->getWeightedSamples(centers, weights, mcConfig.particles * 0.9);
-                    return concatLists(newCenters, centers);
-                };
     }
 
     void MCMCCamGenerator::fillTree()
@@ -82,29 +66,27 @@ namespace opview {
 
     OrderedPose MCMCCamGenerator::uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        OrderedPose empty;
-        OrderedPose poses = generalStep(centroid, normVector, empty, uniformPointGetter);
+        EigVector5List orientedPoints = uniformPointsGetter();
+        OrderedPose poses = generalStep(centroid, normVector, orientedPoints);
         return this->extractBestResults(poses);
     }
 
     OrderedPose MCMCCamGenerator::resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima)
     {
-        OrderedPose poses = generalStep(centroid, normVector, currentOptima, resamplingPointGetter);
+        EigVector5List orientedPoints = resamplingPointsGetter(currentOptima);
+        OrderedPose poses = generalStep(centroid, normVector, orientedPoints);
         return this->extractBestResults(poses);
     }
 
-    OrderedPose MCMCCamGenerator::generalStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, LambdaGLMPointsList &getPoints)
+    OrderedPose MCMCCamGenerator::generalStep(GLMVec3 &centroid, GLMVec3 &normVector, EigVector5List &orientedPoints)
     {
-        GLMVec3List points = getPoints(currentOptima);
-        EigVector5List orientedPoints = insertOrientation(points);
-
         DoubleList visibility(orientedPoints.size(), 0.0);
         DoubleList vonMises(orientedPoints.size(), 0.0);
         DoubleList projection(orientedPoints.size(), 0.0);
         DoubleList constraints(orientedPoints.size(), 0.0);
         DoubleList values(orientedPoints.size(), 0.0);
         
-        #pragma omp sections 
+        #pragma omp parallel sections 
         {
             #pragma omp section
             computeObjectiveFunction(vonMises, orientedPoints, centroid, normVector);
@@ -123,27 +105,11 @@ namespace opview {
 
     void MCMCCamGenerator::sumUpAll(DoubleList &dest, DoubleList &visibility, DoubleList &vonMises, DoubleList &projection, DoubleList &constraints)
     {
-        #pragma omp parallel
+        #pragma omp parallel for
         for (int i = 0; i < dest.size(); i++) {
             dest[i] = visibility[i] + vonMises[i] + projection[i] + constraints[i];
         }
-    }
-
-    EigVector5List MCMCCamGenerator::insertOrientation(GLMVec3List &points)
-    {
-        EigVector5List orientedPoints;
-
-        #pragma omp parallel for collapse(3)
-        for (int p = 0; p < points.size(); p++) {
-            orientationCycles() {
-                EigVector5 pose;
-                pose << points[p].x, points[p].y, points[p].z, (float)ptc, (float)yaw;
-                #pragma omp critical
-                orientedPoints.push_back(pose);
-            }
-        }
-        return orientedPoints;
-    }
+    }    
 
     OrderedPose MCMCCamGenerator::orderPoses(EigVector5List &orientedPoints, DoubleList &values)
     {
@@ -184,7 +150,7 @@ namespace opview {
 
     void MCMCCamGenerator::computeConstraintFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for (int p = 0; p < points.size(); p++) {
             for (int c = 0; c < cams.size(); c++) {
                 values[p] += computeBDConstraint(points[p], centroid, cams[c]);
@@ -196,7 +162,7 @@ namespace opview {
     {
         GLMVec3 point = GLMVec3(newCamPose[0], newCamPose[1], newCamPose[2]);
         double D, B;
-        #pragma omp sections
+        #pragma omp parallel sections
         {
             #pragma omp section
             B = glm::distance(point, cam);
@@ -212,31 +178,42 @@ namespace opview {
     
     OrderedPose MCMCCamGenerator::extractBestResults(OrderedPose &poses)
     {
-        OrderedPose optima;
-        std::cout << "Best Value: " << poses.top().first << std::endl;
-        std::cout << "Best Pose: " << poses.top().second.transpose() << std::endl << std::endl;
+        OrderedPose optima = copy(poses, (size_t)(OFFSPRING*mcConfig.particles));
+        
+        OrderedPose convertedAnglesOptima = convertAngles(optima);
 
-        int c = 0;
-        while(!poses.empty() && c < (size_t)(OFFSPRING*mcConfig.particles)) {
-            optima.push(poses.top());
-            poses.pop();
-            c++;
-        }
-        this->log->append(optima);
+        std::cout << "Best Value: " << poses.top().first << std::endl;
+        std::cout << "Best Pose: " << convertedAnglesOptima.top().second.transpose() << std::endl << std::endl;
+
+        this->log->append(convertAngles(optima));
 
         return optima;
     }
-    
-    GLMVec3List MCMCCamGenerator::getCentersFromOptima(OrderedPose currentOptima) // not by refernce otherwise changes also the original
+
+    OrderedPose MCMCCamGenerator::convertAngles(OrderedPose poses)
     {
-        GLMVec3List coords;
+        OrderedPose optima;
+        int c = 0;
+        while(!poses.empty() && c < (size_t)(OFFSPRING*mcConfig.particles)) {
+            auto tmp = poses.top();
+            tmp.second[3] = rad2deg(tmp.second[3]);
+            tmp.second[4] = rad2deg(tmp.second[4]);
+            optima.push(tmp);
+            poses.pop();
+            c++;
+        }
+        return optima;
+    }
+    
+    EigVector5List MCMCCamGenerator::getCentersFromOptima(OrderedPose currentOptima) // not by refernce otherwise changes also the original
+    {
+        EigVector5List poses;
         while(!currentOptima.empty()) {
-            EigVector5 solution = currentOptima.top().second;
-            coords.push_back(GLMVec3(solution[0], solution[1], solution[2]));
+            poses.push_back(currentOptima.top().second);
             currentOptima.pop();
         }
 
-        return coords;
+        return poses;
     }
 
     DoubleList MCMCCamGenerator::getWeightsFromOptima(OrderedPose currentOptima) // not by refernce otherwise changes also the original
@@ -280,7 +257,7 @@ namespace opview {
         double sigma_x = (double)camConfig.size_x / 3.0;
         double sigma_y = (double)camConfig.size_y / 2.0;
 
-        return bivariateGuassian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
+        return bivariateGaussian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
     }
 
     bool MCMCCamGenerator::isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid)
@@ -361,6 +338,36 @@ namespace opview {
         P[3][2] = t[2];
 
         return K * P;
+    }
+
+    EigVector5List MCMCCamGenerator::uniformPointsGetter()
+    {  
+        GLMVec3List points = sampler->getUniformSamples({std::make_pair(offsetX(), 1.0f), std::make_pair(offsetY(), 1.0f), std::make_pair(offsetZ(), 1.0f)}, mcConfig.particleUniform);  
+        return insertOrientation(points);
+    }
+
+    EigVector5List MCMCCamGenerator::resamplingPointsGetter(OrderedPose &currentOptima)
+    {  
+        EigVector5List centers = getCentersFromOptima(currentOptima); 
+        DoubleList weights = getWeightsFromOptima(currentOptima); 
+        EigVector5List newCenters = sampler->getWeightedSamples(centers, weights, mcConfig.particles * 0.9);
+        return concatLists(newCenters, centers);
+    }
+
+    EigVector5List MCMCCamGenerator::insertOrientation(GLMVec3List &points)
+    {
+        EigVector5List orientedPoints;
+
+        #pragma omp parallel for collapse(3)
+        for (int p = 0; p < points.size(); p++) {
+            orientationCycles() {
+                EigVector5 pose;
+                pose << points[p].x, points[p].y, points[p].z, deg2rad((float)ptc), deg2rad((float)yaw);
+                #pragma omp critical
+                orientedPoints.push_back(pose);
+            }
+        }
+        return orientedPoints;
     }
 
     ReportWriterPtr MCMCCamGenerator::getLogger()

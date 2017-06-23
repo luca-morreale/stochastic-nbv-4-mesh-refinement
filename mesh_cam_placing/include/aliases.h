@@ -7,6 +7,9 @@
 #include <glm/glm.hpp>
 
 namespace camplacing {
+
+    typedef std::vector<double> DoubleList;
+    typedef std::vector<std::string> StringList;
     
     typedef glm::vec3 GLMVec3;
     typedef std::vector<GLMVec3> GLMVec3List;

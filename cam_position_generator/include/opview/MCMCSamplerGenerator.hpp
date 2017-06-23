@@ -16,7 +16,8 @@
 
 namespace opview {
 
-    #define SAMPLE_SIZE 3
+    #define COORDINATE_SIZE 3
+    #define ORIENTATION_SIZE 5
 
     class MCMCSamplerGenerator {
     public:
@@ -28,17 +29,24 @@ namespace opview {
         virtual GLMVec3List getWeightedSamples(GLMVec3List &centers, DoubleList &weights, size_t qt=100);
         virtual GLMVec3List getSamples(GLMVec3 &centers, int qt=100);
         virtual GLMVec3 getSample(GLMVec3 &center);
+
+        virtual EigVector5List getWeightedSamples(EigVector5List &centers, DoubleList &weights, size_t qt=1000);
+        virtual EigVector5List getSamples(EigVector5 &center, int qt=100);
+        virtual EigVector5 getSample(EigVector5 &center);
         
 
     protected:
-        virtual void randomMultivariateSample(const gsl_vector *mus, const gsl_matrix *variances, gsl_vector *results);
-        virtual void setupVarianceMatrix(gsl_matrix *var);
+        virtual void randomMultivariateSample(const gsl_vector *mus, const gsl_matrix *variances, gsl_vector *results, size_t size);
+        virtual void setupCoordinatesVarianceMatrix(gsl_matrix *var, size_t size);
+        virtual void setupOrientationVarianceMatrix(gsl_matrix *var, size_t size);
         virtual void setupMusVector(gsl_vector *mus, GLMVec3 &center);
+        virtual void setupMusVector(gsl_vector *mus, EigVector5 &center);
         virtual void freeDataStructure(GSLVectorList &vecs, GSLMatrixList &mats);
 
     private:
         const gsl_rng *randGen;
-        double std;
+        double coordStd;
+        double orientStd;
         const long SEED = time(NULL);
 
 

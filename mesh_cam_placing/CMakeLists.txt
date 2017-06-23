@@ -1,5 +1,5 @@
 
-project(OptimalViewEstimator)
+project(mesh_cam_generator)
 cmake_minimum_required(VERSION 2.8.3)
 
 # ----------------------- LIBRARIES ---------------------------
@@ -37,9 +37,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 # ------------------------ BUILD -------------------------------
 
-add_executable(camgen src/main.cpp src/OpenMvgParser.cpp src/CamReader.cpp)
+add_executable(sequencegen src/main_sequence.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp)
+add_executable(scoregen src/main_best_score.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp)
+add_executable(finalgen src/main_final.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp)
 
-target_link_libraries(camgen ${OpenCV_LIBS}
+target_link_libraries(sequencegen ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
                                             ${GMP_LIBRARIES}
@@ -51,6 +53,33 @@ target_link_libraries(camgen ${OpenCV_LIBS}
                                             ${OPTIMIZER_LIBRARIES}
                                             ${GMP_LIBRARY}
                                             )
+
+target_link_libraries(scoregen ${OpenCV_LIBS}
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB}
+                                            ${OPTIMIZER_LIBRARIES}
+                                            ${GMP_LIBRARY}
+                                            )
+
+target_link_libraries(finalgen ${OpenCV_LIBS}
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB}
+                                            ${OPTIMIZER_LIBRARIES}
+                                            ${GMP_LIBRARY}
+                                            )
+
 # ------------------------ INSTALLATION ------------------------
 
 

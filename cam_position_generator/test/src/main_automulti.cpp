@@ -7,8 +7,7 @@
 #include <opview/HierarchicalDiscreteGraphicalModel.hpp>
 #include <opview/ICMSolverGenerator.hpp>
 #include <opview/LOCSolverGenerator.hpp>
-#include <opview/MultipointHierarchicalGraphicalModel.hpp>
-#include <opview/OrientationHierarchicalGraphicalModel.hpp>
+#include <opview/AutonomousMultipointHierarchicalGraphicalModel.hpp>
 #include <opview/SolverGenerator.hpp>
 #include <opview/type_definition.h>
 
@@ -77,38 +76,11 @@ int main(int argc, char **argv) {
     size_t maxPoints = 10;
     long double thresholdUncertainty = 100000;
 
-    // opview::BasicGraphicalModel model(solver, cams);
-    // opview::HierarchicalDiscreteGraphicalModel model(solver, DEPTH, DISCRETE_LABELS, cams);
-    // opview::OrientationHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458, -0.462458, 0.462458
-    // opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458 -0.462458 0.712458
-    opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, thresholdUncertainty);
+    opview::AutonomousMultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, thresholdUncertainty);
 
-    // v1 = -0.443026, -0.075465, 2.31818
-    // n1 = -0.0383628, 0.272127, -0.961496
-    // v2 = -0.40168, -0.0697156, 2.3197
-    // n2 = -0.14341, 0.238821, -0.960416
-    // v3 = -0.405273, -0.0428495, 2.34096
-    // n3 = -0.215338, 0.405714, -0.888271
-    auto centroid = glm::vec3(-0.402134, -0.0704882, 2.31928);
-    auto normal = glm::vec3(-0.14341, 0.238821, -0.960416);
 
-    // std::vector<glm::vec3> centroids = {
-    //                 glm::vec3(-0.402134, -0.0704882, 2.31928), 
-    //                 glm::vec3(-0.443026, -0.075465, 2.31818), 
-    //                 glm::vec3(-0.40168, -0.0697156, 2.3197), 
-    //                 glm::vec3(-0.405273, -0.0428495, 2.34096)
-    //                 };
 
-    // std::vector<glm::vec3> normals = {
-    //                 glm::vec3(-0.14341, 0.238821, -0.960416), 
-    //                 glm::vec3(-0.0383628, 0.272127, -0.961496), 
-    //                 glm::vec3(-0.14341, 0.238821, -0.960416), 
-    //                 glm::vec3(-0.215338, 0.405714, -0.888271)
-    //                 };
-
-    // centroid, normal
-    // model.estimateBestCameraPosition(centroids, normals);
-    model.estimateBestCameraPosition(centroid, normal);
+    model.estimateBestCameraPosition();
 
 
     return 0;

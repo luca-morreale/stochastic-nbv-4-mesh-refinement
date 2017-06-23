@@ -1,47 +1,30 @@
-
-#include <realtimeMR/CameraPointsCollection.h>
-#include <realtimeMR/ConfigParser.h>
-#include <realtimeMR/ReconstructFromSfMData.h>
-#include <realtimeMR/ReconstructFromSLAMData.h>
-#include <realtimeMR/types_config.hpp>
-#include <realtimeMR/types_reconstructor.hpp>
-#include <realtimeMR/utilities/Chronometer.h>
-#include <realtimeMR/utilities/Logger.h>
-
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <set>
-#include <utility>
 #include <omp.h>
 
 #include <OpenMvgParser.h>
 
-#include <glm/gtx/string_cast.hpp>
-
-#include <opview/SolverGenerator.hpp>
-#include <opview/ICMSolverGenerator.hpp>
-#include <opview/FlipperSolverGenerator.hpp>
-#include <opview/LOCSolverGenerator.hpp>
-#include <opview/BruteForceSolverGenerator.hpp>
 #include <opview/BasicGraphicalModel.hpp>
-#include <opview/HierarchicalDiscreteGraphicalModel.hpp>
-#include <opview/OrientationHierarchicalGraphicalModel.hpp>
-#include <opview/type_definition.h>
+#include <opview/BruteForceSolverGenerator.hpp>
 #include <opview/DimensionDiagreementLists.hpp>
-#include <opview/MultipointHierarchicalGraphicalModel.hpp>
-#include <opview/MultiBruteForceSolverGenerator.hpp>
+#include <opview/FlipperSolverGenerator.hpp>
+#include <opview/HierarchicalDiscreteGraphicalModel.hpp>
+#include <opview/ICMSolverGenerator.hpp>
+#include <opview/LOCSolverGenerator.hpp>
 #include <opview/MCMCCamGenerator.hpp>
+#include <opview/MultiBruteForceSolverGenerator.hpp>
+#include <opview/MultipointHierarchicalGraphicalModel.hpp>
+#include <opview/OrientationHierarchicalGraphicalModel.hpp>
+#include <opview/SolverGenerator.hpp>
+#include <opview/type_definition.h>
+#include <opview/utilities.hpp>
 
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_linalg.h>
-#include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_vector.h>
 
-#include <opview/utilities.hpp>
 
 #define OMP_THREADS 8
 #define DEPTH 10

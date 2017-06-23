@@ -1,37 +1,19 @@
-
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <set>
-#include <utility>
 #include <omp.h>
 
 #include <OpenMvgParser.h>
 
-
-#include <opview/SolverGenerator.hpp>
-#include <opview/ICMSolverGenerator.hpp>
-#include <opview/FlipperSolverGenerator.hpp>
-#include <opview/LOCSolverGenerator.hpp>
 #include <opview/BruteForceSolverGenerator.hpp>
-#include <opview/BasicGraphicalModel.hpp>
-#include <opview/HierarchicalDiscreteGraphicalModel.hpp>
-#include <opview/OrientationHierarchicalGraphicalModel.hpp>
-#include <opview/type_definition.h>
-#include <opview/DimensionDiagreementLists.hpp>
-#include <opview/MultipointHierarchicalGraphicalModel.hpp>
-#include <opview/MultiBruteForceSolverGenerator.hpp>
-#include <opview/MCMCCamGenerator.hpp>
 #include <opview/ScorerGM.hpp>
-#include <opview/utilities.hpp>
+#include <opview/SolverGenerator.hpp>
+#include <opview/type_definition.h>
 
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_linalg.h>
-#include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_vector.h>
 
 
 

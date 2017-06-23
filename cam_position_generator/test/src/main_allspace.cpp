@@ -4,13 +4,12 @@
 
 #include <opview/BruteForceSolverGenerator.hpp>
 #include <opview/FlipperSolverGenerator.hpp>
-#include <opview/HierarchicalDiscreteGraphicalModel.hpp>
+#include <opview/HeavyOrientationHierarchicalGraphicalModel.hpp>
 #include <opview/ICMSolverGenerator.hpp>
 #include <opview/LOCSolverGenerator.hpp>
-#include <opview/MultipointHierarchicalGraphicalModel.hpp>
-#include <opview/OrientationHierarchicalGraphicalModel.hpp>
 #include <opview/SolverGenerator.hpp>
 #include <opview/type_definition.h>
+#include <opview/utilities.hpp>
 
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_linalg.h>
@@ -19,7 +18,6 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_vector.h>
-
 
 
 #define OMP_THREADS 8
@@ -45,25 +43,6 @@ int main(int argc, char **argv) {
         cams.push_back(cam.center);
     }
 
-    std::vector<glm::vec3> points;
-    std::vector<glm::vec3> normals;
-    std::vector<double> uncertainty;
-
-    double x, y, z, unc;
-    std::ifstream cin("points.txt");
-    while(!cin.eof()) {
-        cin >> x >> y >> z >> unc;
-        points.push_back(glm::vec3(x, y, z));
-        uncertainty.push_back(unc);
-    }
-    cin.close();
-
-    cin.open("normals.txt");
-    while(!cin.eof()) {
-        cin >> x >> y >> z;
-        normals.push_back(glm::vec3(x, y, z));
-    }
-
     // opview::SolverGeneratorPtr solver = new opview::FlipperSolverGenerator();
     // opview::SolverGeneratorPtr solver = new opview::ICMSolverGenerator();
     // opview::SolverGeneratorPtr solver = new opview::LOCSolverGenerator();
@@ -72,16 +51,17 @@ int main(int argc, char **argv) {
     opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, {30, 30, 20, 20, 10});
     opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
     // GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty
-    opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty);
+    // opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty); 
 
-    size_t maxPoints = 10;
-    long double thresholdUncertainty = 100000;
-
+    // size_t maxPoints = 10;
+    // long double maxUncertainty = 100;
+    int spaceBlock = 128*32;
+    int offset = 1;
     // opview::BasicGraphicalModel model(solver, cams);
     // opview::HierarchicalDiscreteGraphicalModel model(solver, DEPTH, DISCRETE_LABELS, cams);
-    // opview::OrientationHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458, -0.462458, 0.462458
+    opview::HeavyOrientationHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams, spaceBlock, offset); // 0.712458, -0.462458, 0.462458
     // opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458 -0.462458 0.712458
-    opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, thresholdUncertainty);
+    // opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, maxUncertainty);
 
     // v1 = -0.443026, -0.075465, 2.31818
     // n1 = -0.0383628, 0.272127, -0.961496
@@ -92,19 +72,19 @@ int main(int argc, char **argv) {
     auto centroid = glm::vec3(-0.402134, -0.0704882, 2.31928);
     auto normal = glm::vec3(-0.14341, 0.238821, -0.960416);
 
-    // std::vector<glm::vec3> centroids = {
-    //                 glm::vec3(-0.402134, -0.0704882, 2.31928), 
-    //                 glm::vec3(-0.443026, -0.075465, 2.31818), 
-    //                 glm::vec3(-0.40168, -0.0697156, 2.3197), 
-    //                 glm::vec3(-0.405273, -0.0428495, 2.34096)
-    //                 };
+    std::vector<glm::vec3> centroids = {
+                    glm::vec3(-0.402134, -0.0704882, 2.31928), 
+                    glm::vec3(-0.443026, -0.075465, 2.31818), 
+                    glm::vec3(-0.40168, -0.0697156, 2.3197), 
+                    glm::vec3(-0.405273, -0.0428495, 2.34096)
+                    };
 
-    // std::vector<glm::vec3> normals = {
-    //                 glm::vec3(-0.14341, 0.238821, -0.960416), 
-    //                 glm::vec3(-0.0383628, 0.272127, -0.961496), 
-    //                 glm::vec3(-0.14341, 0.238821, -0.960416), 
-    //                 glm::vec3(-0.215338, 0.405714, -0.888271)
-    //                 };
+    std::vector<glm::vec3> normals = {
+                    glm::vec3(-0.14341, 0.238821, -0.960416), 
+                    glm::vec3(-0.0383628, 0.272127, -0.961496), 
+                    glm::vec3(-0.14341, 0.238821, -0.960416), 
+                    glm::vec3(-0.215338, 0.405714, -0.888271)
+                    };
 
     // centroid, normal
     // model.estimateBestCameraPosition(centroids, normals);

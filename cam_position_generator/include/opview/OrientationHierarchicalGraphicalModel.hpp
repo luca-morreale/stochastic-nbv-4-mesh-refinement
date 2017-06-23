@@ -1,5 +1,5 @@
-#ifndef CAM_POSITION_ORIENTATION_HIERARCHICAL_GRAPHICAL_MODEL_H
-#define CAM_POSITION_ORIENTATION_HIERARCHICAL_GRAPHICAL_MODEL_H
+#ifndef CAM_POSITION_GENERATOR_ORIENTATION_HIERARCHICAL_GRAPHICAL_MODEL_H
+#define CAM_POSITION_GENERATOR_ORIENTATION_HIERARCHICAL_GRAPHICAL_MODEL_H
 
 #include <cmath>
 #include <cstdlib>
@@ -25,7 +25,7 @@ namespace opview {
                                                     GLMVec3List &cams, double goalAngle=55, double dispersion=5);
         ~OrientationHierarchicalGraphicalModel();
 
-        void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
         virtual size_t numVariables() override;
         virtual size_t orientationLabels();
@@ -98,4 +98,4 @@ namespace opview {
 
 } // namespace opview
 
-#endif // CAM_POSITION_ORIENTATION_HIERARCHICAL_GRAPHICAL_MODEL_H
+#endif // CAM_POSITION_GENERATOR_ORIENTATION_HIERARCHICAL_GRAPHICAL_MODEL_H

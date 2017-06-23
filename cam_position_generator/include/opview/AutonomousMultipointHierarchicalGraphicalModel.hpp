@@ -1,5 +1,5 @@
-#ifndef CAM_POSITION_AUTONOMOUS_MULTI_POINT_HIERARCHICAL_GRAPHICAL_MODEL_H
-#define CAM_POSITION_AUTONOMOUS_MULTI_POINT_HIERARCHICAL_GRAPHICAL_MODEL_H
+#ifndef CAM_POSITION_GENERATOR_AUTONOMOUS_MULTI_POINT_HIERARCHICAL_GRAPHICAL_MODEL_H
+#define CAM_POSITION_GENERATOR_AUTONOMOUS_MULTI_POINT_HIERARCHICAL_GRAPHICAL_MODEL_H
 
 #include <opview/MultipointHierarchicalGraphicalModel.hpp>
 #include <opview/type_definition.h>
@@ -19,6 +19,10 @@ namespace opview {
         // bring up overloaded function from parent
         using MultipointHierarchicalGraphicalModel::estimateBestCameraPosition;
 
+        virtual LabelType logVonMisesWrapper(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normal) override;
+        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
+        virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
+
     private:
         typedef MultipointHierarchicalGraphicalModel super;
 
@@ -27,4 +31,4 @@ namespace opview {
 
 } // namespace opview
 
-#endif // CAM_POSITION_AUTONOMOUS_MULTI_POINT_HIERARCHICAL_GRAPHICAL_MODEL_H
+#endif // CAM_POSITION_GENERATOR_AUTONOMOUS_MULTI_POINT_HIERARCHICAL_GRAPHICAL_MODEL_H

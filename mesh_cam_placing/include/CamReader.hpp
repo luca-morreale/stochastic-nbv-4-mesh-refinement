@@ -19,14 +19,21 @@ namespace camplacing {
 
         virtual GLMVec3List parse();
         GLMVec3List getCameras();
-        GLMMat3List getRots();
+        GLMVec3 getBestCamera();
+        GLMVec3 getFinalCamera();
+
+        GLMMat3List getRotations();
+        GLMMat3 getRotationOfBest();
+        GLMMat3 getRotationOfFinal();
 
     private:
         std::string camfile;
+        DoubleList scores;
         GLMVec3List cams;
         GLMMat3List rots;
 
-        GLMMat3 getRotationMatrix(double pitch, double yaw);
+        int bestScoreIndex();
+        GLMMat3 createRotationMatrix(double pitch, double yaw);
         double radians(double deg);
     };
 

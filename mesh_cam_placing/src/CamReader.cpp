@@ -28,8 +28,12 @@ namespace camplacing {
 
             double pitch = camerasJson[curCam]["rots"][0].GetDouble();
             double yaw = camerasJson[curCam]["rots"][1].GetDouble();
+
+            double score = camerasJson[curCam]["score"].GetDouble();
+
             this->cams.push_back(GLMVec3(x, y, z));
-            this->rots.push_back(getRotationMatrix(pitch, yaw));
+            this->rots.push_back(createRotationMatrix(pitch, yaw));
+            this->scores.push_back(score);
         }
         
         return this->cams;
@@ -40,12 +44,45 @@ namespace camplacing {
         return this->cams;
     }
 
-    GLMMat3List CamReader::getRots()
+    GLMVec3 CamReader::getBestCamera()
+    {
+        int index = bestScoreIndex();
+        return this->cams[index];
+    }
+
+    GLMVec3 CamReader::getFinalCamera()
+    {
+        return this->cams[this->cams.size() - 1];
+    }
+
+    GLMMat3List CamReader::getRotations()
     {
         return this->rots;
     }
+
+    GLMMat3 CamReader::getRotationOfBest()
+    {
+        int index = bestScoreIndex();
+        return this->rots[index];
+    }
+
+    GLMMat3 CamReader::getRotationOfFinal()
+    {
+        return this->rots[this->rots.size() - 1];
+    }
+
+    int CamReader::bestScoreIndex()
+    {
+        int index = 0;
+        for (int i = 0; i < this->cams.size(); i++) {
+            if (this->scores[i] > this->scores[index]) {
+                index = i;
+            }
+        }
+        return index;
+    }
     
-    GLMMat3 CamReader::getRotationMatrix(double pitch, double yaw)
+    GLMMat3 CamReader::createRotationMatrix(double pitch, double yaw)
     {
         auto Rz = GLMMat3(std::cos(radians(yaw)), -std::sin(radians(yaw)), 0,
                         std::sin(radians(yaw)), std::cos(radians(yaw)), 0,

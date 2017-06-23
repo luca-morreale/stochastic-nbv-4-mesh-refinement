@@ -22,7 +22,7 @@
 
 
 #define OMP_THREADS 8
-#define DEPTH 10
+#define DEPTH 30
 #define DISCRETE_LABELS 3
 
 

@@ -47,7 +47,7 @@ namespace opview {
         pos = out.tellp();
         out.seekp(pos-2);
         out << "], \n";
-        out << "\"score:\": " << score << std::endl;
+        out << "\"score\": " << score << std::endl;
 
         out << "},\n";
         out.flush();

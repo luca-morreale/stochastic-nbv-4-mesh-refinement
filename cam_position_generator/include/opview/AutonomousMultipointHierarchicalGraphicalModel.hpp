@@ -24,8 +24,11 @@ namespace opview {
         virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
 
     private:
-        typedef MultipointHierarchicalGraphicalModel super;
+        LabelType origianlLogVonMisesWrapper(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal);
+        LabelType origianlVisibilityDistribution(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal);
+        LabelType origianlImagePlaneWeight(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal);
 
+        typedef MultipointHierarchicalGraphicalModel super;
     };
 
 

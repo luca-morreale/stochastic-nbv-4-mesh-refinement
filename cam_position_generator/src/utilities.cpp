@@ -52,10 +52,16 @@ namespace opview {
         return distance;
     }
 
-    GLMVec3List concatLists(GLMVec3List &a, GLMVec3List &b)
+    OrderedPose copy(OrderedPose poses, size_t max)
     {
-        a.insert(a.end(), b.begin(), b.end());
-        return a;
+        OrderedPose dest;
+        int c = 0;
+        while(!poses.empty() && c < (max)) {
+            dest.push(poses.top());
+            poses.pop();
+            c++;
+        }
+        return dest;
     }
 
     float deg2rad(float deg)
@@ -69,8 +75,14 @@ namespace opview {
     }
 
     // sigmax = 640 sigmay = 360
-    double bivariateGuassian(double x, double y, double centerx, double centery, double sigmax, double sigmay) {
+    double bivariateGaussian(double x, double y, double centerx, double centery, double sigmax, double sigmay) 
+    {
         return std::exp(- 0.5 * std::pow((x-centerx), 2) / std::pow(sigmax, 2) - 0.5 * std::pow((y-centery), 2) / std::pow(sigmay, 2));
+    }
+
+    double logBivariateGaussian(double x, double y, double centerx, double centery, double sigmax, double sigmay)
+    {
+        return - 0.5 * std::pow((x-centerx), 2) / std::pow(sigmax, 2) - 0.5 * std::pow((y-centery), 2) / std::pow(sigmay, 2);
     }
 
     double logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfiguration &config)

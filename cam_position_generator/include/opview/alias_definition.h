@@ -113,6 +113,7 @@ namespace opview {
 
     typedef std::function<float()> LambdaFloat;
     typedef std::function<GLMVec3List(OrderedPose&)> LambdaGLMPointsList;
+    typedef std::function<EigVector5List(OrderedPose&)> LambdaEigPointsList;
 
 }
 

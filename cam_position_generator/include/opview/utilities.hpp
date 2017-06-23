@@ -19,12 +19,15 @@ namespace opview {
     CGALVec3List convertListToCGALVecList(GLMVec3List &inList);
 
     double distanceCGALVec3(CGALVec3 &a, CGALVec3 &b);
-    GLMVec3List concatLists(GLMVec3List &a, GLMVec3List &b);
+
+    OrderedPose copy(OrderedPose poses, size_t max);
+    
 
     float deg2rad(float deg);
     float rad2deg(float rad);
 
-    double bivariateGuassian(double x, double y, double centerx, double centery, double sigmax, double sigmay);
+    double bivariateGaussian(double x, double y, double centerx, double centery, double sigmax, double sigmay);
+    double logBivariateGaussian(double x, double y, double centerx, double centery, double sigmax, double sigmay);
 
     double logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfiguration &config);
     double logVonMises(GLMVec3 &v, GLMVec3 &normalVector, VonMisesConfiguration &config);
@@ -40,6 +43,13 @@ namespace opview {
             unmapping[i->second] = i->first;
         }
         return unmapping;
+    }
+
+    template<typename T>
+    std::vector<T> concatLists(std::vector<T> &a, std::vector<T> &b)
+    {
+        a.insert(a.end(), b.begin(), b.end());
+        return a;
     }
 
 }

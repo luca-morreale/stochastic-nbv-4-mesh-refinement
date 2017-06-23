@@ -150,7 +150,7 @@ namespace opview {
             #pragma omp section
             fillConstraintFunction(constraints, centroid);
         }
-        
+
         addFunctionTo(vonMises, model, variableIndices);
         addFunctionTo(visibility, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
@@ -246,7 +246,7 @@ namespace opview {
         double sigma_x = (double)camConfig.size_x / 3.0;
         double sigma_y = (double)camConfig.size_y / 2.0;
 
-        return bivariateGuassian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
+        return logBivariateGaussian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
     }
 
     bool OrientationHierarchicalGraphicalModel::isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid)

@@ -185,7 +185,7 @@ namespace opview {
     void OrientationHierarchicalGraphicalModel::addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[])
     {
         double B, D;
-        #pragma omp sections 
+        #pragma omp parallel sections 
         {
             #pragma omp section
             B = glm::distance(point, cam);

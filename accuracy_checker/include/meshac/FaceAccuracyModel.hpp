@@ -14,13 +14,14 @@ namespace meshac {
         /*
          * Computes all the matrixs that represents the accuracy of the point.
          */
-        virtual EigMatrixList getAccuracyForFace(int indexFace) = 0;
+        virtual double getAccuracyForFace(int indexFace) = 0;
+        virtual double getAccuracyForFace(GLMVec3 &a, GLMVec3 &b, GLMVec3 &c) = 0;
 
         void changeMesh(std::string meshFile);
         TriangleList getFaces();
 
     protected:
-        virtual TriangleList getTriangleList();
+        virtual TriangleList generateTriangleList();
     
 
     

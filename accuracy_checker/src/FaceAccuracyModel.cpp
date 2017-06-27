@@ -5,7 +5,7 @@ namespace meshac {
     FaceAccuracyModel::FaceAccuracyModel(std::string &meshFile)
     {
         this->meshFilename = meshFile;
-        this->faces = getTriangleList();        
+        this->faces = generateTriangleList();        
     }
 
     FaceAccuracyModel::~FaceAccuracyModel()
@@ -21,10 +21,10 @@ namespace meshac {
     void FaceAccuracyModel::changeMesh(std::string meshFile)
     {
         this->meshFilename = meshFile;
-        this->faces = getTriangleList();
+        this->faces = generateTriangleList();
     }
 
-    TriangleList FaceAccuracyModel::getTriangleList()
+    TriangleList FaceAccuracyModel::generateTriangleList()
     {
         Polyhedron poly = extractPolyhedron();
 

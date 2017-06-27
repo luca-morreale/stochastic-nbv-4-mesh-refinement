@@ -11,7 +11,7 @@ namespace opview {
     class AutonomousMCMCCamGenerator : public MCMCCamGenerator {
     public:
         AutonomousMCMCCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                            MCConfiguration &mcConfig, double goalAngle=55, double dispersion=8);
+                                            MCConfiguration &mcConfig, size_t maxPoints, long double maxUncertainty, double goalAngle=55, double dispersion=8);
 
         ~AutonomousMCMCCamGenerator();
 
@@ -23,14 +23,21 @@ namespace opview {
         virtual void estimateBestCameraPosition();
         
     protected:
-
-        virtual void updateWorstReference(int pointIndex, double accuracy);
-        virtual int checkWorstPoint();
-        virtual void setWorstPoint();
-
         virtual GLMVec3List getPoints();
         virtual GLMVec3List getNormals();
         virtual DoubleList getUncertainties();
+
+        virtual void setupWorstPoints();
+        virtual void updateWorstPoints(int index, long double uncertainty);
+        virtual void retainWorst();
+        virtual DoubleIntList getWorstPointsList();
+
+        virtual double estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function);
+        virtual double computeWeightForPoint(int pointIndex);
+
+        virtual LabelType logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal);
+        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+        virtual LabelType imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
 
         using MCMCCamGenerator::estimateBestCameraPosition;
 
@@ -38,12 +45,17 @@ namespace opview {
         GLMVec3List points;
         GLMVec3List normals;
         DoubleList uncertainty;
-
+        DoubleIntList worstPointsList;
         long double SUM_UNCERTAINTY;
-        long double worstUncertainty;
-        int worstPointIndex;
+
+        size_t maxPoints;
+        long double maxUncertainty;
 
         void precomputeSumUncertainty();
+
+        LabelType parentCatllToLogVonMises(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal);
+        LabelType parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+        LabelType parentCallToPlaneDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
 
         typedef MCMCCamGenerator super;
 

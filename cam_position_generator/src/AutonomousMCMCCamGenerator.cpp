@@ -3,19 +3,17 @@
 namespace opview {
 
     AutonomousMCMCCamGenerator::AutonomousMCMCCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                            MCConfiguration &mcConfig, double goalAngle, double dispersion)
+                                                            MCConfiguration &mcConfig, size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
                                                             : MCMCCamGenerator(camConfig, meshConfig.filename, meshConfig.cams, mcConfig, goalAngle, dispersion)
     {
         this->points = meshConfig.points;
         this->normals = meshConfig.normals;
         this->uncertainty = meshConfig.uncertainty;
+        this->maxPoints = maxPoints;
+        this->maxUncertainty = maxUncertainty;
 
-        SUM_UNCERTAINTY = 0.0;
-        for (int p = 0; p < uncertainty.size(); p++) {
-            SUM_UNCERTAINTY += uncertainty[p];
-        }
-
-        setWorstPoint();
+        precomputeSumUncertainty();
+        setupWorstPoints();
 
         this->getLogger()->resetFile("auto_mcmc.json");
     }
@@ -31,25 +29,84 @@ namespace opview {
         }
     }
 
+    double AutonomousMCMCCamGenerator::computeWeightForPoint(int pointIndex)
+    {
+        return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
+    }
+
+    void AutonomousMCMCCamGenerator::estimateBestCameraPosition()
+    {
+        size_t worstPointIndex = worstPointsList[0].first;
+        GLMVec3 worstCentroid = this->points[worstPointIndex];
+        GLMVec3 normal = this->normals[worstPointIndex];
+        this->estimateBestCameraPosition(worstCentroid, normal);
+    }
+
+    LabelType AutonomousMCMCCamGenerator::logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
+    {
+        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMCMCCamGenerator::parentCatllToLogVonMises, this, _1, _2, _3));
+    }
+
+    LabelType AutonomousMCMCCamGenerator::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    {
+        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMCMCCamGenerator::parentCallToVisibilityEstimation, this, _1, _2, _3));
+    }
+
+    LabelType AutonomousMCMCCamGenerator::imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    {
+        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMCMCCamGenerator::parentCallToPlaneDistribution, this, _1, _2, _3));
+    }
+
+    double AutonomousMCMCCamGenerator::estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function)
+    {
+        LabelType val = 0.0;
+        #pragma omp parallel for
+        for (int i = 0; i < worstPointsList.size(); i++) {
+            DoubleIntPair el = worstPointsList[i];
+            double normalizedWeight = computeWeightForPoint(el.second);     // more the uncertainty is high more important it is seen
+            LabelType local_val = function(pose, points[el.second], normals[el.second]);
+            
+            #pragma omp critical
+            val += local_val * normalizedWeight;
+        }
+        
+        return val;
+    }
+
+    LabelType AutonomousMCMCCamGenerator::parentCatllToLogVonMises(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
+    {
+        return super::logVonMisesWrapper(pose, centroid, normal);
+    }
+
+    LabelType AutonomousMCMCCamGenerator::parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    {
+        return super::visibilityDistribution(pose, centroid, normalVector);
+    }
+
+    LabelType AutonomousMCMCCamGenerator::parentCallToPlaneDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    {
+        return super::imageProjectionDistribution(pose, centroid, normalVector);
+    }
+
     void AutonomousMCMCCamGenerator::updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double uncertainty)
     {
         this->points[pointIndex] = point;
         updateMeshInfo(pointIndex, normal, uncertainty);
-        updateWorstReference(pointIndex, uncertainty);
+        updateWorstPoints(pointIndex, uncertainty);
     }
 
     void AutonomousMCMCCamGenerator::updateMeshInfo(int pointIndex, GLMVec3 normal, double uncertainty)
     {
         this->normals[pointIndex] = normal;
         updateMeshInfo(pointIndex, uncertainty);
-        updateWorstReference(pointIndex, uncertainty);
+        updateWorstPoints(pointIndex, uncertainty);
     }
 
     void AutonomousMCMCCamGenerator::updateMeshInfo(int pointIndex, double uncertainty)
     {
-        SUM_UNCERTAINTY += this->uncertainty[pointIndex] - uncertainty;
+        SUM_UNCERTAINTY += uncertainty - this->uncertainty[pointIndex];
         this->uncertainty[pointIndex] = uncertainty;
-        updateWorstReference(pointIndex, uncertainty);
+        updateWorstPoints(pointIndex, uncertainty);
     }
 
     void AutonomousMCMCCamGenerator::addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty)
@@ -58,50 +115,50 @@ namespace opview {
         this->normals.push_back(normal);
         this->uncertainty.push_back(uncertainty);
         SUM_UNCERTAINTY += uncertainty;
-        updateWorstReference(this->points.size()-1, uncertainty);
+        updateWorstPoints(this->points.size()-1, uncertainty);
     }
 
-    void AutonomousMCMCCamGenerator::updateWorstReference(int pointIndex, double uncertainty)
+    void AutonomousMCMCCamGenerator::setupWorstPoints()
     {
-        if (uncertainty > worstUncertainty) {
-            worstUncertainty = uncertainty;
-            worstPointIndex = pointIndex;
-        }
-    }
-
-    int AutonomousMCMCCamGenerator::checkWorstPoint()
-    {
-        DoubleList uncertainties = uncertainty;
-        int worstPointIndex = 0;
+        worstPointsList.clear();
+        #pragma omp parallel for        // not much to gain using parallelism
         for (int p = 0; p < points.size(); p++) {
-            if (uncertainties[worstPointIndex] < uncertainties[p]) {
-                worstPointIndex = p;
+            if (uncertainty[p] > this->maxUncertainty) {
+                #pragma omp critical
+                worstPointsList.push_back(std::make_pair(uncertainty[p], p));
             }
         }
-        return worstPointIndex;
+        retainWorst();
     }
 
-    void AutonomousMCMCCamGenerator::setWorstPoint()
+    void AutonomousMCMCCamGenerator::updateWorstPoints(int index, long double uncertainty)
     {
-        this->worstPointIndex = this->checkWorstPoint();
-        this->worstUncertainty = this->uncertainty[worstPointIndex];
+        worstPointsList.push_back(std::make_pair(uncertainty, index));
+        retainWorst();
     }
 
-    void AutonomousMCMCCamGenerator::estimateBestCameraPosition()
+    void AutonomousMCMCCamGenerator::retainWorst()
     {
-        GLMVec3 worstCentroid = this->points[this->worstPointIndex];
-        GLMVec3 normal = this->normals[this->worstPointIndex];
-        this->estimateBestCameraPosition(worstCentroid, normal);
+        std::sort(worstPointsList.rbegin(), worstPointsList.rend());
+        int eraseFrom = std::min(this->maxPoints, worstPointsList.size());
+        worstPointsList.erase(worstPointsList.begin() + eraseFrom, worstPointsList.end());
     }
+
+    DoubleIntList AutonomousMCMCCamGenerator::getWorstPointsList()
+    {
+        return worstPointsList;
+    }  
 
     GLMVec3List AutonomousMCMCCamGenerator::getPoints()
     {
         return points;
     }
+
     GLMVec3List AutonomousMCMCCamGenerator::getNormals()
     {
         return normals;
     }
+    
     DoubleList AutonomousMCMCCamGenerator::getUncertainties()
     {
         return uncertainty;

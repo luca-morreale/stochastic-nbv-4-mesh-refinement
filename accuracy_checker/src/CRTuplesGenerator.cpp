@@ -266,7 +266,7 @@ namespace meshac {
                 double pointToStart = cv::norm(point - start);
                 double pointToEnd = cv::norm(point - end);
 
-                if (pointToStart + pointToEnd - segmentSize < 1.0) {
+                if (pointToStart + pointToEnd - segmentSize < 5.0) {    // 5 pixel is still close if line is long
                     #pragma omp critical
                     quadruplets[segmentIndex].push_back(pointIndex);
                 }

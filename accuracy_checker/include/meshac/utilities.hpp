@@ -2,6 +2,7 @@
 #define MESH_ACCURACY_UTILITIES_H
 
 #include <algorithm>
+#include <map>
 #include <random>
 
 #include <meshac/alias_definition.hpp>
@@ -81,6 +82,27 @@ namespace meshac {
     {
         return subsample(samples, samples.size() / 4);
     }
+
+    template<typename K, typename E>
+    std::vector<K> keys(std::map<K, E> &map)
+    {
+        std::vector<K> keys;
+        for(typename std::map<K, E>::iterator it = map.begin(); it != map.end(); ++it) {
+            keys.push_back(it->first);
+        }
+        return keys;
+    }
+
+    template<typename K, typename E>
+    std::vector<E> values(std::map<K, E> &map)
+    {
+        std::vector<E> values;
+        for(typename std::map<K, E>::iterator it = map.begin(); it != map.end(); ++it) {
+            values.push_back(it->second);
+        }
+        return values;
+    }
+
 
 } // namespace meshac
 

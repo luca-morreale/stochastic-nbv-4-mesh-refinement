@@ -68,9 +68,12 @@ int main(int argc, char **argv) {
 
     opview::MCConfiguration mcConfig(10, 1000000, 100); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
+
+    size_t maxPoints = 10;
+    long double thresholdUncertainty = 100000;
     
     // opview::MCMCCamGenerator model(camConfig, meshFile, cams, mcConfig);
-    opview::AutonomousMCMCCamGenerator model(camConfig, meshConfig, mcConfig);
+    opview::AutonomousMCMCCamGenerator model(camConfig, meshConfig, mcConfig, maxPoints, thresholdUncertainty);
 
     model.estimateBestCameraPosition();
 

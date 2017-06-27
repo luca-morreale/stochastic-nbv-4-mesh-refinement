@@ -23,6 +23,13 @@ namespace meshac {
             vs[pos] = index;
         }
 
+        bool is(int a, int b, int c)
+        {
+            return (a == vs[0] && b == vs[1] && c == vs[2]) ||
+                (b == vs[0] && c == vs[1] && a == vs[2]) ||
+                (c == vs[0] && a == vs[1] && b == vs[2]);
+        }
+
     } FaceIndex;
 
     typedef std::vector<FaceIndex> FaceIndexList;

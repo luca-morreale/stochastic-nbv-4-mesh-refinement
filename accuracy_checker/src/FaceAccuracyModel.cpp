@@ -1,0 +1,58 @@
+#include <meshac/FaceAccuracyModel.hpp>
+
+namespace meshac {
+
+    FaceAccuracyModel::FaceAccuracyModel(std::string &meshFile)
+    {
+        this->meshFilename = meshFile;
+        this->faces = getTriangleList();        
+    }
+
+    FaceAccuracyModel::~FaceAccuracyModel()
+    {
+        this->faces.clear();        
+    }
+
+    TriangleList FaceAccuracyModel::getFaces()
+    {
+        return this->faces;
+    }
+
+    void FaceAccuracyModel::changeMesh(std::string meshFile)
+    {
+        this->meshFilename = meshFile;
+        this->faces = getTriangleList();
+    }
+
+    TriangleList FaceAccuracyModel::getTriangleList()
+    {
+        Polyhedron poly = extractPolyhedron();
+
+        TriangleList triangles;
+        for (Facet_iterator it = poly.facets_begin(); it != poly.facets_end(); it++) {
+            Halfedge_facet_circulator p = it->facet_begin();
+            Vertex_handle p0 = p->vertex();
+            Vertex_handle p1 = (++p)->vertex();
+            Vertex_handle p2 = (++p)->vertex();
+
+            Triangle t = Triangle(p0->point(), p1->point(), p2->point());
+            if (t.is_degenerate()) {
+                throw std::runtime_error("A triangle is degenerate.");
+            }
+            triangles.push_back(t);
+        }
+
+        return triangles;
+    }
+
+    Polyhedron FaceAccuracyModel::extractPolyhedron()
+    {
+        std::ifstream meshIn(meshFilename);
+        Polyhedron poly;
+        meshIn >> poly;
+        meshIn.close();
+
+        return poly;
+    }
+
+} // namespace meshac

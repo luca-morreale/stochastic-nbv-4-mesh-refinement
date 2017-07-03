@@ -34,6 +34,8 @@ namespace meshac {
 
     };
 
+    typedef FaceAccuracyModel* FaceAccuracyModelPtr;
+
 }
 
 #endif // MESH_ACCURACY_FACE_ACCURACY_MODEL_H

@@ -387,8 +387,5 @@ namespace meshac {
     {
         return this->cams[indexCam].cameraMatrix;
     }
-    
-
-
 
 } // namespace meshac

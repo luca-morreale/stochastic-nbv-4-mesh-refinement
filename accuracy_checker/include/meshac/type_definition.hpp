@@ -15,7 +15,9 @@ namespace meshac {
         FaceIndex() { /*    */ }
         FaceIndex(size_t x, size_t y, size_t z)
         {
-            vs[0] = x; vs[1] = y; vs[2] = z;
+            vs[0] = x;
+            vs[1] = y;
+            vs[2] = z;
         }
 
         void set(int pos, size_t index)

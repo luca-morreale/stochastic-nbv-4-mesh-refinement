@@ -22,5 +22,10 @@ regParams.t(3) = regParams.t(3) - 3;
 
 new_points = regParams.s * regParams.R * points + repmat(regParams.t, 1, length(points));
 
-write_ply('new_cloud.ply', new_points, pc(:, 4:6)');
+valid_points = pc(:, 4) > 0;
 
+new_points = new_points(:, valid_points);
+
+colors = pc(valid_points, 4:6)';
+
+write_ply('new_cloud.ply', new_points, colors);

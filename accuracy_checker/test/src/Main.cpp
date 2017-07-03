@@ -14,6 +14,8 @@
 //  GNU General Public License for more details.
 
 #include <omp.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/line_descriptor/descriptor.hpp>
 
 #include <realtimeMR/CameraPointsCollection.h>
 #include <realtimeMR/utilities/Chronometer.h>
@@ -32,7 +34,7 @@
 #include <utility>
 
 // accuracy check imports
-#include <meshac/AccuracyModel.hpp>
+#include <meshac/PointAccuracyModel.hpp>
 #include <meshac/PhotogrammetristAccuracyModel.hpp>
 #include <meshac/ComputerVisionAccuracyModel.hpp>
 #include <meshac/Color.hpp>
@@ -218,7 +220,7 @@ void outlierFiltering(std::vector<bool>& inliers, const float outlierThreshold) 
 
 int main(int argc, char **argv) {
 
-    omp_set_num_threads(2);
+    omp_set_num_threads(OMP_THREADS);
 
     utilities::Logger log;
     std::ofstream statsFile, visiblePointsFile;

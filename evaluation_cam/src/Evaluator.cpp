@@ -4,7 +4,6 @@ namespace cameval {
 
     Evaluator::Evaluator(std::string &pointsFilename, std::string &groundTruthFilename, std::string &databaseFilename, 
             std::string &basicPoseFilename, std::string &baseImageFolder, std::string &intrinsicParams, 
-            //std::string &referencePointsFilename, std::string &opengmPointsFilename, 
             std::string &sshconfig)
     {
         this->pointsFilename = pointsFilename;                      // file from which read poses to evaluate
@@ -12,8 +11,6 @@ namespace cameval {
         this->databaseFilename = databaseFilename;                  // file containing the list of images in the database
         this->baseImageFolder = baseImageFolder;                    // name of folder containing the images of current cloud
         this->intrinsicParams = intrinsicParams;                    // file containing the intrinisc params in format ready for opengm
-        // this->referencePointsFilename = referencePointsFilename;    // file containing the points in the povray reference frame
-        // this->opengmPointsFilename = opengmPointsFilename;          // file containing the points in opengm reference frame
         this->distanceRegex = std::regex("\\[(.*)\\] \\[ComputeDistances\\] Mean distance = (.*) / std deviation = (.*)");
 
         this->poses = readPoints(pointsFilename);
@@ -166,19 +163,6 @@ namespace cameval {
         system(command.c_str());
         return outFolder;
     }
-
-    // std::string Evaluator::alignClouds(std::string &input_filename) 
-    // {
-    //     std::string output_filename = random_file();
-
-    //     // assume definition of alias for CloudCompare -> 
-    //     // current_points_filename, reference_points_filename, input_filename, output_filename
-    //     std::string command = "matlab -nojvm -nodisplay -nosplash -r \"transform(\""+ opengmPointsFilename +"\",\""
-    //                         + referencePointsFilename+"\",\"" + input_filename + "\",\" " + output_filename + "\") \" ";
-    //     system(command.c_str());
-
-    //     return output_filename;
-    // }
 
     std::string Evaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
     {

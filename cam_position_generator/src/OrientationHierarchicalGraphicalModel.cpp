@@ -1,5 +1,4 @@
 #include <opview/OrientationHierarchicalGraphicalModel.hpp>
-#include <CGAL/exceptions.h>
 
 namespace opview {
 
@@ -244,7 +243,7 @@ namespace opview {
         double centerx = (double)camConfig.size_x / 2.0;
         double centery = (double)camConfig.size_y / 2.0;
         double sigma_x = (double)camConfig.size_x / 3.0;
-        double sigma_y = (double)camConfig.size_y / 2.0;
+        double sigma_y = (double)camConfig.size_y / 3.0;
 
         return logBivariateGaussian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
     }
@@ -258,7 +257,7 @@ namespace opview {
     {
         GLMVec3 ray = GLMVec3(pose[0]-centroid.x, pose[1]-centroid.y, pose[3]-centroid.z);
         
-        RotationMatrix R = getRotationMatrix(0, -pose[3], -pose[4]);
+        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
         GLMVec3 zDirection = R * zdir;
 
         return glm::dot(ray, zDirection) > 0.0f;    // if < 0.0 than it sees the object, but we want to know when it is opposite.
@@ -270,12 +269,22 @@ namespace opview {
         PointD3 point(centroid.x, centroid.y, centroid.z);
         
         Segment segment_query(cam, point);
-        try {
-            return tree->do_intersect(segment_query);
-        } catch (CGAL::Failure_exception e) {
-            std::cout << e.what() << std::endl;
-            return true;
+        Segment_intersection intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
+
+        if (intersection) {
+            return !isMathemathicalError(intersection, point);
+        } else {
+            return false;
         }
+    }
+
+    bool OrientationHierarchicalGraphicalModel::isMathemathicalError(Segment_intersection &intersection, PointD3 &point)
+    {
+        const PointD3* intersectedPoint = boost::get<PointD3>(&(intersection->first));
+        if(intersectedPoint) {
+            return CGAL::squared_distance(*intersectedPoint, point) < 0.0001;
+        }
+        return false;
     }
 
     bool OrientationHierarchicalGraphicalModel::isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid)
@@ -314,7 +323,7 @@ namespace opview {
 
     CameraMatrix OrientationHierarchicalGraphicalModel::getCameraMatrix(EigVector5 &pose)
     {
-        RotationMatrix R = getRotationMatrix(0, -pose[3], -pose[4]);  // already radians
+        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);  // already radians
         R = glm::transpose(R);
         CameraMatrix K = glm::scale(GLMVec3(camConfig.f, -camConfig.f , 1.0f));  // correct
         K[3][0] = (double)camConfig.size_x / 2.0;

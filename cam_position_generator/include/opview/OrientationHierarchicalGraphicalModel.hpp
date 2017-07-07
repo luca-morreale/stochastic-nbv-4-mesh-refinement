@@ -9,6 +9,8 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include <CGAL/exceptions.h>
+
 #include <opview/HierarchicalDiscreteGraphicalModel.hpp>
 #include <opview/type_definition.h>
 #include <opview/ReportWriter.hpp>
@@ -50,6 +52,7 @@ namespace opview {
         virtual bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid);
         virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
         virtual bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid);
+        virtual bool isMathemathicalError(Segment_intersection &intersection, PointD3 &point);
         virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
 
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);

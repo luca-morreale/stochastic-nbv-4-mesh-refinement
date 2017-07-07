@@ -10,7 +10,7 @@
 #include <opview/alias_definition.h>
 #include <opview/MCMCSamplerGenerator.hpp>
 #include <opview/utilities.hpp>
-#include <opview/ReportWriter.hpp>
+#include <opview/CompleteReportWriter.hpp>
 
 namespace opview {
 
@@ -25,7 +25,7 @@ namespace opview {
     class MCMCCamGenerator {
     public:
         MCMCCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            MCConfiguration &mcConfig, double goalAngle=55, double dispersion=8);
+                                            MCConfiguration &mcConfig, double goalAngle=45, double dispersion=8);
 
         ~MCMCCamGenerator();
 
@@ -33,8 +33,8 @@ namespace opview {
 
     protected:
         virtual EigVector5List insertOrientation(GLMVec3List &points);
-        virtual OrderedPose uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector);
-        virtual OrderedPose resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima);
+        virtual OrderedPose uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector, int round);
+        virtual OrderedPose resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, int round);
         virtual OrderedPose generalStep(GLMVec3 &centroid, GLMVec3 &normVector, EigVector5List &orientedPoints);
         virtual OrderedPose orderPoses(EigVector5List &orientedPoints, DoubleList &values);
         virtual void computeObjectiveFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
@@ -43,7 +43,7 @@ namespace opview {
         virtual void computeVisibilityFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void computeConstraintFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual double computeBDConstraint(EigVector5 &newCamPose, GLMVec3 &centroid, GLMVec3 &normVector);
-        virtual OrderedPose extractBestResults(OrderedPose &poses);
+        virtual OrderedPose extractBestResults(OrderedPose &poses, int round);
         virtual EigVector5List getCentersFromOptima(OrderedPose currentOptima);
         virtual DoubleList getWeightsFromOptima(OrderedPose currentOptima);
 
@@ -56,6 +56,8 @@ namespace opview {
         virtual GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid);
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
         virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
+
+        bool isMathemathicalError(Segment_intersection &intersection, PointD3 &point);
 
         virtual EigVector5List uniformPointsGetter();
         virtual EigVector5List resamplingPointsGetter(OrderedPose &currentOptima);
@@ -83,7 +85,7 @@ namespace opview {
 
         CameraGeneralConfiguration camConfig;
 
-        ReportWriterPtr log;
+        CompleteReportWriterPtr log;
 
         void fillTree();
         Polyhedron extractPolyhedron();

@@ -32,30 +32,30 @@
 
 namespace opview {
 
-    typedef std::vector<int> IntList;
-    typedef std::vector<size_t> SizeTList;
-    typedef std::vector<float> FloatList;
-    typedef std::vector<double> DoubleList;
-    typedef std::map<int, double> IntDoubleMap;
     typedef std::map<double, int> DoubleIntMap;
+    typedef std::map<int, double> IntDoubleMap;
+    typedef std::vector<double> DoubleList;
     typedef std::vector<DoubleIntMap> DoubleIntMapList;
+    typedef std::vector<float> FloatList;
+    typedef std::vector<int> IntList;
     typedef std::vector<IntDoubleMap> IntDoubleMapList;
+    typedef std::vector<size_t> SizeTList;
 
+    typedef std::pair<double, double> DoublePair;
+    typedef std::pair<double, int> DoubleIntPair;
     typedef std::set<double> DoubleSet;
+    typedef std::vector<DoubleIntPair> DoubleIntList;
+    typedef std::vector<DoublePair> DoublePairList;
     typedef std::vector<DoubleSet> DoubleSetList;
     typedef DoubleSet::iterator DoubleSetIterator;
-    typedef std::pair<double, int> DoubleIntPair;
-    typedef std::vector<DoubleIntPair> DoubleIntList;
-    typedef std::pair<double, double> DoublePair;
-    typedef std::vector<DoublePair> DoublePairList;
 
     /* Shortcuts for GLM types */
+    typedef glm::mat3 RotationMatrix;
+    typedef glm::mat4 CameraMatrix;
     typedef glm::vec2 GLMVec2;
     typedef glm::vec3 GLMVec3;
     typedef glm::vec4 GLMVec4;
     typedef std::vector<GLMVec3> GLMVec3List;
-    typedef glm::mat4 CameraMatrix;
-    typedef glm::mat3 RotationMatrix;
 
     /* Shortcuts for Eigen types */
     typedef Eigen::Matrix<float, 5, 1> EigVector5;
@@ -98,6 +98,8 @@ namespace opview {
     typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
     typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
     typedef Tree* TreePtr;
+    
+    typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
 
     typedef std::vector<IloNumVar> IloNumVarList;
     typedef std::vector<IloNum> IloNumList;

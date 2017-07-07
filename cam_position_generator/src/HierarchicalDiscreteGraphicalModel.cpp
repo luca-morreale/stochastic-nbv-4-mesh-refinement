@@ -77,22 +77,22 @@ namespace opview {
         float halfNextSize = (float)numLabels() * nextScale / 2.0f;
 
         // offset = optima - halfNextSize + x * scale - y * scale
-        float tmpOffsetX = currentOptimal[0] - halfNextSize + getXScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale 
-                                                            - getYScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale;
-        float tmpOffsetY = currentOptimal[1] - halfNextSize + getXScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale 
-                                                            - getYScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale;
-        float tmpOffsetZ = currentOptimal[2] - halfNextSize + getXScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale 
-                                                            - getYScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale;
+        // float tmpOffsetX = currentOptimal[0] - halfNextSize + getXScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale 
+        //                                                     - getYScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale;
+        // float tmpOffsetY = currentOptimal[1] - halfNextSize + getXScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale 
+        //                                                     - getYScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale;
+        // float tmpOffsetZ = currentOptimal[2] - halfNextSize + getXScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale 
+        //                                                     - getYScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale;
 
-        offsetX = [tmpOffsetX](){ return tmpOffsetX; };
-        offsetY = [tmpOffsetY](){ return tmpOffsetY; };
-        // std::max to force z to stay in the positive space
-        offsetZ = [tmpOffsetZ](){ return tmpOffsetZ; };
-
-        // offsetX = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[0] - halfNextSize, 3.0-halfNextSize), -3.0+halfNextSize); };
-        // offsetY = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[1] - halfNextSize, 3.0-halfNextSize), -3.0+halfNextSize); };
+        // offsetX = [tmpOffsetX](){ return tmpOffsetX; };
+        // offsetY = [tmpOffsetY](){ return tmpOffsetY; };
         // // std::max to force z to stay in the positive space
-        // offsetZ = [currentOptimal, halfNextSize](){ return std::max(std::min(currentOptimal[2] - halfNextSize, 3.0-halfNextSize), -3.0+halfNextSize); };
+        // offsetZ = [tmpOffsetZ](){ return tmpOffsetZ; };
+
+        offsetX = [currentOptimal, halfNextSize](){ return currentOptimal[0] - halfNextSize; };
+        offsetY = [currentOptimal, halfNextSize](){ return currentOptimal[1] - halfNextSize; };
+        // std::max to force z to stay in the positive space
+        offsetZ = [currentOptimal, halfNextSize](){ return currentOptimal[2] - halfNextSize; };
 
         scale = [nextScale](){ return nextScale; };
     }

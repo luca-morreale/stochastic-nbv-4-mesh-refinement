@@ -2,6 +2,7 @@
 #define MESH_ACCURACY_UTILITIES_H
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <random>
 
@@ -35,6 +36,10 @@ namespace meshac {
     EigMatrix generateDiagonalMatrix(DoubleList &list);
     EigMatrix juxtaposeMatrixs(EigMatrixList &list, int size);
     EigMatrix juxtaposeMatrixs(EigMatrixList &list);
+
+
+    float rad2deg(float rad);
+    float deg2rad(float deg);
 
     /*
      * Subsample the data given.

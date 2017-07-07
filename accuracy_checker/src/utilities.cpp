@@ -104,4 +104,14 @@ namespace meshac {
         return matrix;
     }
 
+    float rad2deg(float rad)
+    {
+        return rad * 180.0f / M_PI;
+    }
+
+    float deg2rad(float deg)
+    {
+        return deg * M_PI / 180.0f;
+    }
+
 } // namespace meshac

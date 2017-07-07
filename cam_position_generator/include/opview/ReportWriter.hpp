@@ -7,8 +7,6 @@
 
 namespace opview {
     
-    // in case of single point it just estimate the best point using a weighted function that consider all visible points
-    
     class ReportWriter {
     public:
         ReportWriter(std::string reportFilename);
@@ -18,12 +16,14 @@ namespace opview {
         virtual void append(OrderedPose poses);
 
         void resetFile(std::string newfile);
+
+    protected:
+        std::ofstream out;
     
     
     private:
         std::string reportFilename;
-        std::ofstream out;
-
+        
         void init();
     };
 

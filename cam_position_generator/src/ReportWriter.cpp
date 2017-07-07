@@ -10,7 +10,6 @@ namespace opview {
 
     ReportWriter::~ReportWriter()
     {
-
         long pos = out.tellp();
         out.seekp(pos-2);
         out << "\n]\n}\n";

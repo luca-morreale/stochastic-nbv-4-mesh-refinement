@@ -50,9 +50,9 @@ namespace opview {
 
         float tmpOffsetX = MIN_COORDINATE + (blockNumber & mask) * blockX;
         mask <<= shift;
-        float tmpOffsetY = -0.5 + ((blockNumber & mask) % spaceBlock) * blockY;
+        float tmpOffsetY = -0.5 + ((blockNumber & mask) >> shift) * blockY;
         mask <<= shift;
-        float tmpOffsetZ = MIN_COORDINATE + ((blockNumber & mask) % spaceBlock) * blockZ;
+        float tmpOffsetZ = MIN_COORDINATE + ((blockNumber & mask) >> shift >> shift) * blockZ;
 
         std::cout << tmpOffsetX << " " << tmpOffsetY << " " << tmpOffsetZ << std::endl;
 

@@ -59,14 +59,11 @@ int main(int argc, char **argv) {
     }
 
     opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
-
-    glm::vec3 centroid(-0.402134, -0.0704882, 2.31928);
-    glm::vec3 normal(-0.14341, 0.238821, -0.960416);
     // centroid, normal
 
     opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty);
 
-    opview::MCConfiguration mcConfig(10, 1000000, 100); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    opview::MCConfiguration mcConfig(10, 100000, 100); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
 
     size_t maxPoints = 10;

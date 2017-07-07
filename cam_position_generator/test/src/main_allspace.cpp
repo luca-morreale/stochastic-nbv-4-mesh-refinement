@@ -56,7 +56,8 @@ int main(int argc, char **argv) {
     // size_t maxPoints = 10;
     // long double maxUncertainty = 100;
     int spaceBlock = 128*32;
-    int offset = 1;
+    int offset = 3381;  // last done 3380+1
+
     // opview::BasicGraphicalModel model(solver, cams);
     // opview::HierarchicalDiscreteGraphicalModel model(solver, DEPTH, DISCRETE_LABELS, cams);
     opview::HeavyOrientationHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams, spaceBlock, offset); // 0.712458, -0.462458, 0.462458

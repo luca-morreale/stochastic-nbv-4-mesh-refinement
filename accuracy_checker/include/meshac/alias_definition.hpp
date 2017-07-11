@@ -10,6 +10,8 @@
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Vector_3.h>
 
+#include <CGAL/Simple_cartesian.h>
+
 #include <Eigen/Dense>
 #include <Eigen/Core>
 
@@ -36,6 +38,7 @@ namespace meshac {
     /* Shortcuts for OpenCV types */
     typedef cv::line_descriptor::KeyLine CVSegment;
     typedef cv::Mat CVMat;
+    typedef cv::Point CVPoint;
     typedef cv::Point2f CVPoint2;
     typedef cv::Vec3f CVLine;
     typedef cv::Vec3f CVVector3;
@@ -87,20 +90,38 @@ namespace meshac {
     typedef glm::mat4 CameraMatrix;
     typedef std::vector<CameraMatrix> CameraMatrixList;
 
-    typedef K::Ray_3 Ray;
-    typedef CGAL::Polyhedron_3<K> Polyhedron;
+    typedef CGAL::Simple_cartesian<double> TreeKernel;
+    typedef TreeKernel::Point_3 Point;
+    typedef TreeKernel::Vector_3 Vector;
+    typedef TreeKernel::Segment_3 Segment;
+    typedef TreeKernel::Ray_3 Ray;
+    typedef CGAL::Polyhedron_3<TreeKernel> Polyhedron;
+    // typedef CGAL::AABB_face_graph_triangle_primitive<Polyhedron> Primitive;
+    // typedef CGAL::AABB_traits<TreeKernel, Primitive> Traits;
+
     typedef Polyhedron::Vertex_handle Vertex_handle;
     typedef Polyhedron::Facet_iterator Facet_iterator;
     typedef Polyhedron::Halfedge_around_facet_circulator Halfedge_facet_circulator;
-    typedef K::Triangle_3 Triangle;
+    typedef TreeKernel::Triangle_3 Triangle;
     typedef std::vector<Triangle> TriangleList;
     typedef TriangleList::iterator Iterator;
-    typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
-    typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
-    typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
+    typedef CGAL::AABB_triangle_primitive<TreeKernel, Iterator> Primitive;
+    typedef CGAL::AABB_traits<TreeKernel, Primitive> Traits;
+
+    typedef CGAL::AABB_tree<Traits> Tree;
+    typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
+    typedef Tree::Primitive_id Primitive_id;
+
     typedef Tree* TreePtr;
 
-    typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
+
+    // typedef TreeKernel::Ray_3 Ray;
+    // typedef CGAL::Polyhedron_3<TreeKernel> Polyhedron;
+    
+    // typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
+    // typedef Tree* TreePtr;
+
+    // typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
     
 }
 

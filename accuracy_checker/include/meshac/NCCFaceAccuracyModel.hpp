@@ -2,6 +2,9 @@
 #define MESH_ACCURACY_NCC_FACE_ACCURACY_MODEL_H
 
 #include <algorithm>
+#include <ctime>
+#include <iostream>
+#include <cstdio>
 
 #include <CGAL/exceptions.h>
 
@@ -21,7 +24,7 @@
 namespace meshac {
 
     // #define TRIANGLE_SIZE 24.5  // area of 100
-    #define TRIANGLE_SIZE 100  // area of 4330.13
+    #define TRIANGLE_SIDE 100  // area of 4330.13
     
     class NCCFaceAccuracyModel : public FaceAccuracyModel {
     public:
@@ -47,7 +50,7 @@ namespace meshac {
         virtual bool isMeaningfulPose(GLMVec3 &meshPoint, int camIndex);
         virtual bool isOppositeView(GLMVec3 &centroid, int camIndex);
         virtual bool isIntersecting(GLMVec3 &meshPoint, int camIndex);
-        virtual bool isMathemathicalError(Segment_intersection &intersection, PointD3 &point);
+        virtual bool isMathemathicalError(Segment_intersection &intersection, Point &point);
         virtual bool isPointInsideImage(GLMVec2 &point2D, int camIndex);
         virtual GLMVec2 getProjectedPoint(GLMVec3 &meshPoint, int camIndex);
         GLMVec3 getCameraCenter(int indexCam);
@@ -68,20 +71,24 @@ namespace meshac {
         TreePtr tree;
         FaceIndexList faces;
         CVPoint2 destTriangle[3];
+        CVMat triangularMask;
 
         const GLMVec3 zdir = GLMVec3(0.0, 0.0, 1.0);
 
         void initAffineTriangle();
+        void setTriangularMask();
         void initTree();
 
         void fixImagesPath(std::string &pathPrefix);
         void convertTriangleToIndex();
 
-        int retreiveIndex(PointD3 &vertex);
+        int retreiveIndex(Point &vertex);
         int retreiveIndex(GLMVec3 &point);
         ListMappingGLMVec2 getMappings(int faceIndex);
         ListMappingGLMVec2 removeUnusedMapping(ListMappingGLMVec2 &mappings, IntList &commonCams);
         IntList unionCamIndex(ListMappingGLMVec2 &mappings);
+
+        CVMat cropTriangle(CVMat &projectedImage);
 
     };
 

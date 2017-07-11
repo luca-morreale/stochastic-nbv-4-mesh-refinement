@@ -10,10 +10,13 @@ namespace meshac {
         this->point3DTo2DThroughCam.assign(this->points.size(), std::map<int, GLMVec2>());
 
         this->fixImagesPath(pathPrefix);
-        this->initTree();       // NOTE do not move this below
+        
         this->convertTriangleToIndex();
+        
         this->initAffineTriangle();
-
+        
+        this->initTree();
+        
         this->projectMeshPoints();
     }
 
@@ -24,45 +27,63 @@ namespace meshac {
 
     void NCCFaceAccuracyModel::initAffineTriangle()
     {
+        float ax = (float)TRIANGLE_SIDE / 2.0f;
+        float ay = (float)TRIANGLE_SIDE * std::sin(deg2rad(60.0f));
+
         destTriangle[0] = CVPoint2(0, 0);
-        destTriangle[1] = CVPoint2(0, TRIANGLE_SIZE);
-        destTriangle[2] = CVPoint2(TRIANGLE_SIZE, 0);
+        destTriangle[1] = CVPoint2(ax, ay);
+        destTriangle[2] = CVPoint2(TRIANGLE_SIDE, 0);
+
+        setTriangularMask();
+    }
+
+    void NCCFaceAccuracyModel::setTriangularMask()  // NOTE I can not know the right size of the mask ahead of time
+    {
+        CVPoint corners[1][3];
+        corners[0][0] = destTriangle[0];
+        corners[0][1] = destTriangle[1];
+        corners[0][2] = destTriangle[2];
+
+        const CVPoint* corner_list[1] = { corners[0] };
+
+        const int num_points = 3;
+        const int num_polygons = 1;
+        const int line_type = 8;
+        CVMat mask(getImageHeight(0), getImageWidth(0), CV_8UC3, cv::Scalar(0,0,0));
+        cv::fillPoly(mask, corner_list, &num_points, num_polygons, cv::Scalar(255, 255, 255));
+
+        this->triangularMask = mask;
     }
 
     void NCCFaceAccuracyModel::initTree()
     {
         TriangleList faces = this->getFaces();
         this->tree = new Tree(faces.begin(), faces.end());
-        tree->build();
     }
 
     void NCCFaceAccuracyModel::convertTriangleToIndex()
     {
         FaceIndexList newFaces;
         TriangleList faces = this->getFaces();
-        
-        // NOTE if parallelized this section will break during the execution (or at least on my machine)
-        // #pragma omp parallel for
+
+        #pragma omp parallel for
         for (int f = 0; f < faces.size(); f++) {
             try {
                 FaceIndex face;
-                // #pragma omp parallel for
                 for (int v = 0; v < 3; v++) {
-                    PointD3 vertex = faces[f].vertex(v);
+                    Point vertex = faces[f].vertex(v);
                     size_t index = retreiveIndex(vertex);
                     face.set(v, index);
                 }
-                // #pragma omp critical
+                #pragma omp critical
                 newFaces.push_back(face);
             } catch (UnexpectedPointException &ex) {}
-            TriangleList faces = this->getFaces();      // NOTE do not remove this or it won't work
-            this->tree->rebuild(faces.begin(), faces.end());
         }
 
         this->faces = newFaces;
     }
 
-    int NCCFaceAccuracyModel::retreiveIndex(PointD3 &vertex)
+    int NCCFaceAccuracyModel::retreiveIndex(Point &vertex)
     {
         GLMVec3 point(vertex.x(), vertex.y(), vertex.z());
         return retreiveIndex(point);
@@ -118,34 +139,33 @@ namespace meshac {
         }
 
         ListMappingGLMVec2 mappings = getMappings(faceIndex);
-
+        
         IntList commonCams = selectCommonCameras(mappings);
 
-        if (commonCams.size() < 2) return 0.0;
+        if (commonCams.size() < 2) return -10.0;
 
         mappings = removeUnusedMapping(mappings, commonCams);
 
         CVMatList triangles = projectTriangles(mappings, commonCams);
-
         return computeNCC(triangles);
     }
 
     double NCCFaceAccuracyModel::computeNCC(CVMatList triangles)
     {
         CVMat result;
-        int result_cols =  triangles[0].cols - triangles[0].cols + 1;
-        int result_rows = triangles[0].rows - triangles[0].rows + 1;
-        result.create(result_rows, result_cols, 0);
+        int result_cols =  triangles[0].cols;
+        int result_rows = triangles[0].rows;
+        result.create(result_rows, result_cols, triangles[0].type());
         DoubleList maxs, mins;
 
         // NOTE if parallelized probably dies
         // #pragma omp parallel for
-        for (int i = 0; i < triangles.size() - 1; i++) {
+        for (int i = 0; i < triangles.size() - 1; i++) {    // try all possible pair of triangles only once!!!
             for (int j = i+1; j < triangles.size(); j++) {
 
                 cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_CCORR_NORMED);
                 double minVal, maxVal; 
-                cv::Point minLoc, maxLoc;
+                CVPoint minLoc, maxLoc;
 
                 cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, CVMat());
                 #pragma omp critical
@@ -156,8 +176,9 @@ namespace meshac {
             }
         }
 
-        std::sort(maxs.rbegin(), maxs.rend());
-        return maxs[0];
+        double average = std::accumulate(maxs.begin(), maxs.end(), 0.0) / (double)maxs.size(); 
+
+        return average;
     }
 
     CVMatList NCCFaceAccuracyModel::projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams)
@@ -180,14 +201,22 @@ namespace meshac {
     }
 
     CVMat NCCFaceAccuracyModel::applyAffine(CVMat &affine, int camIndex)
-    {
+   {
         CVMat src, projected;
-        src = cv::imread(this->imgFilepath[camIndex], 0);   // 0 is grey scale
+        src = cv::imread(this->imgFilepath[camIndex]);   // 0 is grey scale but we need color!!
         projected = CVMat::zeros(src.rows, src.cols, src.type());
 
         cv::warpAffine(src, projected, affine, projected.size());
 
-        return projected.rowRange(0, TRIANGLE_SIZE).colRange(0, TRIANGLE_SIZE);
+        return cropTriangle(projected).rowRange(0, TRIANGLE_SIDE).colRange(0, TRIANGLE_SIDE);
+    }
+
+    CVMat NCCFaceAccuracyModel::cropTriangle(CVMat &projectedImage)
+    {
+        CVMat result(projectedImage.rows, projectedImage.cols, projectedImage.type());        
+        cv::bitwise_and(projectedImage, triangularMask, result);
+        
+        return result;
     }
 
     CVMat NCCFaceAccuracyModel::generateAffineTransform(GLMVec2 &a, GLMVec2 &b, GLMVec2 &c)
@@ -273,19 +302,18 @@ namespace meshac {
     void NCCFaceAccuracyModel::projectMeshPoints()
     {
         // NOTE this section does not work if parallelized
-        // #pragma omp parallel for
+        #pragma omp parallel for collapse(2)
         for (int p = 0; p < this->points.size(); p++) {
-            for(int c = 0; c < this->cams.size(); c++) {
+            for (int c = 0; c < this->cams.size(); c++) {
                 try {
                     GLMVec2 point = projectThrough(points[p], c);
-                    // #pragma omp critical
+                    #pragma omp critical
                     this->point3DTo2DThroughCam[p].insert(std::make_pair(c, point));
                 } catch (const UnprojectablePointThroughCamException &ex) 
                 { } // do nothing because it makes no sense to project it
             }
         }
     }
-
 
     GLMVec2 NCCFaceAccuracyModel::projectThrough(GLMVec3 &meshPoint, int camIndex)
     {
@@ -297,7 +325,6 @@ namespace meshac {
         if (!isMeaningfulPose(meshPoint, camIndex)) {
             throw UnprojectablePointThroughCamException();
         }
-
         return point;
     }
 
@@ -310,7 +337,7 @@ namespace meshac {
     {
         GLMVec3 pose = getCameraCenter(camIndex);
         GLMVec3 ray = pose - meshPoint;
-        
+
         RotationMatrix R = getRotationMatrix(camIndex);
         GLMVec3 zDirection = R * zdir;
 
@@ -319,30 +346,32 @@ namespace meshac {
 
     bool NCCFaceAccuracyModel::isIntersecting(GLMVec3 &meshPoint, int camIndex)
     {
-        #pragma omp critical
-        tree->build();
-
         GLMVec3 pose = getCameraCenter(camIndex);
-        PointD3 cam(pose.x, pose.y, pose.z);
-        PointD3 point(meshPoint.x, meshPoint.y, meshPoint.z);
+        Point cam(pose[0], pose[1], pose[2]);
+        Point point(meshPoint[0], meshPoint[1], meshPoint[2]);
         
-        Segment segment_query(cam, point);
-        Segment_intersection intersection;
-        #pragma omp critical
-        intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
-
-        if (intersection) {
-            return !isMathemathicalError(intersection, point);
-        } else {
-            return false;
+        try {
+            Segment segment_query(cam, point);
+            Segment_intersection intersection;
+            
+            #pragma omp critical
+            intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
+            
+            if (intersection) {
+                return !isMathemathicalError(intersection, point);
+            } else {
+                return false;
+            }
+        } catch (const CGAL::Assertion_exception &ex) {
+            return true;
         }
     }
 
-    bool NCCFaceAccuracyModel::isMathemathicalError(Segment_intersection &intersection, PointD3 &point)
+    bool NCCFaceAccuracyModel::isMathemathicalError(Segment_intersection &intersection, Point &point)
     {
-        const PointD3* intersectedPoint = boost::get<PointD3>(&(intersection->first));
+        const Point* intersectedPoint = boost::get<Point>(&(intersection->first));
         if(intersectedPoint) {
-            return CGAL::squared_distance(*intersectedPoint, point) < 0.0001;
+            return CGAL::squared_distance(*intersectedPoint, point) < 0.0001f;
         }
         return false;
     }
@@ -356,6 +385,7 @@ namespace meshac {
     {
         GLMVec4 point3D = GLMVec4(meshPoint, 1.0f);
         CameraMatrix P = getCameraMatrix(camIndex);
+        P = glm::transpose(P);
         GLMVec4 point2D = P * point3D;
 
         point2D = point2D / point2D.z;

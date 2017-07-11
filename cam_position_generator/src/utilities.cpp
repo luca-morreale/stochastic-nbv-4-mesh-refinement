@@ -95,7 +95,7 @@ namespace opview {
     {
         double dotProduct = glm::dot(normalVector, v);
         double normProduct = glm::l2Norm(normalVector) * glm::l2Norm(v);
-        double angle = dotProduct / normProduct;
+        double angle = std::acos(dotProduct / normProduct);
  
         return logVonMises(angle, config);
     }

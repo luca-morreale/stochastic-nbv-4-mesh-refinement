@@ -150,90 +150,6 @@ namespace meshac {
         return computeNCC(triangles);
     }
 
-    double NCCFaceAccuracyModel::computeNCC(CVMatList triangles)
-    {
-        CVMat result;
-        int result_cols =  triangles[0].cols;
-        int result_rows = triangles[0].rows;
-        result.create(result_rows, result_cols, triangles[0].type());
-        DoubleList maxs, mins;
-
-        // NOTE if parallelized probably dies
-        // #pragma omp parallel for
-        for (int i = 0; i < triangles.size() - 1; i++) {    // try all possible pair of triangles only once!!!
-            for (int j = i+1; j < triangles.size(); j++) {
-
-                cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_CCORR_NORMED);
-                double minVal, maxVal; 
-                CVPoint minLoc, maxLoc;
-
-                cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, CVMat());
-                #pragma omp critical
-                {
-                    mins.push_back(minVal);
-                    maxs.push_back(maxVal);
-                }
-            }
-        }
-
-        double average = std::accumulate(maxs.begin(), maxs.end(), 0.0) / (double)maxs.size(); 
-
-        return average;
-    }
-
-    CVMatList NCCFaceAccuracyModel::projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams)
-    {
-        CVMatList projectedFace;
-
-        #pragma omp parallel for
-        for (int i = 0; i < commonCams.size(); i++) {
-            GLMVec2 a = mappings[0][commonCams[i]];
-            GLMVec2 b = mappings[1][commonCams[i]];
-            GLMVec2 c = mappings[2][commonCams[i]];
-
-            CVMat affine = generateAffineTransform(a, b, c);
-            CVMat projected = applyAffine(affine, commonCams[i]);
-
-            #pragma omp critical
-            projectedFace.push_back(projected);
-        }
-        return projectedFace;
-    }
-
-    CVMat NCCFaceAccuracyModel::applyAffine(CVMat &affine, int camIndex)
-   {
-        CVMat src, projected;
-        src = cv::imread(this->imgFilepath[camIndex]);   // 0 is grey scale but we need color!!
-        projected = CVMat::zeros(src.rows, src.cols, src.type());
-
-        cv::warpAffine(src, projected, affine, projected.size());
-
-        return cropTriangle(projected).rowRange(0, TRIANGLE_SIDE).colRange(0, TRIANGLE_SIDE);
-    }
-
-    CVMat NCCFaceAccuracyModel::cropTriangle(CVMat &projectedImage)
-    {
-        CVMat result(projectedImage.rows, projectedImage.cols, projectedImage.type());        
-        cv::bitwise_and(projectedImage, triangularMask, result);
-        
-        return result;
-    }
-
-    CVMat NCCFaceAccuracyModel::generateAffineTransform(GLMVec2 &a, GLMVec2 &b, GLMVec2 &c)
-    {
-        CVPoint2 srcTri[3];
-        CVMat warp_mat(2, 3, CV_32FC1);
-        
-        /// Set your 3 points to calculate the  Affine Transform
-        srcTri[0] = CVPoint2(a.x, a.y);
-        srcTri[1] = CVPoint2(b.x, b.y);
-        srcTri[2] = CVPoint2(c.x, c.y);
-
-        /// Get the Affine Transform
-        warp_mat = cv::getAffineTransform(srcTri, destTriangle);
-        return warp_mat;
-    }
-
     ListMappingGLMVec2 NCCFaceAccuracyModel::getMappings(int faceIndex)
     {
         FaceIndex face = faces[faceIndex];
@@ -284,6 +200,90 @@ namespace meshac {
         }
         return camMappings;
     }
+
+    CVMatList NCCFaceAccuracyModel::projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams)
+    {
+        CVMatList projectedFace;
+
+        #pragma omp parallel for
+        for (int i = 0; i < commonCams.size(); i++) {
+            GLMVec2 a = mappings[0][commonCams[i]];
+            GLMVec2 b = mappings[1][commonCams[i]];
+            GLMVec2 c = mappings[2][commonCams[i]];
+
+            CVMat affine = generateAffineTransform(a, b, c);
+            CVMat projected = applyAffine(affine, commonCams[i]);
+
+            #pragma omp critical
+            projectedFace.push_back(projected);
+        }
+        return projectedFace;
+    }
+
+    CVMat NCCFaceAccuracyModel::generateAffineTransform(GLMVec2 &a, GLMVec2 &b, GLMVec2 &c)
+    {
+        CVPoint2 srcTri[3];
+        CVMat warp_mat(2, 3, CV_32FC1);
+        
+        /// Set your 3 points to calculate the  Affine Transform
+        srcTri[0] = CVPoint2(a.x, a.y);
+        srcTri[1] = CVPoint2(b.x, b.y);
+        srcTri[2] = CVPoint2(c.x, c.y);
+
+        /// Get the Affine Transform
+        warp_mat = cv::getAffineTransform(srcTri, destTriangle);
+        return warp_mat;
+    }
+
+    CVMat NCCFaceAccuracyModel::applyAffine(CVMat &affine, int camIndex)
+    {
+        CVMat src, projected;
+        src = cv::imread(this->imgFilepath[camIndex]);   // 0 is grey scale but we need color!!
+        projected = CVMat::zeros(src.rows, src.cols, src.type());
+
+        cv::warpAffine(src, projected, affine, projected.size());
+
+        return cropTriangle(projected).rowRange(0, TRIANGLE_SIDE).colRange(0, TRIANGLE_SIDE);
+    }
+
+    CVMat NCCFaceAccuracyModel::cropTriangle(CVMat &projectedImage)
+    {
+        CVMat result(projectedImage.rows, projectedImage.cols, projectedImage.type());        
+        cv::bitwise_and(projectedImage, triangularMask, result);
+        
+        return result;
+    }
+
+    double NCCFaceAccuracyModel::computeNCC(CVMatList triangles)
+    {
+        CVMat result;
+        int result_cols =  triangles[0].cols;
+        int result_rows = triangles[0].rows;
+        result.create(result_rows, result_cols, triangles[0].type());
+        DoubleList maxs, mins;
+
+        // NOTE if parallelized probably dies
+        // #pragma omp parallel for
+        for (int i = 0; i < triangles.size() - 1; i++) {    // try all possible pair of triangles only once!!!
+            for (int j = i+1; j < triangles.size(); j++) {
+
+                cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_CCORR_NORMED);
+                double minVal, maxVal; 
+                CVPoint minLoc, maxLoc;
+
+                cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, CVMat());
+                #pragma omp critical
+                {
+                    mins.push_back(minVal);
+                    maxs.push_back(maxVal);
+                }
+            }
+        }
+
+        double average = std::accumulate(maxs.begin(), maxs.end(), 0.0) / (double)maxs.size(); 
+        return average;
+    }
+
 
     IntList NCCFaceAccuracyModel::unionCamIndex(ListMappingGLMVec2 &mappings)
     {

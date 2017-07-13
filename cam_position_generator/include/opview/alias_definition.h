@@ -21,8 +21,6 @@
 #include <boost/function.hpp> 
 #include <boost/bind.hpp>
 
-#include <ilcplex/ilocplexi.h>
-
 #include <map>
 #include <set>
 #include <vector>
@@ -100,12 +98,6 @@ namespace opview {
     typedef Tree* TreePtr;
     
     typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
-
-    typedef std::vector<IloNumVar> IloNumVarList;
-    typedef std::vector<IloNum> IloNumList;
-    typedef std::vector<IloExpr> IloExprList;
-    typedef std::vector<IloRange> IloRangeList;
-    typedef std::vector<IloConstraint> IloConstraintList;
 
     typedef std::vector<gsl_vector *> GSLVectorList;
     typedef std::vector<gsl_matrix *> GSLMatrixList;

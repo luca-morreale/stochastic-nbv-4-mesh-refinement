@@ -96,33 +96,20 @@ namespace meshac {
     typedef TreeKernel::Segment_3 Segment;
     typedef TreeKernel::Ray_3 Ray;
     typedef CGAL::Polyhedron_3<TreeKernel> Polyhedron;
-    // typedef CGAL::AABB_face_graph_triangle_primitive<Polyhedron> Primitive;
-    // typedef CGAL::AABB_traits<TreeKernel, Primitive> Traits;
-
-    typedef Polyhedron::Vertex_handle Vertex_handle;
+    
+    typedef Polyhedron::Vertex_handle Vertex;
     typedef Polyhedron::Facet_iterator Facet_iterator;
     typedef Polyhedron::Halfedge_around_facet_circulator Halfedge_facet_circulator;
     typedef TreeKernel::Triangle_3 Triangle;
     typedef std::vector<Triangle> TriangleList;
-    typedef TriangleList::iterator Iterator;
-    typedef CGAL::AABB_triangle_primitive<TreeKernel, Iterator> Primitive;
+    typedef CGAL::AABB_triangle_primitive<TreeKernel, TriangleList::iterator> Primitive;
     typedef CGAL::AABB_traits<TreeKernel, Primitive> Traits;
 
     typedef CGAL::AABB_tree<Traits> Tree;
     typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
-    typedef Tree::Primitive_id Primitive_id;
 
     typedef Tree* TreePtr;
 
-
-    // typedef TreeKernel::Ray_3 Ray;
-    // typedef CGAL::Polyhedron_3<TreeKernel> Polyhedron;
-    
-    // typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
-    // typedef Tree* TreePtr;
-
-    // typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
-    
 }
 
 #endif // MESH_ACCURACY_TYPE_DEFINITION_H

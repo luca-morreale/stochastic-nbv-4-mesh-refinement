@@ -31,9 +31,9 @@ namespace meshac {
         TriangleList triangles;
         for (Facet_iterator it = poly.facets_begin(); it != poly.facets_end(); it++) {
             Halfedge_facet_circulator p = it->facet_begin();
-            Vertex_handle p0 = p->vertex();
-            Vertex_handle p1 = (++p)->vertex();
-            Vertex_handle p2 = (++p)->vertex();
+            Vertex p0 = p->vertex();
+            Vertex p1 = (++p)->vertex();
+            Vertex p2 = (++p)->vertex();
 
             Triangle t = Triangle(p0->point(), p1->point(), p2->point());
             if (t.is_degenerate()) {

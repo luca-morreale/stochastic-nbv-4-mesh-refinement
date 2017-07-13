@@ -52,7 +52,7 @@ namespace opview {
         virtual bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid);
         virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
         virtual bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isMathemathicalError(Segment_intersection &intersection, PointD3 &point);
+        virtual bool isMathemathicalError(Segment_intersection &intersection, Point &point);
         virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
 
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);

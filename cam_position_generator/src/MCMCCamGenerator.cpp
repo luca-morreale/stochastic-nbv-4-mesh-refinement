@@ -46,9 +46,9 @@ namespace opview {
         TriangleList triangles;
         for (Facet_iterator it = poly.facets_begin(); it != poly.facets_end(); it++) {
             Halfedge_facet_circulator p = it->facet_begin();
-            Vertex_handle p0 = p->vertex();
-            Vertex_handle p1 = (++p)->vertex();
-            Vertex_handle p2 = (++p)->vertex();
+            Vertex p0 = p->vertex();
+            Vertex p1 = (++p)->vertex();
+            Vertex p2 = (++p)->vertex();
 
             triangles.push_back(Triangle(p0->point(), p1->point(), p2->point()));
         }
@@ -279,8 +279,8 @@ namespace opview {
 
     bool MCMCCamGenerator::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
     {
-        PointD3 cam(pose[0], pose[1], pose[2]);
-        PointD3 point(centroid.x, centroid.y, centroid.z);
+        Point cam(pose[0], pose[1], pose[2]);
+        Point point(centroid.x, centroid.y, centroid.z);
         
         Segment segment_query(cam, point);
         Segment_intersection intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
@@ -292,9 +292,9 @@ namespace opview {
         }
     }
 
-    bool MCMCCamGenerator::isMathemathicalError(Segment_intersection &intersection, PointD3 &point)
+    bool MCMCCamGenerator::isMathemathicalError(Segment_intersection &intersection, Point &point)
     {
-        const PointD3* intersectedPoint = boost::get<PointD3>(&(intersection->first));
+        const Point* intersectedPoint = boost::get<Point>(&(intersection->first));
         if(intersectedPoint) {
             return CGAL::squared_distance(*intersectedPoint, point) < 0.0001;
         }

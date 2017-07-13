@@ -69,36 +69,6 @@ namespace opview {
     typedef std::priority_queue<ValuePose, std::vector<ValuePose>, ComparePoses> OrderedPose;
 
 
-    /* Shortcuts for CGAL types */
-    typedef std::vector<PointD3> PointD3List;
-    typedef Delaunay3::Cell_handle CGALCell;
-    typedef Delaunay3::Vertex_handle CGALVertex;
-    typedef std::vector<Delaunay3::Cell_handle> CGALCellList;
-    typedef std::set<Delaunay3::Cell_handle> CGALCellSet;
-    typedef std::array<CGALVertex, 3> CGALFace;
-
-    typedef std::array<PointD3, 3> FaceVertices;
-    typedef std::vector<FaceVertices> FaceVerticesList;
-
-    typedef K::Direction_3 CGALDirection;
-    typedef K::Vector_3 CGALVec3;
-    typedef std::vector<CGALVec3> CGALVec3List;
-
-    typedef K::Ray_3 Ray;
-    typedef CGAL::Polyhedron_3<K> Polyhedron;
-    typedef Polyhedron::Vertex_handle Vertex_handle;
-    typedef Polyhedron::Facet_iterator Facet_iterator;
-    typedef Polyhedron::Halfedge_around_facet_circulator Halfedge_facet_circulator;
-    typedef K::Triangle_3 Triangle;
-    typedef std::vector<Triangle> TriangleList;
-    typedef TriangleList::iterator Iterator;
-    typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
-    typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
-    typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
-    typedef Tree* TreePtr;
-    
-    typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
-
     typedef std::vector<gsl_vector *> GSLVectorList;
     typedef std::vector<gsl_matrix *> GSLMatrixList;
 
@@ -109,6 +79,32 @@ namespace opview {
     typedef std::function<GLMVec3List(OrderedPose&)> LambdaGLMPointsList;
     typedef std::function<EigVector5List(OrderedPose&)> LambdaEigPointsList;
 
+
+    /* Shortcuts for CGAL types */
+    typedef CGAL::Simple_cartesian<double> TreeKernel;
+    typedef TreeKernel::Point_3 Point;
+    typedef TreeKernel::Vector_3 Vector;
+    typedef std::vector<Vector> VectorList;
+    typedef TreeKernel::Segment_3 Segment;
+    typedef TreeKernel::Ray_3 Ray;
+    typedef CGAL::Polyhedron_3<TreeKernel> Polyhedron;
+
+    typedef std::vector<Point> PointList;
+
+    typedef Polyhedron::Vertex_handle Vertex;
+    typedef Polyhedron::Facet_iterator Facet_iterator;
+    typedef Polyhedron::Halfedge_around_facet_circulator Halfedge_facet_circulator;
+    typedef TreeKernel::Triangle_3 Triangle;
+    typedef std::vector<Triangle> TriangleList;
+    typedef TriangleList::iterator Iterator;
+    typedef CGAL::AABB_triangle_primitive<TreeKernel, Iterator> Primitive;
+    typedef CGAL::AABB_traits<TreeKernel, Primitive> Traits;
+
+    typedef CGAL::AABB_tree<Traits> Tree;
+    typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
+    typedef Tree::Primitive_id Primitive_id;
+
+    typedef Tree* TreePtr;
 }
 
 #endif // CAM_POSITION_GENERATOR_ALIAS_DEFINITION_H

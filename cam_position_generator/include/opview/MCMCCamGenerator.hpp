@@ -57,7 +57,7 @@ namespace opview {
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
         virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
 
-        bool isMathemathicalError(Segment_intersection &intersection, PointD3 &point);
+        bool isMathemathicalError(Segment_intersection &intersection, Point &point);
 
         virtual EigVector5List uniformPointsGetter();
         virtual EigVector5List resamplingPointsGetter(OrderedPose &currentOptima);

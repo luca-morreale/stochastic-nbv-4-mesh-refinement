@@ -10,15 +10,12 @@
 
 namespace opview {
     
-    Face convertCGALFaceToFace(CGALFace triangleVertices);
-    Face convertCGALFaceToFace(CGALFace triangleVertices, PointD3 oppositeVertex);
+    GLMVec3 convertPoinToGLMVec(Point &point);
+    Vector convertPoinToCGALVec(Point &point);
+    Vector convertPoinToCGALVec(GLMVec3 &point);
+    VectorList convertListToCGALVecList(GLMVec3List &inList);
 
-    GLMVec3 convertPoinToGLMVec(PointD3 &point);
-    CGALVec3 convertPoinToCGALVec(PointD3 &point);
-    CGALVec3 convertPoinToCGALVec(GLMVec3 &point);
-    CGALVec3List convertListToCGALVecList(GLMVec3List &inList);
-
-    double distanceCGALVec3(CGALVec3 &a, CGALVec3 &b);
+    double distanceVector(Vector &a, Vector &b);
 
     OrderedPose copy(OrderedPose poses, size_t max);
     

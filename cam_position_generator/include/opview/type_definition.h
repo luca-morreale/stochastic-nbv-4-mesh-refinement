@@ -21,14 +21,7 @@
 #include <opview/DimensionDisagreementLists.hpp>
 
 namespace opview {
-
-    struct Face {
-        FaceVertices face;
-        PointD3 oppositeVertex;
-    };
-
-    typedef std::vector<Face> FaceList;
-
+    
     typedef double LabelType;
     typedef size_t VariableIndexType;
 

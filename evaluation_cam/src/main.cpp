@@ -3,15 +3,17 @@
 
 #include <glm/glm.hpp>
 
-
 #include <Evaluator.hpp>
 
+#define OMP_THREADS 4
 
 #define ARGS 5
 
 int main(int argc, char **argv) {
 
-    if (argc < ARGS) {
+    omp_set_num_threads(OMP_THREADS);
+
+    if (argc < ARGS + 1) {
         std::cout << "Usage: " << argv[0] << " points_file.txt ground_truth.asc database.txt sshconfig.txt basicposecam.txt" << std::endl;
         return 1;
     }

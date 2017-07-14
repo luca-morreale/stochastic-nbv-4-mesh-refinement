@@ -27,7 +27,6 @@ endif()
 # ----------------------- INCLUDES ----------------------------
 
 include_directories(include/)
-include_directories("/usr/local/include/chilkat-9.5.0/")
 
 # ----------------------- GCC FLAGS ----------------------------
 

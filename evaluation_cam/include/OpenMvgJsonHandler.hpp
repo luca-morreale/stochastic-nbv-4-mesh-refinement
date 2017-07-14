@@ -17,7 +17,7 @@ namespace cameval {
         virtual void parse();
 
         virtual int countImages();
-        virtual void appendImage(std::string &imagePath, std::string &imageFile);
+        virtual size_t appendImage(std::string &imagePath, std::string &imageFile);
 
 
         virtual void setCamPosition(int camIndex, GLMVec3 &camCenter, GLMMat3 rotation=GLMMat3());  // cam index = image index
@@ -25,6 +25,7 @@ namespace cameval {
         virtual bool testCamPosition(int camIndex, GLMVec3 &camCenter);
 
         virtual void saveChanges(std::string newFilename);
+        virtual void saveChanges();
 
         void setFile(std::string path);
 
@@ -54,6 +55,8 @@ namespace cameval {
         std::ifstream cin;
         
     };
+
+    typedef OpenMvgJsonHandler* OpenMvgJsonHandlerPtr;
 
 } // cameval
 

@@ -4,6 +4,7 @@ namespace cameval {
 
     OpenMvgJsonHandler::OpenMvgJsonHandler(std::string path) {
         setFile(path);
+        parse();
     }
 
     OpenMvgJsonHandler::~OpenMvgJsonHandler() {
@@ -267,7 +268,7 @@ namespace cameval {
         return document["views"].Size();
     }
 
-    void OpenMvgJsonHandler::appendImage(std::string &imagePath, std::string &imageName)
+    size_t OpenMvgJsonHandler::appendImage(std::string &imagePath, std::string &imageName)
     {
         const JsonValue &sampleElement = document["views"][countImages() - 1];
 
@@ -275,25 +276,31 @@ namespace cameval {
         JsonValue value(JsonObject);
         JsonValue wrapper(JsonObject);
         JsonValue data(JsonObject);
+        std::cout << countImages() << std::endl;
 
         addFieldTo(data, "local_path", "");             // FIXME
         addFieldTo(data, "filename", imageName);
+        
         addFieldTo(data, "width", sampleElement["value"]["ptr_wrapper"]["data"]["width"].GetInt());
         addFieldTo(data, "height", sampleElement["value"]["ptr_wrapper"]["data"]["height"].GetInt());
+        
         addFieldTo(data, "id_view", sampleElement["value"]["ptr_wrapper"]["data"]["id_view"].GetInt() + 1);
         addFieldTo(data, "id_intrinsic", sampleElement["value"]["ptr_wrapper"]["data"]["id_intrinsic"].GetInt());
         addFieldTo(data, "id_pose", sampleElement["value"]["ptr_wrapper"]["data"]["id_pose"].GetInt() + 1);
-
+        
         addFieldTo(wrapper, "id", (size_t)sampleElement["value"]["ptr_wrapper"]["id"].GetUint() + 1);
         addFieldTo(wrapper, "data", data);
 
         addFieldTo(value, "polymorphic_id", (size_t)sampleElement["value"]["polymorphic_id"].GetUint());
         addFieldTo(value, "ptr_wrapper", wrapper);
 
-        addFieldTo(image, "key", countImages());
+        size_t key = countImages();
+        addFieldTo(image, "key", key);
         addFieldTo(image, "value", value);
 
         document["views"].PushBack(image, document.GetAllocator());
+
+        return key;
     }
 
     void OpenMvgJsonHandler::saveChanges(std::string newFilename)
@@ -304,6 +311,11 @@ namespace cameval {
         document.Accept(writer);
 
         cout.close();
+    }
+
+    void OpenMvgJsonHandler::saveChanges()
+    {
+        this->saveChanges(this->fileName);
     }
 
 

@@ -5,6 +5,9 @@
 #include <meshac/FaceAccuracyModel.hpp>
 #include <meshac/NCCFaceAccuracyModel.hpp>
 
+#include <iostream>
+#include <fstream>
+
 
 #define OMP_THREADS 8
 
@@ -15,6 +18,9 @@ int main(int argc, char **argv) {
 
     std::string jsonFile = argv[1];
     std::string meshFile = argv[2];
+    std::string log = argv[3];
+
+    std::ofstream cout(log);
     
     OpenMvgParser op_openmvg(jsonFile);
     op_openmvg.parse();
@@ -26,12 +32,12 @@ int main(int argc, char **argv) {
     pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
 
     meshac::FaceAccuracyModelPtr model;
-
+    
     model = new meshac::NCCFaceAccuracyModel(meshFile, sfm_data_, pathPrefix);
-
-    for (int i = 0; i < 2000; i++) {
+    std::cout << "done\n";
+    for (int i = 0; i < 2021; i++) {
+        cout << "result: " << model->getAccuracyForFace(i) << std::endl;
         std::cout << "result: " << model->getAccuracyForFace(i) << std::endl;
-        // model->getAccuracyForFace(i);
     }
 
     // poche viste comuni dalle diverse camere

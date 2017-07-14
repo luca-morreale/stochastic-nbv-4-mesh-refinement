@@ -10,6 +10,7 @@
 #include <SSHException.hpp>
 
 #define LIBSSH_STATIC 1
+#define BUFFER_SIZE 16384
 
 namespace cameval {
     
@@ -19,15 +20,18 @@ namespace cameval {
         SshHandler(std::string &sshconfig);
         ~SshHandler();
 
-        void download(std::string &filename);
+        std::string download(std::string &filename);
 
     protected:
-        virtual int fetchFile(ssh_session session, std::string &filePath);
+        virtual void setOptions(ssh_session session);
+        virtual void throwException(std::string prefix, std::string error, ssh_session session);
+        virtual void throwException(std::string prefix, std::string error, ssh_scp scp, ssh_session session);
 
     private:
         std::string host;
         std::string user;
         std::string password;
+
 
     };
 

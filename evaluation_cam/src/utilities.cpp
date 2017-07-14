@@ -2,6 +2,11 @@
 
 namespace cameval {
 
+    void log(std::string msg)
+    {
+        std::cout << msg << std::endl;
+    }
+
     // trim from start
     std::string &ltrim(std::string &s) {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(),

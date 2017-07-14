@@ -24,10 +24,10 @@ if (OPENMP_FOUND)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-
 # ----------------------- INCLUDES ----------------------------
 
 include_directories(include/)
+include_directories("/usr/local/include/chilkat-9.5.0/")
 
 # ----------------------- GCC FLAGS ----------------------------
 
@@ -45,6 +45,27 @@ target_link_libraries(autoeval ${GMPXX_LIBRARIES}
                                 ${Boost_SYSTEM_LIBRARY}
                                 ${LIBSSH_LIBRARY}
                                 )
+
+add_executable(evalnocopy src/mainnocopy.cpp src/EvaluatorNoCopy.cpp src/OpenMvgJsonHandler.cpp src/SshHandler.cpp src/utilities.cpp )
+
+target_link_libraries(evalnocopy ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                )
+
+add_executable(testssh src/test_ssh.cpp src/EvaluatorNoCopy.cpp src/OpenMvgJsonHandler.cpp src/SshHandler.cpp src/utilities.cpp )
+
+target_link_libraries(testssh ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                )
+
 
 # ------------------------ INSTALLATION ------------------------
 

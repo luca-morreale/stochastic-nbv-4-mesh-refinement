@@ -16,6 +16,8 @@
 
 #include <Eigen/Dense>
 
+#include <boost/system/error_code.hpp>
+
 namespace cameval {
 
     typedef std::vector<std::string> StringList;
@@ -53,6 +55,7 @@ namespace cameval {
     typedef rapidjson::Writer<JsonFOUTWrapper> JsonWriter;
     typedef rapidjson::PrettyWriter<JsonFOUTWrapper> JsonPrettyWriter;
 
+    typedef boost::system::error_code BoostSystemErrorCode;
 
 } // namesapce cameval
 

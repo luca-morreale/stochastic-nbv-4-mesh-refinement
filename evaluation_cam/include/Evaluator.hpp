@@ -5,49 +5,41 @@
 
 #include <boost/filesystem.hpp>
 
+#include <boost/algorithm/string.hpp>
+
 #include <aliases.h>
+#include <FileHandler.hpp>
+#include <InputReader.hpp>
 #include <OpenMvgJsonHandler.hpp>
-#include <KDTree.hpp>
+#include <OpenMvgPoseConverter.hpp>
+#include <PoseReader.hpp>
+#include <OpenMvgSysCall.hpp>
 #include <SshHandler.hpp>
 #include <utilities.hpp>
-#include <SourceDirectoryDoesNotExistsException.hpp>
-#include <UnableToCreateDirectoryException.hpp>
 
 namespace cameval {
     
     class Evaluator {
     public:
-        Evaluator(std::string &pointsFilename, std::string &groundTruthFilename, std::string &databaseFilename, 
-                std::string &basicPoseFilename, std::string &baseImageFolder, std::string &intrinsicParams, std::string &sshconfig);
+        Evaluator(std::string &databaseFilename, std::string &groundTruthFilename, std::string &basicPoseFilename, 
+                                        std::string &baseImageFolder, std::string &intrinsicParams, std::string &sshconfig);
         ~Evaluator();
 
         virtual void evaluate();
 
     protected:
         virtual std::string initOpenMvg();
-        virtual double evaluatePose(EigVector6 &pose, std::string &basicFolder, int uniqueId);
-        virtual void setDefaultCameraPoses(std::string &jsonFile, OpenMvgJsonHandler &mvgJsonHandler);
-        virtual std::string imageListing();
-        virtual std::string extractMvgFeatures(std::string &jsonFile, int uniqueId);
-        virtual void cleanAll(StringList folders);
-        virtual std::string getClosestImage(EigVector6 &pose);
-        virtual void appendImageToJson(std::string &sfmFile, std::string &imageFile, OpenMvgJsonHandler &mvgJsonHandler);
-        virtual void setPositionOfCameras(std::string &sfmFile, EigVector6 &pose, OpenMvgJsonHandler &mvgJsonHandler);
-        virtual std::string computeStructureFromPoses(std::string &jsonFile, std::string &matchesFolder, int uniqueId);
+        virtual double evaluatePose(std::string &file, std::string &basicFolder);
+        virtual void setDefaultCameraPoses();
+        virtual std::string generatePairFile(size_t uniqueId);
+        virtual size_t appendImageToJson(std::string &sfmFile, std::string &imageFile);
+        virtual void setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId);
         virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename);
         virtual double parseDistance(std::string &logFile);
-
-        virtual void copyDataToPrivateFolder(std::string &basicFolder, std::string &privateFolder, std::string &filePath);
-        virtual void checkSourceExistence(boost::filesystem::path &source);
-        virtual void createDestinationFolder(boost::filesystem::path &destination);
-        virtual void copyDirectory(boost::filesystem::path &source, boost::filesystem::path &destination);
-        virtual void copyAllFilesFromTo(boost::filesystem::path &source, boost::filesystem::path &destination);
-        virtual void copyFileInside(std::string sourceString, boost::filesystem::path &dest);
-        virtual void copyFileInside(boost::filesystem::path &source, boost::filesystem::path &dest);
-        
+        virtual void generateBasicPairFile();
+        virtual AnglePose extractPose(std::string &filename);
 
     private:
-        std::string pointsFilename;
         std::string groundTruthFilename;
         std::string databaseFilename;
         std::string baseImageFolder;
@@ -57,20 +49,17 @@ namespace cameval {
         std::string filePrefix;
         std::string fileExtention;
 
-        PoseList poses;
-        CameraPoseList basicPoses;
+        PoseList basicPoses;
         StringList database;
 
-        KDTReePtr tree;
         SshHandlerPtr sshHandler;
 
         std::regex distanceRegex;
 
-        CameraPoseList readCameraPoses(std::string &basicPoseFilename);
-        PoseList readPoints(std::string &pointsFilename);
-        StringList readDatabase(std::string &database);
+        OpenMvgJsonHandlerPtr mvgJsonHandler;
+        size_t defaultCamNumber;
+
         int getIndexOfSmallestDistance(DoubleList &distances);
-        std::string readStringFromFile(std::string &filename);
         
     };
 

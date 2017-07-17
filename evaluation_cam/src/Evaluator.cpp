@@ -2,174 +2,195 @@
 
 namespace cameval {
 
-    Evaluator::Evaluator(std::string &pointsFilename, std::string &groundTruthFilename, std::string &databaseFilename, 
+    Evaluator::Evaluator(std::string &databaseFilename, std::string &groundTruthFilename, 
             std::string &basicPoseFilename, std::string &baseImageFolder, std::string &intrinsicParams, 
             std::string &sshconfig)
     {
-        this->pointsFilename = pointsFilename;                      // file from which read poses to evaluate
+        this->databaseFilename = databaseFilename;                  // file from which read poses to evaluate
         this->groundTruthFilename = groundTruthFilename;            // file containing the g-t cloud of points
-        this->databaseFilename = databaseFilename;                  // file containing the list of images in the database
-        this->baseImageFolder = baseImageFolder;                    // name of folder containing the images of current cloud
-        this->intrinsicParams = intrinsicParams;                    // file containing the intrinisc params in format ready for opengm
+        OpenMvgSysCall::baseImageFolder = baseImageFolder;                    // name of folder containing the images of current cloud
+        OpenMvgSysCall::intrinsicParams = intrinsicParams;                    // file containing the intrinisc params in format ready for opengm
         this->distanceRegex = std::regex("\\[(.*)\\] \\[ComputeDistances\\] Mean distance = (.*) / std deviation = (.*)");
 
-        this->poses = readPoints(pointsFilename);
-        this->database = readDatabase(databaseFilename);
-        this->basicPoses = readCameraPoses(basicPoseFilename);
+
+        log("\nPopulating basic camera poses");
+        PoseReader reader(basicPoseFilename);
+        this->basicPoses = reader.getPoses();
+        OpenMvgPoseConverter::convertPoses(this->basicPoses);
+        log("\nBasic poses size: " + std::to_string(basicPoses.size()));
+
+        log("\nPopulating Database");
+        this->database = InputReader::readDatabase(databaseFilename);
+        log("\nDatabase size: " + std::to_string(database.size()));
 
         this->filePrefix = database[0].substr(0, database[0].find_first_of("_"));
         this->fileExtention = database[0].substr(database[0].find_last_of(".") + 1, database[0].size());
 
-        this->tree = new KDTree(database);
         this->sshHandler = new SshHandler(sshconfig);
     }
 
     Evaluator::~Evaluator()
     {
-        delete tree;
         delete sshHandler;
+        delete mvgJsonHandler;
     }
 
     void Evaluator::evaluate()
     {
+        std::ofstream out("report.txt");
         std::string basicFolder = initOpenMvg();
+        log("\nInitialized folders");
 
-        DoubleList distances(poses.size());
+        DoubleList distances;
+        distances.assign(database.size(), 0.0);
 
-        #pragma omp parallel for
-        for (int i = 0; i < poses.size(); ++i) {
-            distances[i] = evaluatePose(poses[i], basicFolder, i+1);    // i+1 because 0 is the original copy
+
+        for (int i = 2; i < database.size(); ++i) {
+            log("\nStart analysis pose #" + std::to_string(i));
+            double tmp = evaluatePose(database[i], basicFolder);
+            distances[i] = tmp;
+            out << database[i] << " " << distances[i] << std::endl;
+            log("\nDone analysis pose #" + std::to_string(i));
         }
 
+        log("\nDone computation of all poses");
+        
         int index = getIndexOfSmallestDistance(distances);
         std::cout << "min distance: " << distances[index] << std::endl;
-        std::cout << "pose: " << poses[index] << std::endl;
+        std::cout << "pose: " << database[index] << std::endl;
+
+        out << "min distance: " << distances[index] << std::endl;
+        out << "pose: " << database[index] << std::endl;
+
+        out.close();
+
+        FileHandler::cleanAll({basicFolder, "matches/", "poses_sfm_data/"});     // remove all folders created!
     }
 
     std::string Evaluator::initOpenMvg()
     {
-        std::string jsonFile = imageListing();
-        std::string baseFolder = extractMvgFeatures(jsonFile, 0);
-        OpenMvgJsonHandler mvgJsonHandler(baseFolder+"/sfm_data.json");
-        setDefaultCameraPoses(jsonFile, mvgJsonHandler);
+        OpenMvgSysCall::initOpenMvg();
 
-        // TODO I should save changes after modification of sfm_data.json
+        mvgJsonHandler = new OpenMvgJsonHandler("matches/sfm_data.json");
+        log("\nSet default camera poses");
+        setDefaultCameraPoses();
+        mvgJsonHandler->saveChanges();
 
-        return baseFolder;
+        return "matches";
     }
-
-    double Evaluator::evaluatePose(EigVector6 &pose, std::string &basicFolder, int uniqueId)
+    
+    double Evaluator::evaluatePose(std::string &file, std::string &basicFolder)
     {
-        std::string filePath = getClosestImage(pose);
-        sshHandler->download(filePath);
+        log("\nParsing filename to pose");
+        AnglePose pose = extractPose(file);
+        log("\nDownloading image");
+        std::string filename = sshHandler->download(file);
 
-        std::string privateFolder = basicFolder + std::to_string(uniqueId);
-        std::string jsonFile = privateFolder + "/sfm_data.json";
-        std::string imageFile = privateFolder + "/" + filePath;
+        std::string jsonFile = basicFolder + "/sfm_data.json";
 
-        // TODO improve readability
+        log("\nMove file into folder");
         try {
-            copyDataToPrivateFolder(baseImageFolder, privateFolder, filePath);
+            std::string imagesFolder = "images";
+            FileHandler::moveFileInside(filename, imagesFolder);
         } catch (const boost::filesystem::filesystem_error &ex) {
             auto errorCode = ex.code();
-            if (errorCode == boost::system::errc::errc_t::file_too_large ||
-                errorCode == boost::system::errc::errc_t::not_enough_memory ||
-                errorCode == boost::system::errc::errc_t::no_space_on_device) {
+            if (FileHandler::isSpaceSystemError(errorCode)) {
                 std::cerr << "Out of Memory Exception" << std::endl;
                 return DBL_MAX;
             }
         }
+        
+        log("\nAppend image");
+        size_t imgId = appendImageToJson(jsonFile, filename);
+        
+        log("\nSet position camera");
+        setPositionOfCameras(jsonFile, pose, imgId);
+        
 
-        OpenMvgJsonHandler mvgJsonHandler(jsonFile);
+        std::string pairFile = generatePairFile(imgId);
 
-        appendImageToJson(jsonFile, filePath, mvgJsonHandler);
-        setPositionOfCameras(jsonFile, pose, mvgJsonHandler);
-        // TODO I should save changes after modification of sfm_data.json
-
-        std::string matchesFolder = extractMvgFeatures(jsonFile, uniqueId);
-        std::string mvgFolder = computeStructureFromPoses(jsonFile, matchesFolder, uniqueId);
+        OpenMvgSysCall::extractMvgFeatures(jsonFile, pairFile);
+        log("\nCompute Structure");
+        std::string mvgFolder = OpenMvgSysCall::computeStructureFromPoses(jsonFile, imgId);
 
         std::string inputCloud = mvgFolder + "/sfm_data.ply";
-
-        // std::string alignedCloud = alignClouds(inputCloud);  // not needed because inserted camera position
-    
+        log("\nCompute Distance");
         std::string logFile = computeDistance(inputCloud, groundTruthFilename); 
 
+        log("\nExtract distance from log");
         double distance = parseDistance(logFile);     
-
-        cleanAll({privateFolder, filePath, matchesFolder, mvgFolder, inputCloud, logFile});     // remove all folders created!
+        
+        FileHandler::cleanAll({filename, pairFile, mvgFolder, "images/"+filename, "out_Incremental_Reconstruction"});     // remove all folders created!
 
         return distance;
     }
 
-    void Evaluator::setDefaultCameraPoses(std::string &jsonFile, OpenMvgJsonHandler &mvgJsonHandler)
+    void Evaluator::setDefaultCameraPoses()
     {
-        for (auto pose : basicPoses) {
-            // convert eigen to glm
-            auto center = convert(pose.center);
-            auto rotation = convert(pose.rotation);
-            mvgJsonHandler.setCamPosition(pose.index, center, rotation);
+        for (int index = 0; index < basicPoses.size(); index++) {
+            mvgJsonHandler->setCamPosition(index, basicPoses[index].first, basicPoses[index].second);
+        }
+        defaultCamNumber = basicPoses.size();
+    }
+
+    void Evaluator::generateBasicPairFile()
+    {
+        std::string pairFile = "matches_pairs.txt";
+        if (!FileHandler::checkSourceExistence(pairFile)) {
+            std::ofstream out("matches_pairs.txt");
+            for (int i = 0; i < basicPoses.size() - 1; i++) {
+                for (int j = i + 1; j < basicPoses.size(); j++) {
+                    out << i << " " << j << std::endl;
+                }
+            }
+            out.close();
         }
     }
-
-    std::string Evaluator::imageListing()
+    
+    std::string Evaluator::generatePairFile(size_t uniqueId)
     {
-        std::string command = "openMVG_main_SfMInit_ImageListing -i " + baseImageFolder + 
-            " -d /usr/local/share/openMVG/sensor_width_camera_database.txt -o matches -k " + intrinsicParams;
-        system(command.c_str());
-        return "matches/sfm_data.json"; // NOTE this can even not be unique because this has to be done just once!!
-    }
+        std::string original = "matches_pairs.txt";
+        std::string filename = "matches_pairs_" + std::to_string(uniqueId) + ".txt";
+        FileHandler::copyFile(original, filename);
 
-    std::string Evaluator::extractMvgFeatures(std::string &jsonFile, int uniqueId) 
-    {
-        std::string matchesFolder = "matches_" + std::to_string(uniqueId);
-        std::string command = "openMVG_main_ComputeFeatures -i " + jsonFile + " -o " + matchesFolder + "/ -m AKAZE_FLOAT";
-        system(command.c_str());
-        command = "openMVG_main_ComputeMatches -i " + jsonFile + " -o " + matchesFolder + "/";
-        system(command.c_str());
-        
-        return matchesFolder;
-    }
-
-    std::string Evaluator::getClosestImage(EigVector6 &pose)
-    {
-        EigVector6 closest = tree->searchClosestPoint(pose);
-        std::string out;
-        for (int i = 0; i < 6; i++) {
-            out += "_" + std::to_string(closest[i]);
+        std::ofstream out;
+        out.open(filename, std::ofstream::out | std::ofstream::app);
+        for (int i = 0; i < defaultCamNumber; i++) {
+            out << i << " " << uniqueId << std::endl;
         }
-        return this->filePrefix + out + "." + fileExtention;
+        out.close();
+
+        return filename;
     }
 
-    void Evaluator::appendImageToJson(std::string &sfmFile, std::string &imageFile, OpenMvgJsonHandler &mvgJsonHandler)
+    size_t Evaluator::appendImageToJson(std::string &sfmFile, std::string &imageFile)
     {
         std::string prefix = sfmFile.substr(0, sfmFile.find_last_of("/"));
-        mvgJsonHandler.appendImage(prefix, imageFile);
+
+        size_t key;
+        #pragma omp critical
+        key = mvgJsonHandler->appendImage(prefix, imageFile);
+        #pragma omp critical
+        mvgJsonHandler->saveChanges();
+
+        return key;
     }
 
-    void Evaluator::setPositionOfCameras(std::string &sfmFile, EigVector6 &pose, OpenMvgJsonHandler &mvgJsonHandler) 
+    void Evaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
     {
-        int imageCount = mvgJsonHandler.countImages();
-        CameraPose cam(-1, pose[0], pose[1], pose[2], pose[5], pose[4], pose[3]);
-        auto center = convert(cam.center);
-        auto rotation = convert(cam.rotation);
-        mvgJsonHandler.setCamPosition(imageCount-1, center, rotation);
-    }
-
-    std::string Evaluator::computeStructureFromPoses(std::string &jsonFile, std::string &matchesFolder, int uniqueId) 
-    {
-        std::string outFolder = "poses_sfm_data_" + std::to_string(uniqueId);
-        std::string command = "openMVG_main_ComputeStructureFromKnownPoses -i "+jsonFile+" -o "+outFolder+"/sfm_data.json -m "+matchesFolder+"/";
-        system(command.c_str());
-        return outFolder;
+        GLMMat3 rotation = rotationMatrix(pose.second);
+        #pragma omp critical
+        mvgJsonHandler->setCamPosition(imgId, pose.first, rotation);
+        #pragma omp critical
+        mvgJsonHandler->saveChanges();
     }
 
     std::string Evaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
     {
-        std::string logfilename = alignedCloud.substr(0, alignedCloud.find_last_of("/")) + "log_distance.txt";
+        std::string logfilename = alignedCloud.substr(0, alignedCloud.find_last_of("/")) + "/log_distance.txt";
 
         // assume definition of alias for CloudCompare -> 
-        std::string command = "ccmp -SILENT -LOG_FILE " + logfilename + " -O " + alignedCloud + " -O " + groundTruthFilename + "  -c2c_dist";
+        std::string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + alignedCloud + " -O " + groundTruthFilename + " -c2c_dist";
         system(command.c_str());
 
         return logfilename;
@@ -201,126 +222,13 @@ namespace cameval {
         std::cerr << "Pattern not found" << std::endl;
         return DBL_MAX;
     }
-
-    std::string Evaluator::readStringFromFile(std::string &filename)
+    
+    AnglePose Evaluator::extractPose(std::string &filename)
     {
-        std::ifstream cin(filename);
-        std::string content((std::istreambuf_iterator<char>(cin)), std::istreambuf_iterator<char>());
-        cin.close();
-        return content;
-    }
+        std::string path = filename.substr(0, filename.find_last_of("/") + 1);
+        std::string name = filename.substr(filename.find_last_of("/") + 1, filename.size());
 
-    void Evaluator::copyDataToPrivateFolder(std::string &basicFolder, std::string &privateFolder, std::string &filePath)
-    {
-        boost::filesystem::path imagePath(filePath);
-        boost::filesystem::path source(basicFolder);
-        boost::filesystem::path destination(privateFolder);
-
-        // Check whether the function call is valid
-        copyDirectory(source, destination);
-        copyFileInside(imagePath, destination);
-        copyFileInside("sfm_data.json", destination);
-    }
-
-    void Evaluator::createDestinationFolder(boost::filesystem::path &destination)
-    {
-        
-        if(boost::filesystem::exists(destination)) {
-            std::cerr << "Destination directory " << destination.string() << " already exists." << std::endl;
-        } else if(!boost::filesystem::create_directory(destination)) { // Create the destination directory
-            std::cerr << "Unable to create destination directory" << destination.string() << std::endl;
-            throw UnableToCreateDirectoryException(destination);
-        }
-    }
-
-    void Evaluator::checkSourceExistence(boost::filesystem::path &source)
-    {
-        if(!boost::filesystem::exists(source) || !boost::filesystem::is_directory(source)) {
-            throw SourceDirectoryDoesNotExistsException(source);
-        }
-    }
-
-    void Evaluator::copyDirectory(boost::filesystem::path &source, boost::filesystem::path &destination)
-    {
-        checkSourceExistence(source);
-        createDestinationFolder(destination);
-
-        copyAllFilesFromTo(source, destination);
-    }
-
-    void Evaluator::copyAllFilesFromTo(boost::filesystem::path &source, boost::filesystem::path &destination)
-    {
-        // Iterate through the source directory
-        for(boost::filesystem::directory_iterator file(source); file != boost::filesystem::directory_iterator(); ++file) {
-            boost::filesystem::path current(file->path());
-            copyFileInside(current, destination);
-        }
-    }
-
-    void Evaluator::copyFileInside(std::string sourceString, boost::filesystem::path &dest)
-    {
-        boost::filesystem::path source(sourceString);
-        copyFileInside(source, dest);
-    }
-
-    void Evaluator::copyFileInside(boost::filesystem::path &source, boost::filesystem::path &dest)
-    {
-        boost::filesystem::copy_file(source, dest / source.filename(), boost::filesystem::copy_option::overwrite_if_exists);
-
-    }
-
-    void Evaluator::cleanAll(StringList folders)
-    {
-        for (auto folder : folders) {
-            boost::filesystem::path path(folder);
-            remove_all(path);
-        }
-    }
-
-    CameraPoseList Evaluator::readCameraPoses(std::string &basicPoseFilename)
-    {
-        std::ifstream cin(basicPoseFilename);
-        CameraPoseList poses;
-
-        int index;
-        float x, y, z, yaw, pitch, roll;
-        while (!cin.eof()) {
-            cin >> index >> x >> y >> z >> roll >> pitch >> yaw;
-            poses.push_back(CameraPose(index, x, y, z, yaw, pitch, roll));
-        }
-        cin.close();
-        return poses;
-    }
-
-    PoseList Evaluator::readPoints(std::string &pointsFilename) 
-    {
-        std::ifstream cin(pointsFilename);
-        PoseList poses;
-
-        while (!cin.eof()) {
-            EigVector6 point;
-            cin >> point[0] >> point[1] >> point[2] >> point[3] >> point[4] >> point[5];
-            poses.push_back(point);
-        }
-        cin.close();
-        return poses;
-    }
-
-    StringList Evaluator::readDatabase(std::string &database) 
-    {
-        std::ifstream cin(database);
-        StringList filelist;
-
-        while (!cin.eof()) {
-            std::string file;
-            cin >> file;
-            file = trim(file);
-            if (file.size() > 0){
-                filelist.push_back(file);
-            }
-        }
-        cin.close();
-        return filelist;
+        return parseEntry(name);
     }
 
     int Evaluator::getIndexOfSmallestDistance(DoubleList &distances)

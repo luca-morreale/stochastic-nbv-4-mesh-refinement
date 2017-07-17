@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 
 
-#include <EvaluatorNoCopy.hpp>
+#include <Evaluator.hpp>
 
 #define OMP_THREADS 1
 
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
     // databaseFilename, groundTruthFilename, basicPoseFilename, baseImageFolder, intrinsicParams, sshconfig
 
-    cameval::EvaluatorNoCopy eval(databaseFilename, groundTruthFilename, basicPosesFilename, baseImageFolder, intrinsicParams, sshconfig);
+    cameval::Evaluator eval(databaseFilename, groundTruthFilename, basicPosesFilename, baseImageFolder, intrinsicParams, sshconfig);
     eval.evaluate();
 
     return 0;

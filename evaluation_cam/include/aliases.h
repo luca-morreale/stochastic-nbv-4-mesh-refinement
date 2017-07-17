@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <boost/filesystem.hpp>
+
 #include <pcl/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
 
@@ -30,17 +32,23 @@ namespace cameval {
     typedef pcl::PointCloud<PCLPoint> PCLPointCloud;
     typedef pcl::KdTreeFLANN<PCLPoint> PCLKDTree;
 
-
-    typedef Eigen::Matrix<float, 6, 1> EigVector6;
-    typedef std::vector<EigVector6> PoseList;
-
-
     typedef Eigen::Vector3f EigVector3;
     typedef Eigen::Matrix3f EigMatrix3;
 
 
     typedef glm::vec3 GLMVec3;
     typedef glm::mat3 GLMMat3;
+    typedef glm::mat4 GLMMat4;
+    
+    typedef std::pair<GLMVec3, GLMVec3> AnglePose;
+    typedef std::pair<GLMVec3, GLMMat3> Pose;
+
+    typedef std::vector<GLMVec3> GLMVec3List;
+    typedef std::vector<GLMMat3> GLMMat3List;
+    typedef std::vector<AnglePose> AnglePoseList;
+    typedef std::vector<Pose> PoseList;
+
+    typedef boost::filesystem::path BoostPath;
 
 
     typedef rapidjson::SizeType JsonSizeT;

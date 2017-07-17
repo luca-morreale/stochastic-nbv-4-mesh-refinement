@@ -34,28 +34,20 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 # ------------------------ BUILD -------------------------------
 
-add_executable(autoeval src/main.cpp src/Evaluator.cpp src/KDTree.cpp src/OpenMvgJsonHandler.cpp src/SshHandler.cpp src/utilities.cpp )
+file(GLOB SOURCE src/*.cpp)
 
-target_link_libraries(autoeval ${GMPXX_LIBRARIES}
-                                ${GMP_LIBRARIES}
-                                ${GMP_LIBRARY}
-                                ${PCL_LIBRARIES}
-                                ${Boost_FILESYSTEM_LIBRARY}
-                                ${Boost_SYSTEM_LIBRARY}
-                                ${LIBSSH_LIBRARY}
-                                )
+add_executable(eval main/main.cpp ${SOURCE} )
 
-add_executable(evalnocopy src/mainnocopy.cpp src/EvaluatorNoCopy.cpp src/OpenMvgJsonHandler.cpp src/SshHandler.cpp src/utilities.cpp )
-
-target_link_libraries(evalnocopy ${GMPXX_LIBRARIES}
+target_link_libraries(eval ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}
                                 ${GMP_LIBRARY}
                                 ${Boost_FILESYSTEM_LIBRARY}
                                 ${Boost_SYSTEM_LIBRARY}
                                 ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES} 
                                 )
 
-add_executable(testssh src/test_ssh.cpp src/EvaluatorNoCopy.cpp src/OpenMvgJsonHandler.cpp src/SshHandler.cpp src/utilities.cpp )
+add_executable(testssh main/test_ssh.cpp ${SOURCE} )
 
 target_link_libraries(testssh ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}
@@ -63,6 +55,7 @@ target_link_libraries(testssh ${GMPXX_LIBRARIES}
                                 ${Boost_FILESYSTEM_LIBRARY}
                                 ${Boost_SYSTEM_LIBRARY}
                                 ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES} 
                                 )
 
 

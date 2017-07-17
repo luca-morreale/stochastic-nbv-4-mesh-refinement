@@ -24,48 +24,48 @@ namespace cameval {
 
         #pragma omp parallel for
         for (int i = 0; i < database.size(); i++) {
-            EigVector6 pose = parseEntry(database[i]);
+            AnglePose pose = parseEntry(database[i]);
             fillPoint(pose, cloud->points[i]);
         }
 
         tree->setInputCloud(cloud);
     }
 
-    PCLPoint KDTree::getPointFromVector(EigVector6 &pose)
+    PCLPoint KDTree::getPointFromVector(AnglePose &pose)
     {
         PCLPoint point;
         fillPoint(pose, point);
         return point;
     }
 
-    void KDTree::fillPoint(EigVector6 &pose, PCLPoint &point)
+    void KDTree::fillPoint(AnglePose &pose, PCLPoint &point)
     {
-        point.x = pose[0];
-        point.y = pose[1];
-        point.z = pose[2];
-        point.vp_x = pose[3];
-        point.vp_y = pose[4];
-        point.vp_z = pose[5];
+        point.x = pose.first.x;
+        point.y = pose.first.y;
+        point.z = pose.first.z;
+        point.vp_x = pose.second.x;
+        point.vp_y = pose.second.y;
+        point.vp_z = pose.second.z;
     }
 
-    EigVector6 KDTree::getVectorFromPoint(PCLPoint &point)
+    AnglePose KDTree::getVectorFromPoint(PCLPoint &point)
     {
-        EigVector6 pose;
+        AnglePose pose;
         fillVector(pose, point);
         return pose;
     }
 
-    void KDTree::fillVector(EigVector6 &pose, PCLPoint &point)
+    void KDTree::fillVector(AnglePose &pose, PCLPoint &point)
     {
-        pose[0] = point.x;
-        pose[1] = point.y;
-        pose[2] = point.z;
-        pose[3] = point.vp_x;
-        pose[4] = point.vp_y;
-        pose[5] = point.vp_z;
+        pose.first.x = point.x;
+        pose.first.y = point.y;
+        pose.first.z = point.z;
+        pose.second.x = point.vp_x;
+        pose.second.y = point.vp_y;
+        pose.second.z = point.vp_z;
     }
 
-    EigVector6 KDTree::searchClosestPoint(EigVector6 &pose)
+    AnglePose KDTree::searchClosestPoint(AnglePose &pose)
     {
         PCLPoint searchPoint = getPointFromVector(pose);
         // K nearest neighbor search
@@ -78,23 +78,6 @@ namespace cameval {
             return getVectorFromPoint(cloud->points[pointIdxNKNSearch[0]]);
         }
         throw NoClosePointException();
-    }
-
-    EigVector6 KDTree::parseEntry(std::string &entry)
-    {
-        EigVector6 pose;
-
-        entry = entry.substr(0, entry.find_last_of("."));
-
-        StringList blocks;
-        std::size_t offset = 0;
-        boost::split(blocks, entry, boost::is_any_of("_"));
-        
-        for (int i = 0; i < 6; i++) {
-            pose[i] = std::strtod(blocks[i + 1].c_str(), NULL);
-        }
-        
-        return pose;
     }
 
 }

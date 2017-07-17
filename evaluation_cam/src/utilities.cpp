@@ -26,6 +26,34 @@ namespace cameval {
         return ltrim(rtrim(s));
     }
 
+    std::string readStringFromFile(std::string &filename)
+    {
+        std::ifstream cin(filename);
+        std::string content((std::istreambuf_iterator<char>(cin)), std::istreambuf_iterator<char>());
+        cin.close();
+        return content;
+    }
+
+    AnglePose parseEntry(std::string &entry)
+    {
+        AnglePose pose;
+
+        entry = entry.substr(0, entry.find_last_of("."));
+
+        StringList blocks;
+        std::size_t offset = 0;
+        boost::split(blocks, entry, boost::is_any_of("_"));
+        
+        for (int i = 0; i < 3; i++) {
+            pose.first[i] = std::strtod(blocks[i + 1].c_str(), NULL);
+        }
+        for (int i = 3; i < 6; i++) {
+            pose.second[i] = std::strtod(blocks[i + 1].c_str(), NULL);
+        }
+        
+        return pose;
+    }
+
     GLMVec3 convert(EigVector3 &arr)
     {
         return GLMVec3(arr[0], arr[1], arr[2]);
@@ -36,24 +64,45 @@ namespace cameval {
         return GLMMat3(mat(0, 0), mat(0, 1), mat(0, 2), mat(1, 0), mat(1, 1), mat(1, 2), mat(2, 0), mat(2, 1), mat(2, 2));
     }
 
-    EigMatrix3 rotationMatrix(float yaw, float pitch, float roll)
+    float rad(float deg)
     {
-        // Calculate rotation about x axis
-        EigMatrix3 Rx;
-        Rx << 1.0f, 0.0f, 0.0f, 
+        return deg * M_PI / 180.0f;
+    }
+
+    float deg(float rad)
+    {
+        return rad * 180.0f / M_PI;
+    }
+
+    GLMMat3 rotationMatrix(float yaw, float pitch, float roll)
+    {
+        return (rotationYaw(yaw) * rotationPitch(pitch)) * rotationRoll(roll);
+    }
+
+    GLMMat3 rotationMatrix(GLMVec3 &angles)
+    {
+        return (rotationYaw(angles.z) * rotationPitch(angles.y)) * rotationRoll(angles.x);
+    }
+
+    GLMMat3 rotationRoll(float roll)
+    {
+        return GLMMat3(1.0f, 0.0f, 0.0f,
                 0.0f, std::cos(roll), -std::sin(roll),
-                0.0f, std::sin(roll), std::cos(roll);
-        // Calculate rotation about y axis
-        EigMatrix3 Ry;
-        Ry << std::cos(pitch), 0.0f, std::sin(pitch), 
-                0.0f, 1.0f, 0.0f,
-                -std::sin(pitch), 0.0f, std::cos(pitch);
-        // Calculate rotation about z axis
-        EigMatrix3 Rz;
-        Rz << std::cos(yaw), -std::sin(yaw), 0.0f, 
-                std::sin(yaw), std::cos(yaw), 0.0f,
-                0.0f, 0.0f, 1.0f;
-        return (Rz * Ry) * Rx;
+                0.0f, std::sin(roll), std::cos(roll));
+    }
+
+    GLMMat3 rotationPitch(float pitch)
+    {
+        return GLMMat3(std::cos(pitch), 0.0f, std::sin(pitch),
+                        0.0f, 1.0f, 0.0f,
+                        -std::sin(pitch), 0.0f, std::cos(pitch));
+    }
+
+    GLMMat3 rotationYaw(float yaw)
+    {
+        return GLMMat3(std::cos(yaw), -std::sin(yaw), 0.0f,
+                        std::sin(yaw), std::cos(yaw), 0.0f,
+                        0.0f, 0.0f, 1.0f);
     }
 
 } // namespace cameval

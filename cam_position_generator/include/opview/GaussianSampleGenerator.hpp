@@ -1,5 +1,5 @@
-#ifndef CAM_POSITION_GENERATOR_MCMC_SAMPLER_GENERATOR_H
-#define CAM_POSITION_GENERATOR_MCMC_SAMPLER_GENERATOR_H
+#ifndef CAM_POSITION_GENERATOR_GAUSSIAN_SAMPLE_GENERATOR_H
+#define CAM_POSITION_GENERATOR_GAUSSIAN_SAMPLE_GENERATOR_H
 
 #include <math.h>
 #include <time.h>
@@ -19,10 +19,10 @@ namespace opview {
     #define COORDINATE_SIZE 3
     #define ORIENTATION_SIZE 5
 
-    class MCMCSamplerGenerator {
+    class GaussianSampleGenerator {
     public:
-        MCMCSamplerGenerator();
-        ~MCMCSamplerGenerator();
+        GaussianSampleGenerator();
+        ~GaussianSampleGenerator();
 
         virtual GLMVec3List getUniformSamples(DoublePairList limits, size_t qt=10);
 
@@ -55,8 +55,8 @@ namespace opview {
 
     };
 
-    typedef MCMCSamplerGenerator* MCMCSamplerGeneratorPtr;
+    typedef GaussianSampleGenerator* GaussianSampleGeneratorPtr;
 
 } // namespace opview
 
-#endif // CAM_POSITION_GENERATOR_MCMC_SAMPLER_GENERATOR_H
+#endif // CAM_POSITION_GENERATOR_GAUSSIAN_SAMPLE_GENERATOR_H

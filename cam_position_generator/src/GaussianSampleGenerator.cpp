@@ -1,9 +1,9 @@
-#include <opview/MCMCSamplerGenerator.hpp>
+#include <opview/GaussianSampleGenerator.hpp>
 
 
 namespace opview {
 
-    MCMCSamplerGenerator::MCMCSamplerGenerator()
+    GaussianSampleGenerator::GaussianSampleGenerator()
     {
         randGen = gsl_rng_alloc(gsl_rng_mt19937); /*Define random number t*/
         gsl_rng_set(randGen, SEED); /*Initiate the random number generator with seed*/
@@ -11,12 +11,12 @@ namespace opview {
         orientStd = M_PI;  // standard deviation of roll, pitch, yaw
     }
 
-    MCMCSamplerGenerator::~MCMCSamplerGenerator()
+    GaussianSampleGenerator::~GaussianSampleGenerator()
     {
         gsl_rng_free(randGen);
     }
 
-    GLMVec3List MCMCSamplerGenerator::getUniformSamples(DoublePairList limits, size_t qt)
+    GLMVec3List GaussianSampleGenerator::getUniformSamples(DoublePairList limits, size_t qt)
     {
         GLMVec3List pointList;
         double stepx = (limits[0].second - limits[0].first) / qt;
@@ -33,7 +33,7 @@ namespace opview {
         return pointList;
     }
 
-    GLMVec3List MCMCSamplerGenerator::getWeightedSamples(GLMVec3List &centers, DoubleList &weights, size_t qt)
+    GLMVec3List GaussianSampleGenerator::getWeightedSamples(GLMVec3List &centers, DoubleList &weights, size_t qt)
     {
         IntList sampleQt = computeWeightedSampleQuantity(weights, qt);
 
@@ -45,7 +45,7 @@ namespace opview {
         return points;
     }
 
-    GLMVec3List MCMCSamplerGenerator::getSamples(GLMVec3 &center, int qt)
+    GLMVec3List GaussianSampleGenerator::getSamples(GLMVec3 &center, int qt)
     {
         GLMVec3List points;
         for (int i = 0; i < qt; i++) {
@@ -55,7 +55,7 @@ namespace opview {
         return points;
     }
 
-    GLMVec3 MCMCSamplerGenerator::getSample(GLMVec3 &center)
+    GLMVec3 GaussianSampleGenerator::getSample(GLMVec3 &center)
     {
         gsl_vector *mus     = gsl_vector_alloc(COORDINATE_SIZE);
         gsl_matrix *var     = gsl_matrix_alloc(COORDINATE_SIZE, COORDINATE_SIZE);
@@ -75,7 +75,7 @@ namespace opview {
         return point;
     }
 
-    EigVector5List MCMCSamplerGenerator::getWeightedSamples(EigVector5List &centers, DoubleList &weights, size_t qt)
+    EigVector5List GaussianSampleGenerator::getWeightedSamples(EigVector5List &centers, DoubleList &weights, size_t qt)
     {
         IntList sampleQt = computeWeightedSampleQuantity(weights, qt);
 
@@ -87,7 +87,7 @@ namespace opview {
         return points;
     }
 
-    EigVector5List MCMCSamplerGenerator::getSamples(EigVector5 &center, int qt)
+    EigVector5List GaussianSampleGenerator::getSamples(EigVector5 &center, int qt)
     {
         EigVector5List points;
         for (int i = 0; i < qt; i++) {
@@ -97,7 +97,7 @@ namespace opview {
         return points;
     }
 
-    EigVector5 MCMCSamplerGenerator::getSample(EigVector5 &center)
+    EigVector5 GaussianSampleGenerator::getSample(EigVector5 &center)
     {
         gsl_vector *mus     = gsl_vector_alloc(ORIENTATION_SIZE);
         gsl_matrix *var     = gsl_matrix_alloc(ORIENTATION_SIZE, ORIENTATION_SIZE);
@@ -119,7 +119,7 @@ namespace opview {
         return point;
     }
 
-    void MCMCSamplerGenerator::randomMultivariateSample(const gsl_vector *mus, const gsl_matrix *variances, gsl_vector *results, size_t size)
+    void GaussianSampleGenerator::randomMultivariateSample(const gsl_vector *mus, const gsl_matrix *variances, gsl_vector *results, size_t size)
     {
         /* multivariate normal distribution random number generator */
         /*
@@ -144,7 +144,7 @@ namespace opview {
     }
 
     // FIXME change sigma depending on something? No but maybe set a different one
-    void MCMCSamplerGenerator::setupCoordinatesVarianceMatrix(gsl_matrix *var, size_t size)
+    void GaussianSampleGenerator::setupCoordinatesVarianceMatrix(gsl_matrix *var, size_t size)
     {
         //set up variance matrix
         for (size_t i = 0; i < size; i++) {
@@ -158,7 +158,7 @@ namespace opview {
         }
     }
 
-    void MCMCSamplerGenerator::setupOrientationVarianceMatrix(gsl_matrix *var, size_t size)
+    void GaussianSampleGenerator::setupOrientationVarianceMatrix(gsl_matrix *var, size_t size)
     {
         setupCoordinatesVarianceMatrix(var, size);
 
@@ -167,14 +167,14 @@ namespace opview {
         }
     }
 
-    void MCMCSamplerGenerator::setupMusVector(gsl_vector *mus, GLMVec3 &center)
+    void GaussianSampleGenerator::setupMusVector(gsl_vector *mus, GLMVec3 &center)
     {
         //set up the mean vector
         for (int i = 0; i < 3; i++) {
             gsl_vector_set(mus, i, center[i]);
         }
     }
-    void MCMCSamplerGenerator::setupMusVector(gsl_vector *mus, EigVector5 &center)
+    void GaussianSampleGenerator::setupMusVector(gsl_vector *mus, EigVector5 &center)
     {
         //set up the mean vector
         for (int i = 0; i < 5; i++) {
@@ -182,7 +182,7 @@ namespace opview {
         }
     }
 
-    void MCMCSamplerGenerator::freeDataStructure(GSLVectorList &vecs, GSLMatrixList &mats)
+    void GaussianSampleGenerator::freeDataStructure(GSLVectorList &vecs, GSLMatrixList &mats)
     {
         for (int i = 0; i < vecs.size(); i++) {
             gsl_vector_free(vecs[i]);
@@ -193,7 +193,7 @@ namespace opview {
         }
     }
 
-    IntList MCMCSamplerGenerator::computeWeightedSampleQuantity(DoubleList &weights, size_t qt)
+    IntList GaussianSampleGenerator::computeWeightedSampleQuantity(DoubleList &weights, size_t qt)
     {
         // if there is a negative value translate all up and then compute the weights
         double minWeight = *std::min_element(std::begin(weights), std::end(weights));

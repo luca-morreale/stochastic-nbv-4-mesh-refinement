@@ -1,14 +1,14 @@
-#include <opview/CompleteReportWriter.hpp>
+#include <opview/ExhaustiveReportWriter.hpp>
 
 namespace opview {
 
-    CompleteReportWriter::CompleteReportWriter(std::string reportFilename) : ReportWriter(reportFilename)
+    ExhaustiveReportWriter::ExhaustiveReportWriter(std::string reportFilename) : ReportWriter(reportFilename)
     { }
 
-    CompleteReportWriter::~CompleteReportWriter()
+    ExhaustiveReportWriter::~ExhaustiveReportWriter()
     { }
 
-    void CompleteReportWriter::append(DoubleList &pose, double score, int round)
+    void ExhaustiveReportWriter::append(DoubleList &pose, double score, int round)
     {
         out << "{\n" << "\"vals\": [";
 
@@ -36,17 +36,17 @@ namespace opview {
         out.flush();
     }
 
-    void CompleteReportWriter::append(OrderedPose poses, int round)
+    void ExhaustiveReportWriter::append(OrderedPose poses, int round)
     {
         while (!poses.empty()) {
             EigVector5 vec = poses.top().second;
-            auto tmp = convert(vec);
+            DoubleList tmp = convert(vec);
             append(tmp, poses.top().first, round);
             poses.pop();
         }        
     }
 
-    DoubleList CompleteReportWriter::convert(EigVector5 &vec)
+    DoubleList ExhaustiveReportWriter::convert(EigVector5 &vec)
     {
         DoubleList pose;
         for (int i = 0; i < 5; i++) {

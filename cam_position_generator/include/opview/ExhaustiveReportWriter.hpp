@@ -6,10 +6,10 @@
 
 namespace opview {
     
-    class CompleteReportWriter : public ReportWriter {
+    class ExhaustiveReportWriter : public ReportWriter {
     public:
-        CompleteReportWriter(std::string reportFilename);
-        ~CompleteReportWriter();
+        ExhaustiveReportWriter(std::string reportFilename);
+        ~ExhaustiveReportWriter();
 
         virtual void append(OrderedPose poses, int round);
         virtual void append(DoubleList &pose, double score, int round);
@@ -19,7 +19,7 @@ namespace opview {
 
     };
 
-    typedef CompleteReportWriter* CompleteReportWriterPtr;
+    typedef ExhaustiveReportWriter* ExhaustiveReportWriterPtr;
 
 
 } // namespace opview

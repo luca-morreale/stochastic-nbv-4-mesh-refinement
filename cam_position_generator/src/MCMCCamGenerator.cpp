@@ -6,13 +6,13 @@ namespace opview {
     MCMCCamGenerator::MCMCCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
                                             MCConfiguration &mcConfig, double goalAngle, double dispersion)
     {
-        this->sampler = new MCMCSamplerGenerator();
+        this->sampler = new GaussianSampleGenerator();
         this->vonMisesConfig = {deg2rad(goalAngle), dispersion};
         this->camConfig = camConfig;
         this->cams = cams;
         this->meshFile = meshFile;
         this->mcConfig = mcConfig;
-        this->log = new CompleteReportWriter("mcmc.json");
+        this->log = new ExhaustiveReportWriter("mcmc.json");
 
         this->fillTree();     // called to assure usage of overridden function
     }
@@ -60,7 +60,7 @@ namespace opview {
         OrderedPose currentOptima = uniformMCStep(centroid, normVector, 0);
 
         for (int d = 0; d < mcConfig.resamplingNum; d++) {
-            currentOptima = resamplingMCStep(centroid, normVector, currentOptima, d+1);
+            currentOptima = resamplingStep(centroid, normVector, currentOptima, d+1);
         }
     }
 
@@ -71,7 +71,7 @@ namespace opview {
         return this->extractBestResults(poses, round);
     }
 
-    OrderedPose MCMCCamGenerator::resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, int round)
+    OrderedPose MCMCCamGenerator::resamplingStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, int round)
     {
         EigVector5List orientedPoints = resamplingPointsGetter(currentOptima);
         OrderedPose poses = generalStep(centroid, normVector, orientedPoints);
@@ -383,6 +383,21 @@ namespace opview {
             }
         }
         return orientedPoints;
+    }
+
+    MCConfiguration MCMCCamGenerator::getMCConfiguration()
+    {
+        return mcConfig;
+    }
+    
+    VonMisesConfiguration MCMCCamGenerator::getVonMisesConfiguration()
+    {
+        return vonMisesConfig;
+    }
+    
+    CameraGeneralConfiguration MCMCCamGenerator::getCameraConfiguration()
+    {
+        return camConfig;
     }
 
     ReportWriterPtr MCMCCamGenerator::getLogger()

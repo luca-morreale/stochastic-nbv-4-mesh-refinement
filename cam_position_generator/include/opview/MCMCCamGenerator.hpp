@@ -8,9 +8,9 @@
 
 #include <opview/type_definition.h>
 #include <opview/alias_definition.h>
-#include <opview/MCMCSamplerGenerator.hpp>
+#include <opview/GaussianSampleGenerator.hpp>
 #include <opview/utilities.hpp>
-#include <opview/CompleteReportWriter.hpp>
+#include <opview/ExhaustiveReportWriter.hpp>
 
 namespace opview {
 
@@ -34,7 +34,7 @@ namespace opview {
     protected:
         virtual EigVector5List insertOrientation(GLMVec3List &points);
         virtual OrderedPose uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector, int round);
-        virtual OrderedPose resamplingMCStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, int round);
+        virtual OrderedPose resamplingStep(GLMVec3 &centroid, GLMVec3 &normVector, OrderedPose &currentOptima, int round);
         virtual OrderedPose generalStep(GLMVec3 &centroid, GLMVec3 &normVector, EigVector5List &orientedPoints);
         virtual OrderedPose orderPoses(EigVector5List &orientedPoints, DoubleList &values);
         virtual void computeObjectiveFunction(DoubleList &values, EigVector5List &points, GLMVec3 &centroid, GLMVec3 &normVector);
@@ -64,6 +64,10 @@ namespace opview {
 
         virtual void sumUpAll(DoubleList &dest, DoubleList &visibility, DoubleList &vonMises, DoubleList &projection, DoubleList &constraints);
         
+        MCConfiguration getMCConfiguration();
+        VonMisesConfiguration getVonMisesConfiguration();
+        CameraGeneralConfiguration getCameraConfiguration();
+        
         ReportWriterPtr getLogger();
         void setLogger(ReportWriterPtr log);
 
@@ -72,7 +76,7 @@ namespace opview {
         LambdaFloat offsetZ = [](){ return -1.0; };
 
     private:
-        MCMCSamplerGeneratorPtr sampler;
+        GaussianSampleGeneratorPtr sampler;
         MCConfiguration mcConfig;
         GLMVec3List cams;
         VonMisesConfiguration vonMisesConfig;
@@ -85,7 +89,7 @@ namespace opview {
 
         CameraGeneralConfiguration camConfig;
 
-        CompleteReportWriterPtr log;
+        ExhaustiveReportWriterPtr log;
 
         void fillTree();
         Polyhedron extractPolyhedron();

@@ -48,20 +48,8 @@ namespace cameval {
         std::string command = "mkdir " + outFolder;
         system(command.c_str());
 
-        log("OpenMvg: Compute incremental sfm");
-        command = "openMVG_main_IncrementalSfM -i "+jsonFile+" -m matches/ -o out_Incremental_Reconstruction";
-        system(command.c_str());
-
         log("OpenMvg: Compute structure from known poses");
-        command = "openMVG_main_ComputeStructureFromKnownPoses -i out_Incremental_Reconstruction/sfm_data.bin -o "+outFolder+"/sfm_data.json -m matches/ -f matches/matches.f.bin -b";
-        system(command.c_str());
-
-        log("OpenMvg: Convert ply from binary to ascii");
-        command = "CloudCompare -SILENT -O "+outFolder+"/sfm_data.ply -C_EXPORT_FMT PLY -PLY_EXPORT_FMT ASCII -NO_TIMESTAMP -SAVE_CLOUDS";
-        system(command.c_str());
-
-        log("OpenMvg: Scale cloud");
-        command = "matlab -nojvm -nodisplay -nosplash -r \"addpath('../../pc_compare'); addpath('"+outFolder+"'); transform_function('fixed_current_points.csv', 'reference_points.csv', '"+outFolder+"/sfm_data.ply', '"+outFolder+"/sfm_data.ply'); exit\"";
+        command = "openMVG_main_ComputeStructureFromKnownPoses -i matches/sfm_data.json -o "+outFolder+"/sfm_data.json -m matches/ -f matches/matches.f.bin -b";
         system(command.c_str());
 
         return outFolder;

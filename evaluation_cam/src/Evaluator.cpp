@@ -12,11 +12,9 @@ namespace cameval {
         OpenMvgSysCall::intrinsicParams = intrinsicParams;                    // file containing the intrinisc params in format ready for opengm
         this->distanceRegex = std::regex("\\[(.*)\\] \\[ComputeDistances\\] Mean distance = (.*) / std deviation = (.*)");
 
-
         log("\nPopulating basic camera poses");
         PoseReader reader(basicPoseFilename);
         this->basicPoses = reader.getPoses();
-        OpenMvgPoseConverter::convertPoses(this->basicPoses);
         log("\nBasic poses size: " + std::to_string(basicPoses.size()));
 
         log("\nPopulating Database");
@@ -82,30 +80,20 @@ namespace cameval {
     double Evaluator::evaluatePose(std::string &file, std::string &basicFolder)
     {
         log("\nParsing filename to pose");
-        AnglePose pose = extractPose(file);
+        Pose pose = Mapper::slowMappingToPose(file);    // FIXME this might be empty, so check, if not here just parse.
         log("\nDownloading image");
         std::string filename = sshHandler->download(file);
 
         std::string jsonFile = basicFolder + "/sfm_data.json";
 
         log("\nMove file into folder");
-        try {
-            std::string imagesFolder = "images";
-            FileHandler::moveFileInside(filename, imagesFolder);
-        } catch (const boost::filesystem::filesystem_error &ex) {
-            auto errorCode = ex.code();
-            if (FileHandler::isSpaceSystemError(errorCode)) {
-                std::cerr << "Out of Memory Exception" << std::endl;
-                return DBL_MAX;
-            }
-        }
+        moveImageIntoImagesFolder(filename);
         
         log("\nAppend image");
         size_t imgId = appendImageToJson(jsonFile, filename);
         
         log("\nSet position camera");
         setPositionOfCameras(jsonFile, pose, imgId);
-        
 
         std::string pairFile = generatePairFile(imgId);
 
@@ -120,7 +108,7 @@ namespace cameval {
         log("\nExtract distance from log");
         double distance = parseDistance(logFile);     
         
-        FileHandler::cleanAll({filename, pairFile, mvgFolder, "images/"+filename, "out_Incremental_Reconstruction"});     // remove all folders created!
+        FileHandler::cleanAll({filename, pairFile, mvgFolder, "images/"+filename, "matches/matches.f.bin"});     // remove all folders created!
 
         return distance;
     }
@@ -131,36 +119,6 @@ namespace cameval {
             mvgJsonHandler->setCamPosition(index, basicPoses[index].first, basicPoses[index].second);
         }
         defaultCamNumber = basicPoses.size();
-    }
-
-    void Evaluator::generateBasicPairFile()
-    {
-        std::string pairFile = "matches_pairs.txt";
-        if (!FileHandler::checkSourceExistence(pairFile)) {
-            std::ofstream out("matches_pairs.txt");
-            for (int i = 0; i < basicPoses.size() - 1; i++) {
-                for (int j = i + 1; j < basicPoses.size(); j++) {
-                    out << i << " " << j << std::endl;
-                }
-            }
-            out.close();
-        }
-    }
-    
-    std::string Evaluator::generatePairFile(size_t uniqueId)
-    {
-        std::string original = "matches_pairs.txt";
-        std::string filename = "matches_pairs_" + std::to_string(uniqueId) + ".txt";
-        FileHandler::copyFile(original, filename);
-
-        std::ofstream out;
-        out.open(filename, std::ofstream::out | std::ofstream::app);
-        for (int i = 0; i < defaultCamNumber; i++) {
-            out << i << " " << uniqueId << std::endl;
-        }
-        out.close();
-
-        return filename;
     }
 
     size_t Evaluator::appendImageToJson(std::string &sfmFile, std::string &imageFile)
@@ -181,6 +139,14 @@ namespace cameval {
         GLMMat3 rotation = rotationMatrix(pose.second);
         #pragma omp critical
         mvgJsonHandler->setCamPosition(imgId, pose.first, rotation);
+        #pragma omp critical
+        mvgJsonHandler->saveChanges();
+    }
+
+    void Evaluator::setPositionOfCameras(std::string &sfmFile, Pose &pose, size_t imgId)
+    {
+        #pragma omp critical
+        mvgJsonHandler->setCamPosition(imgId, pose.first, pose.second);
         #pragma omp critical
         mvgJsonHandler->saveChanges();
     }
@@ -240,6 +206,50 @@ namespace cameval {
             }
         }
         return index;
+    }
+
+    void Evaluator::generateBasicPairFile()
+    {
+        std::string pairFile = "matches_pairs.txt";
+        if (!FileHandler::checkSourceExistence(pairFile)) {
+            std::ofstream out("matches_pairs.txt");
+            for (int i = 0; i < basicPoses.size() - 1; i++) {
+                for (int j = i + 1; j < basicPoses.size(); j++) {
+                    out << i << " " << j << std::endl;
+                }
+            }
+            out.close();
+        }
+    }
+    
+    std::string Evaluator::generatePairFile(size_t uniqueId)
+    {
+        std::string original = "matches_pairs.txt";
+        std::string filename = "matches_pairs_" + std::to_string(uniqueId) + ".txt";
+        FileHandler::copyFile(original, filename);
+
+        std::ofstream out;
+        out.open(filename, std::ofstream::out | std::ofstream::app);
+        for (int i = 0; i < defaultCamNumber; i++) {
+            out << i << " " << uniqueId << std::endl;
+        }
+        out.close();
+
+        return filename;
+    }
+
+    void Evaluator::moveImageIntoImagesFolder(std::string &filename)
+    {
+        try {
+            std::string imagesFolder = "images";
+            FileHandler::moveFileInside(filename, imagesFolder);
+        } catch (const boost::filesystem::filesystem_error &ex) {
+            auto errorCode = ex.code();
+            if (FileHandler::isSpaceSystemError(errorCode)) {
+                std::cerr << "Out of Memory Exception" << std::endl;
+                return DBL_MAX;
+            }
+        }
     }
 
 

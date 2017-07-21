@@ -10,10 +10,10 @@
 #include <aliases.h>
 #include <FileHandler.hpp>
 #include <InputReader.hpp>
+#include <Mapper.hpp>
 #include <OpenMvgJsonHandler.hpp>
-#include <OpenMvgPoseConverter.hpp>
-#include <PoseReader.hpp>
 #include <OpenMvgSysCall.hpp>
+#include <PoseReader.hpp>
 #include <SshHandler.hpp>
 #include <utilities.hpp>
 
@@ -34,6 +34,7 @@ namespace cameval {
         virtual std::string generatePairFile(size_t uniqueId);
         virtual size_t appendImageToJson(std::string &sfmFile, std::string &imageFile);
         virtual void setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId);
+        virtual void setPositionOfCameras(std::string &sfmFile, Pose &pose, size_t imgId);
         virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename);
         virtual double parseDistance(std::string &logFile);
         virtual void generateBasicPairFile();
@@ -54,12 +55,15 @@ namespace cameval {
 
         SshHandlerPtr sshHandler;
 
+        MapperPtr mapper;
+
         std::regex distanceRegex;
 
         OpenMvgJsonHandlerPtr mvgJsonHandler;
         size_t defaultCamNumber;
 
         int getIndexOfSmallestDistance(DoubleList &distances);
+        void moveImageIntoImagesFolder(std::string &filename);
         
     };
 

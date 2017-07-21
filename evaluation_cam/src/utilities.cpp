@@ -39,16 +39,14 @@ namespace cameval {
         AnglePose pose;
 
         entry = entry.substr(0, entry.find_last_of("."));
-
         StringList blocks;
-        std::size_t offset = 0;
         boost::split(blocks, entry, boost::is_any_of("_"));
         
         for (int i = 0; i < 3; i++) {
             pose.first[i] = std::strtod(blocks[i + 1].c_str(), NULL);
         }
-        for (int i = 3; i < 6; i++) {
-            pose.second[i] = std::strtod(blocks[i + 1].c_str(), NULL);
+        for (int i = 0; i < 3; i++) {
+            pose.second[i] = std::strtod(blocks[i + 1 + 3].c_str(), NULL);
         }
         
         return pose;

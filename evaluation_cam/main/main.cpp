@@ -10,6 +10,8 @@
 
 #define ARGS 4
 
+#define DEBUG 1
+
 int main(int argc, char **argv) {
 
     omp_set_num_threads(OMP_THREADS);

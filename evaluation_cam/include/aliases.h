@@ -1,6 +1,8 @@
 #ifndef EVALUATION_CAMERA_POSITION_ALIAS_H_
 #define EVALUATION_CAMERA_POSITION_ALIAS_H_
 
+#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 #include <boost/filesystem.hpp>
@@ -23,6 +25,8 @@
 namespace cameval {
 
     typedef std::vector<std::string> StringList;
+    typedef std::unordered_set<std::string> StringUSet;
+    typedef std::unordered_map<std::string, int> StringIntUMap;
     typedef std::vector<int> IntList;
     typedef std::vector<float> FloatList;
     typedef std::vector<double> DoubleList;
@@ -47,6 +51,8 @@ namespace cameval {
     typedef std::vector<GLMMat3> GLMMat3List;
     typedef std::vector<AnglePose> AnglePoseList;
     typedef std::vector<Pose> PoseList;
+
+    typedef std::pair<StringList, PoseList> StringPoseMapping;
 
     typedef boost::filesystem::path BoostPath;
 

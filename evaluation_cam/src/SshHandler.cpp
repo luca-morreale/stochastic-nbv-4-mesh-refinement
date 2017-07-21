@@ -53,12 +53,12 @@ namespace cameval {
         if (session == NULL) {
             throw SSHException("Unable to create a session\n");
         }
-        
+
         setOptions(session);
 
         rc = ssh_connect(session);
         if (rc != SSH_OK) {
-            throwException("Error connecting to localhost: ", ssh_get_error(session), session);
+            throwException("Error connecting to host: ", ssh_get_error(session), session);
         }
 
         rc = ssh_userauth_password(session, NULL, this->password.c_str());

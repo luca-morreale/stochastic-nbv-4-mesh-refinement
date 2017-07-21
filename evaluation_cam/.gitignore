@@ -1,4 +1,3 @@
 build
-*.png
-images
-matches
+exec
+test

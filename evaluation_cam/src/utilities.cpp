@@ -4,7 +4,7 @@ namespace cameval {
 
     void log(std::string msg)
     {
-        std::cout << msg << std::endl;
+        std::cout << std::endl << msg << std::endl;
     }
 
     // trim from start

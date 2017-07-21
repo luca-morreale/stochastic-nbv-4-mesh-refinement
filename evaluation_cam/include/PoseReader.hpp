@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <aliases.h>
+#include <OpenMvgPoseConverter.hpp>
 #include <utilities.hpp>
 
 namespace cameval {

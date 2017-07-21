@@ -28,7 +28,7 @@ namespace cameval {
         for (int i = 0; i < positions.size(); i++) {
             poses.push_back(std::make_pair(positions[i], rotations[i]));
         }
-
+        OpenMvgPoseConverter::convertPoses(poses);
         return poses;
     }
 
@@ -38,19 +38,19 @@ namespace cameval {
         for (int i = 0; i < positions.size(); i++) {
             poses.push_back(std::make_pair(positions[i], angles[i]));
         }
-
+        OpenMvgPoseConverter::convertAnglePoses(poses);
         return poses;
     }
 
     void PoseReader::parse()
     {
         std::ifstream cin(this->filename);
-
+        
         while(!cin.eof()) {
             GLMVec3 position, lookAt;
             cin >> position.x >> position.y >> position.z >> lookAt.x >> lookAt.y >> lookAt.z;
 
-            ProjectionMatrix view = glm::lookAt(position, lookAt, GLMVec3(0, 1, 0));
+            ProjectionMatrix view = glm::lookAt(position, lookAt, GLMVec3(0, -1, 0));
             RotationMatrix rot(view);
             GLMVec3 angle = PoseReader::computeAngles(rot);
 

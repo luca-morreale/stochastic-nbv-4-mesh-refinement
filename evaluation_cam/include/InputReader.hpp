@@ -3,7 +3,10 @@
 
 #include <fstream>
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <aliases.h>
+#include <OpenMvgPoseConverter.hpp>
 #include <utilities.hpp>
 
 namespace cameval {
@@ -11,6 +14,11 @@ namespace cameval {
     class InputReader {
     public:
         static StringList readDatabase(std::string &database);
+        static StringPoseMapping readMappingDatabase(std::string &mappingFile);
+
+    private:
+        typedef GLMMat3 RotationMatrix;
+        typedef GLMMat4 ProjectionMatrix;
 
     };
 

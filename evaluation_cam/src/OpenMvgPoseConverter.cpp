@@ -23,17 +23,27 @@ namespace cameval {
 
     void OpenMvgPoseConverter::convertPoses(PoseList &poses)
     {
-        RotationMatrix rot = rotationPitch(M_PI);     // 180° around Y because vertical axis is y and not z
         for (int i = 0; i < poses.size(); i++) {
-            poses[i].second = rot * poses[i].second;
+            convertPose(poses[i]);
         }
+    }
+    
+    void OpenMvgPoseConverter::convertPose(Pose &pose)
+    {
+        // 180° around Y because vertical axis is y and not z
+        pose.second = rotationPitch(M_PI) * pose.second;
     }
 
     void OpenMvgPoseConverter::convertAnglePoses(AnglePoseList &poses)
     {
         for (int i = 0; i < poses.size(); i++) {
-            poses[i].second.y = poses[i].second.y + getAngleDisplacement(poses[i].second);
+            convertAnglePose(poses[i]);
         }
+    }
+
+    void OpenMvgPoseConverter::convertAnglePose(AnglePose &pose)
+    {
+        pose.second.y = pose.second.y + getAngleDisplacement(pose.second);
     }
 
     float OpenMvgPoseConverter::getAngleDisplacement(GLMVec3 &angles)

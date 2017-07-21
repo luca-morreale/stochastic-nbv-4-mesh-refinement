@@ -16,7 +16,9 @@ namespace cameval {
         // ~OpenMvgPoseConverter();
 
         static void convertPoses(PoseList &poses);
+        static void convertPose(Pose &pose);
         static void convertAnglePoses(AnglePoseList &poses);
+        static void convertAnglePose(AnglePose &pose);
 
     private:
 

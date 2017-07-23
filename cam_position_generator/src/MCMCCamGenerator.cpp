@@ -375,7 +375,7 @@ namespace opview {
 
         #pragma omp parallel for collapse(3)
         for (int p = 0; p < points.size(); p++) {
-            orientationCycles() {
+            orientationCycles(mcConfig.deltaDegree) {
                 EigVector5 pose;
                 pose << points[p].x, points[p].y, points[p].z, deg2rad((float)ptc), deg2rad((float)yaw);
                 #pragma omp critical

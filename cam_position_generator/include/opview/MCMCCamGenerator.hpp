@@ -15,8 +15,7 @@
 namespace opview {
 
     #define OFFSPRING 0.1   // 10% of the total
-    #define ORIENTATION 10
-    #define orientationCycles() for(int ptc = 0; ptc < 360; ptc+=ORIENTATION) for(int yaw = 0; yaw < 360; yaw+=ORIENTATION)
+    #define orientationCycles(delta) for(int ptc = 0; ptc < 360; ptc+=delta) for(int yaw = 0; yaw < 360; yaw+=delta)
 
     #define BD_AERIAL 0.2f
     #define BD_TERRESTRIAL_PROSPECTIVE 0.25f

@@ -3,16 +3,18 @@
 namespace opview {
 
     PSOCamGenerator::PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            MCConfiguration &mcConfig, double goalAngle, double dispersion)
-                                            : MCMCCamGenerator(camConfig, meshFile, cams, mcConfig, goalAngle, dispersion)
+                                            PSOConfiguration &psoConfig, double goalAngle, double dispersion)
+                                            : MCMCCamGenerator(camConfig, meshFile, cams, psoConfig.mcConfig, goalAngle, dispersion)
     {
         randGen = gsl_rng_alloc(gsl_rng_mt19937);
         gsl_rng_set(randGen, SEED);
         setLogger(new SwarmReportWriter("pso_log.txt"));
 
-        // FIXME set omega and phi
         omega << 2, 0.729, 0.729, 0.729, 0.729;
         phiP << 2, 1.49445, 1.49445, 1.49445, 1.49445;
+
+        spaceLowerBounds = psoConfig.spaceLowerBounds;
+        spaceUpperBounds = psoConfig.spaceUpperBounds;
     }
 
     PSOCamGenerator::~PSOCamGenerator()
@@ -58,28 +60,50 @@ namespace opview {
         evaluateSwarm(centroid, normVector);
     }
 
-    void PSOCamGenerator::updateVelocityParticle(int j)
+    void PSOCamGenerator::updateVelocityParticle(int p)
     {
-        double rp = gsl_rng_uniform(randGen);
-        double rg = gsl_rng_uniform(randGen);
+        double rp = this->uniform();
+        double rg = this->uniform();
 
-        EigVector5 dp = particles[j]->bestPosition - particles[j]->position;
-        EigVector5 dg = particles[bestParticleIndex]->position - particles[j]->position;
+        EigVector5 dp = particles[p]->bestPosition - particles[p]->position;
+        EigVector5 dg = particles[bestParticleIndex]->position - particles[p]->position;
 
-        particles[j]->velocity = omega.cwiseProduct(particles[j]->velocity);
-        particles[j]->velocity += rp * phiP.cwiseProduct(dp);
+        particles[p]->velocity = omega.cwiseProduct(particles[p]->velocity);
+        particles[p]->velocity += rp * phiP.cwiseProduct(dp);
         
-        if (bestParticleIndex != j) {
-            particles[j]->velocity += rg * phiP.cwiseProduct(dg);
+        if (bestParticleIndex != p) {
+            particles[p]->velocity += rg * phiP.cwiseProduct(dg);
         }
 
-       // Here there are no bounds in the space.
+        this->fixSpaceVelocity(p);
     }
 
-    void PSOCamGenerator::updatePositionParticle(int j)
+    void PSOCamGenerator::fixSpaceVelocity(int p)
     {
-        particles[j]->updatePosition();
-        // Here there are no bounds in the space.
+        for (int i = 0; i < 3; i++) {
+            if (fabs(particles[p]->velocity[i]) > (spaceUpperBounds[i] - spaceLowerBounds[i])) {
+                particles[p]->velocity[i] = this->uniform() * (spaceUpperBounds[i] - spaceLowerBounds[i]);
+            }
+        }
+    }
+
+    void PSOCamGenerator::updatePositionParticle(int p)
+    {
+        particles[p]->updatePosition();
+        this->fixSpacePosition(p);
+    }
+
+    void PSOCamGenerator::fixSpacePosition(int p)
+    {
+        for (int i = 0; i < 3; i++) {
+            if (particles[p]->position[i] > (spaceLowerBounds[i])) {
+                particles[p]->position[i] = spaceLowerBounds[i];
+                particles[p]->velocity[i] = 0.0;
+            } else if (particles[p]->position[i] < (spaceLowerBounds[i])) {
+                particles[p]->position[i] = spaceLowerBounds[i];
+                particles[p]->velocity[i] = 0.0;
+            }
+        }
     }
 
     EigVector5List PSOCamGenerator::extractSwarmPositions()
@@ -130,6 +154,11 @@ namespace opview {
                 this->bestParticleIndex = p;
             }
         }
+    }
+
+    double PSOCamGenerator::uniform()
+    {
+        return gsl_rng_uniform(randGen) * 0.001;
     }
 
     void PSOCamGenerator::logParticles(int round)

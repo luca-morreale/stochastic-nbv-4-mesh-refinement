@@ -161,16 +161,32 @@ namespace opview {
         size_t resamplingNum;
         size_t particles;
         size_t particleUniform;
+        int deltaDegree;
 
     public:
-        MCConfiguration(size_t resamplingNum, size_t particles, size_t particleUniform) 
-                        : resamplingNum(resamplingNum), particles(particles), particleUniform(particleUniform)
+        MCConfiguration(size_t resamplingNum, size_t particles, size_t particleUniform, int deltaDegree) 
+                        : resamplingNum(resamplingNum), particles(particles), particleUniform(particleUniform), deltaDegree(deltaDegree)
         { /*    */ }
-        MCConfiguration() : resamplingNum(10), particles(1000), particleUniform(10)
+        MCConfiguration() : resamplingNum(10), particles(1000), particleUniform(10), deltaDegree(45)
         { /*    */ }
         
     } MCConfiguration;
     typedef MCConfiguration* MCConfigurationPtr;
+
+    typedef struct PSOConfiguration {
+        MCConfiguration mcConfig;
+        GLMVec3 spaceLowerBounds;
+        GLMVec3 spaceUpperBounds;
+
+        PSOConfiguration(MCConfiguration &mcConfig, GLMVec3 lowerBounds, GLMVec3 upperBounds)
+                : mcConfig(mcConfig), spaceLowerBounds(lowerBounds), spaceUpperBounds(upperBounds)
+        { /*    */ }
+
+        PSOConfiguration() : spaceLowerBounds(GLMVec3(-10, -10, -10)), spaceUpperBounds(GLMVec3(10, 10, 10))
+        { /*    */ }
+
+    } PSOConfiguration;
+    typedef PSOConfiguration* PSOConfigurationPtr;
 
 }
 

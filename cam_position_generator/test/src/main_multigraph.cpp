@@ -12,16 +12,6 @@
 #include <opview/SolverGenerator.hpp>
 #include <opview/type_definition.h>
 
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_vector.h>
-
-
-
 #define OMP_THREADS 8
 #define DEPTH 10
 #define DISCRETE_LABELS 3

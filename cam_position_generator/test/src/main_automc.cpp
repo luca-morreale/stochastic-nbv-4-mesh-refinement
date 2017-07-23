@@ -10,14 +10,6 @@
 #include <opview/AutonomousMCMCCamGenerator.hpp>
 #include <opview/utilities.hpp>
 
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_vector.h>
-
 #define OMP_THREADS 8
 
 
@@ -63,7 +55,7 @@ int main(int argc, char **argv) {
 
     opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty);
 
-    opview::MCConfiguration mcConfig(10, 100000, 100); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    opview::MCConfiguration mcConfig(10, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
 
     size_t maxPoints = 10;
@@ -71,7 +63,7 @@ int main(int argc, char **argv) {
     
     // opview::MCMCCamGenerator model(camConfig, meshFile, cams, mcConfig);
     opview::AutonomousMCMCCamGenerator model(camConfig, meshConfig, mcConfig, maxPoints, thresholdUncertainty);
-
+    
     model.estimateBestCameraPosition();
 
     return 0;

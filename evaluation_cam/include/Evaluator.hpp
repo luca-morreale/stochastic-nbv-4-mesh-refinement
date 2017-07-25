@@ -4,7 +4,6 @@
 #include <regex>
 
 #include <boost/filesystem.hpp>
-
 #include <boost/algorithm/string.hpp>
 
 #include <aliases.h>

@@ -48,6 +48,7 @@ namespace cameval {
             double tmp = evaluatePose(database[i], basicFolder);
             distances[i] = tmp;
             out << database[i] << " " << distances[i] << std::endl;
+            out.flush();
             log("\nDone analysis pose #" + std::to_string(i));
         }
 
@@ -155,7 +156,8 @@ namespace cameval {
     {
         std::string logfilename = alignedCloud.substr(0, alignedCloud.find_last_of("/")) + "/log_distance.txt";
 
-        // assume definition of alias for CloudCompare -> 
+        // NOTE no need to remove cameras because assumed main_Structure... already output a structure without cameras and in ascii
+
         std::string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + alignedCloud + " -O " + groundTruthFilename + " -c2c_dist";
         system(command.c_str());
 

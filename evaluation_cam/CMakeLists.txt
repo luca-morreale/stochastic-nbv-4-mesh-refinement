@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 2.8.3)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(CGAL REQUIRED)
 
 find_library(GMP_LIBRARY gmp /usr/lib)
 find_package(Eigen3 REQUIRED)
@@ -27,6 +28,7 @@ endif()
 # ----------------------- INCLUDES ----------------------------
 
 include_directories(include/)
+include_directories(${CGAL_INCLUDE_DIRS})
 
 # ----------------------- GCC FLAGS ----------------------------
 
@@ -41,10 +43,11 @@ add_executable(eval main/main.cpp ${SOURCE} )
 target_link_libraries(eval ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}
                                 ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
                                 ${Boost_FILESYSTEM_LIBRARY}
                                 ${Boost_SYSTEM_LIBRARY}
                                 ${LIBSSH_LIBRARY}
-                                ${PCL_LIBRARIES} 
+                                ${PCL_LIBRARIES}
                                 )
 
 add_executable(testssh main/test_ssh.cpp ${SOURCE} )
@@ -52,12 +55,24 @@ add_executable(testssh main/test_ssh.cpp ${SOURCE} )
 target_link_libraries(testssh ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}
                                 ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
                                 ${Boost_FILESYSTEM_LIBRARY}
                                 ${Boost_SYSTEM_LIBRARY}
                                 ${LIBSSH_LIBRARY}
-                                ${PCL_LIBRARIES} 
+                                ${PCL_LIBRARIES}
                                 )
 
+add_executable(result main/main_closest.cpp ${SOURCE} )
+
+target_link_libraries(result ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
 
 # ------------------------ INSTALLATION ------------------------
 

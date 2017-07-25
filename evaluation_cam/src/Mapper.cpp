@@ -38,8 +38,6 @@ namespace cameval {
         entry = entry.substr(entry.find_last_of("/") + 1, entry.size());
         entry = entry.substr(0, entry.find_last_of("."));
         
-        std::cout << entry << std::endl;
-
         std::ifstream cin("output_mapping.txt");
 
         while (!cin.eof()) {

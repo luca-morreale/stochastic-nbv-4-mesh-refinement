@@ -52,7 +52,7 @@ namespace cameval {
 
             ProjectionMatrix view = glm::lookAt(position, lookAt, GLMVec3(0, -1, 0));
             RotationMatrix rot(view);
-            GLMVec3 angle = PoseReader::computeAngles(rot);
+            GLMVec3 angle = computeAngles(rot);
 
             this->positions.push_back(position);
             this->rotations.push_back(rot);

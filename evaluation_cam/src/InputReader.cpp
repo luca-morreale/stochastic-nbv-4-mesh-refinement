@@ -29,14 +29,14 @@ namespace cameval {
             std::string filename, poseString;
             cin >> filename >> poseString;
 
-            poseString = "prefix_" + poseString;
-            poseString += ".suffix";
-            AnglePose pose = parseEntry(poseString);
-
             filename = trim(filename);
             if (filename.size() == 0){
                 continue;
             }
+
+            poseString = "prefix_" + poseString;
+            poseString += ".suffix";
+            AnglePose pose = parseEntry(poseString);            
 
             ProjectionMatrix view = glm::lookAt(pose.first, pose.second, GLMVec3(0, 1, 0));
             RotationMatrix rot(view);

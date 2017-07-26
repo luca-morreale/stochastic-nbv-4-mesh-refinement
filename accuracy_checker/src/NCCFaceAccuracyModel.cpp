@@ -269,8 +269,11 @@ namespace meshac {
         for (int i = 0; i < triangles.size() - 1; i++) {    // try all possible pair of triangles only once!!!
             for (int j = i+1; j < triangles.size(); j++) {
 
+                double maxVal;
+                CVPoint maxLoc;
                 cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_CCORR_NORMED);
-                double maxVal = result.at<double>(0,0);
+                cv::minMaxLoc(result, NULL, &maxVal, NULL, &maxLoc, CVMat());
+
 
                 #pragma omp critical
                 maxs.push_back(maxVal);

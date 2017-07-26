@@ -57,27 +57,27 @@ namespace meshac {
 
     void NCCFaceAccuracyModel::initTree()
     {
-        TriangleList faces = this->getFaces();
-        this->tree = new Tree(faces.begin(), faces.end());
+        TriangleList facets = this->getFaces();
+        this->tree = new Tree(facets.begin(), facets.end());
     }
 
     void NCCFaceAccuracyModel::convertTriangleToIndex()
     {
         FaceIndexList newFaces;
-        TriangleList faces = this->getFaces();
+        TriangleList facets = this->getFaces();
 
         #pragma omp parallel for
-        for (int f = 0; f < faces.size(); f++) {
+        for (int f = 0; f < facets.size(); f++) {
             try {
                 FaceIndex face;
                 for (int v = 0; v < 3; v++) {
-                    Point vertex = faces[f].vertex(v);
+                    Point vertex = facets[f].vertex(v);
                     size_t index = retreiveIndex(vertex);
                     face.set(v, index);
                 }
                 #pragma omp critical
                 newFaces.push_back(face);
-            } catch (UnexpectedPointException &ex) {}
+            } catch (UnexpectedPointException &ex) { }
         }
 
         this->faces = newFaces;
@@ -122,7 +122,7 @@ namespace meshac {
         for (int i = 0; i < faces.size(); i++) {
             if (faces[i].is(ia, ib, ic)) {
                 acc = getAccuracyForFace(i);        // assume there are not duplicate triangles
-            }           
+            }
         }
 
         if (acc >= 0) {
@@ -134,12 +134,12 @@ namespace meshac {
 
     double NCCFaceAccuracyModel::getAccuracyForFace(int faceIndex)
     {
-        if (faceIndex > faces.size()) {
+        if (faceIndex >= faces.size() || faceIndex < 0) {
             throw UndefinedFaceIndexException(faceIndex);
         }
 
         ListMappingGLMVec2 mappings = getMappings(faceIndex);
-        
+
         IntList commonCams = selectCommonCameras(mappings);
 
         if (commonCams.size() < 2) return -10.0;
@@ -147,6 +147,7 @@ namespace meshac {
         mappings = removeUnusedMapping(mappings, commonCams);
 
         CVMatList triangles = projectTriangles(mappings, commonCams);
+
         return computeNCC(triangles);
     }
 
@@ -257,10 +258,11 @@ namespace meshac {
     double NCCFaceAccuracyModel::computeNCC(CVMatList triangles)
     {
         CVMat result;
-        int result_cols =  triangles[0].cols;
-        int result_rows = triangles[0].rows;
+        int result_cols =  1;
+        int result_rows = 1;
+
         result.create(result_rows, result_cols, triangles[0].type());
-        DoubleList maxs, mins;
+        DoubleList maxs;
 
         // NOTE if parallelized probably dies
         // #pragma omp parallel for
@@ -268,15 +270,10 @@ namespace meshac {
             for (int j = i+1; j < triangles.size(); j++) {
 
                 cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_CCORR_NORMED);
-                double minVal, maxVal; 
-                CVPoint minLoc, maxLoc;
+                double maxVal = result.at<double>(0,0);
 
-                cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, CVMat());
                 #pragma omp critical
-                {
-                    mins.push_back(minVal);
-                    maxs.push_back(maxVal);
-                }
+                maxs.push_back(maxVal);
             }
         }
 

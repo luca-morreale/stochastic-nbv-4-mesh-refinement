@@ -10,7 +10,7 @@ namespace meshac {
         UndefinedFaceIndexException(std::string msg) : std::runtime_error(msg)
         { /*    */ }
 
-        UndefinedFaceIndexException(int index) : std::runtime_error("Undefined face/triangle in the mesh for the given index"+std::to_string(index)+".")
+        UndefinedFaceIndexException(int index) : std::runtime_error("Undefined face/triangle in the mesh for the given index "+std::to_string(index)+".")
         { /*    */ }
 
         UndefinedFaceIndexException() : std::runtime_error("Undefined face/triangle in the mesh for the given index.")

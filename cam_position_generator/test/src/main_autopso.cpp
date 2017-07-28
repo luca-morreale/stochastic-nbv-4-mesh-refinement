@@ -7,6 +7,7 @@
 
 #include <opview/type_definition.h>
 #include <opview/AutonomousPSOCamGenerator.hpp>
+#include <opview/AutonomousLocalPSOCamGenerator.hpp>
 #include <opview/utilities.hpp>
 
 
@@ -55,15 +56,16 @@ int main(int argc, char **argv) {
     opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty);
     // // centroid, normal
 
-    opview::MCConfiguration mcConfig(10, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    opview::MCConfiguration mcConfig(30, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
 
-    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5));
+    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-3, -3, -3), glm::vec3(1, 1, 1));
 
     size_t maxPoints = 10;
     long double thresholdUncertainty = 100000;
     
-    opview::AutonomousPSOCamGenerator model(camConfig, meshConfig, psoConfig, maxPoints, thresholdUncertainty);
+    // opview::AutonomousPSOCamGenerator model(camConfig, meshConfig, psoConfig, maxPoints, thresholdUncertainty);
+    opview::AutonomousLocalPSOCamGenerator model(camConfig, meshConfig, psoConfig, maxPoints, thresholdUncertainty);
 
     model.estimateBestCameraPosition();
 

@@ -7,6 +7,7 @@
 
 #include <opview/type_definition.h>
 #include <opview/PSOCamGenerator.hpp>
+#include <opview/LocalPSOCamGenerator.hpp>
 #include <opview/utilities.hpp>
 
 
@@ -38,12 +39,13 @@ int main(int argc, char **argv) {
     glm::vec3 normal(-0.14341, 0.238821, -0.960416);
     // // centroid, normal
 
-    opview::MCConfiguration mcConfig(10, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    opview::MCConfiguration mcConfig(30, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
 
-    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-5, -5, -5), glm::vec3(5, 5, 5));
+    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-3, -3, -3), glm::vec3(1, 1, 1));
     
-    opview::PSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
+    // opview::PSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
+    opview::LocalPSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
 
     model.estimateBestCameraPosition(centroid, normal);
 

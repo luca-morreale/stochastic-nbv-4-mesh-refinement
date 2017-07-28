@@ -1,5 +1,5 @@
-#ifndef MESH_ACCURACY_NCC_FACE_ACCURACY_MODEL_H
-#define MESH_ACCURACY_NCC_FACE_ACCURACY_MODEL_H
+#ifndef MESH_ACCURACY_GENERAL_INDEX_FACE_ACCURACY_MODEL_H
+#define MESH_ACCURACY_GENERAL_INDEX_FACE_ACCURACY_MODEL_H
 
 #include <algorithm>
 #include <ctime>
@@ -24,12 +24,12 @@
 namespace meshac {
 
     // #define TRIANGLE_SIZE 24.5  // area of 100
-    #define TRIANGLE_SIDE 100  // area of 4330.13
+    #define TRIANGLE_SIDE 500  // area of 4330.13
     
-    class NCCFaceAccuracyModel : public FaceAccuracyModel {
+    class GeneralIndexFaceAccuracyModel : public FaceAccuracyModel {
     public:
-        NCCFaceAccuracyModel(std::string &meshFile, SfMData &data, std::string &pathPrefix);
-        ~NCCFaceAccuracyModel();
+        GeneralIndexFaceAccuracyModel(std::string &meshFile, SfMData &data, std::string &pathPrefix);
+        ~GeneralIndexFaceAccuracyModel();
 
         /*
          * Computes all the matrixs that represents the accuracy of the point.
@@ -44,7 +44,8 @@ namespace meshac {
         virtual CVMat generateAffineTransform(GLMVec2 &a, GLMVec2 &b, GLMVec2 &c);
         virtual CVMat applyAffine(CVMat &affine, int camIndex);
         virtual CVMatList projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams);
-        virtual double computeNCC(CVMatList triangles);
+
+        virtual double computeIndex(CVMatList triangles) = 0;
 
         virtual GLMVec2 projectThrough(GLMVec3 &meshPoint, int camIndex);
         virtual bool isMeaningfulPose(GLMVec3 &meshPoint, int camIndex);
@@ -92,8 +93,8 @@ namespace meshac {
 
     };
 
-    typedef NCCFaceAccuracyModel* NCCFaceAccuracyModelPtr;
+    typedef GeneralIndexFaceAccuracyModel* GeneralIndexFaceAccuracyModelPtr;
 
 }
 
-#endif // MESH_ACCURACY_NCC_FACE_ACCURACY_MODEL_H
+#endif // MESH_ACCURACY_GENERAL_INDEX_FACE_ACCURACY_MODEL_H

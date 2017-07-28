@@ -1,8 +1,8 @@
-#include <meshac/NCCFaceAccuracyModel.hpp>
+#include <meshac/GeneralIndexFaceAccuracyModel.hpp>
 
 namespace meshac {
 
-    NCCFaceAccuracyModel::NCCFaceAccuracyModel(std::string &meshFile, SfMData &data, std::string &pathPrefix) : FaceAccuracyModel(meshFile)
+    GeneralIndexFaceAccuracyModel::GeneralIndexFaceAccuracyModel(std::string &meshFile, SfMData &data, std::string &pathPrefix) : FaceAccuracyModel(meshFile)
     {
         this->imgFilepath = data.camerasPaths_;
         this->points = data.points_;
@@ -20,12 +20,12 @@ namespace meshac {
         this->projectMeshPoints();
     }
 
-    NCCFaceAccuracyModel::~NCCFaceAccuracyModel()
+    GeneralIndexFaceAccuracyModel::~GeneralIndexFaceAccuracyModel()
     {
         delete tree;
     }
 
-    void NCCFaceAccuracyModel::initAffineTriangle()
+    void GeneralIndexFaceAccuracyModel::initAffineTriangle()
     {
         float ax = (float)TRIANGLE_SIDE / 2.0f;
         float ay = (float)TRIANGLE_SIDE * std::sin(deg2rad(60.0f));
@@ -37,7 +37,7 @@ namespace meshac {
         setTriangularMask();
     }
 
-    void NCCFaceAccuracyModel::setTriangularMask()  // NOTE I can not know the right size of the mask ahead of time
+    void GeneralIndexFaceAccuracyModel::setTriangularMask()  // NOTE I can not know the right size of the mask ahead of time
     {
         CVPoint corners[1][3];
         corners[0][0] = destTriangle[0];
@@ -55,13 +55,13 @@ namespace meshac {
         this->triangularMask = mask;
     }
 
-    void NCCFaceAccuracyModel::initTree()
+    void GeneralIndexFaceAccuracyModel::initTree()
     {
         TriangleList facets = this->getFaces();
         this->tree = new Tree(facets.begin(), facets.end());
     }
 
-    void NCCFaceAccuracyModel::convertTriangleToIndex()
+    void GeneralIndexFaceAccuracyModel::convertTriangleToIndex()
     {
         FaceIndexList newFaces;
         TriangleList facets = this->getFaces();
@@ -83,13 +83,13 @@ namespace meshac {
         this->faces = newFaces;
     }
 
-    int NCCFaceAccuracyModel::retreiveIndex(Point &vertex)
+    int GeneralIndexFaceAccuracyModel::retreiveIndex(Point &vertex)
     {
         GLMVec3 point(vertex.x(), vertex.y(), vertex.z());
         return retreiveIndex(point);
     }
 
-    int NCCFaceAccuracyModel::retreiveIndex(GLMVec3 &point)
+    int GeneralIndexFaceAccuracyModel::retreiveIndex(GLMVec3 &point)
     {
         int index = -1;
         #pragma omp parallel for
@@ -106,12 +106,12 @@ namespace meshac {
         throw UnexpectedPointException(point);
     }
 
-    void NCCFaceAccuracyModel::fixImagesPath(std::string &pathPrefix)
+    void GeneralIndexFaceAccuracyModel::fixImagesPath(std::string &pathPrefix)
     {
         std::for_each(this->imgFilepath.begin(), this->imgFilepath.end(), [pathPrefix](std::string &path) { path.insert(0, pathPrefix); } );
     }
 
-    double NCCFaceAccuracyModel::getAccuracyForFace(GLMVec3 &a, GLMVec3 &b, GLMVec3 &c)
+    double GeneralIndexFaceAccuracyModel::getAccuracyForFace(GLMVec3 &a, GLMVec3 &b, GLMVec3 &c)
     {
         int ia = retreiveIndex(a);
         int ib = retreiveIndex(b);
@@ -132,7 +132,7 @@ namespace meshac {
         throw UnexpectedTriangleException(a, b, c);
     }
 
-    double NCCFaceAccuracyModel::getAccuracyForFace(int faceIndex)
+    double GeneralIndexFaceAccuracyModel::getAccuracyForFace(int faceIndex)
     {
         if (faceIndex >= faces.size() || faceIndex < 0) {
             throw UndefinedFaceIndexException(faceIndex);
@@ -148,10 +148,10 @@ namespace meshac {
 
         CVMatList triangles = projectTriangles(mappings, commonCams);
 
-        return computeNCC(triangles);
+        return computeIndex(triangles);
     }
 
-    ListMappingGLMVec2 NCCFaceAccuracyModel::getMappings(int faceIndex)
+    ListMappingGLMVec2 GeneralIndexFaceAccuracyModel::getMappings(int faceIndex)
     {
         FaceIndex face = faces[faceIndex];
         ListMappingGLMVec2 mappings;
@@ -165,7 +165,7 @@ namespace meshac {
     }
 
     // Select cams where every point is present
-    IntList NCCFaceAccuracyModel::selectCommonCameras(ListMappingGLMVec2 &mappings)
+    IntList GeneralIndexFaceAccuracyModel::selectCommonCameras(ListMappingGLMVec2 &mappings)
     {
         IntArrayList camsList;
 
@@ -188,7 +188,7 @@ namespace meshac {
         return commonCams;
     }
 
-    ListMappingGLMVec2 NCCFaceAccuracyModel::removeUnusedMapping(ListMappingGLMVec2 &mappings, IntList &commonCams)
+    ListMappingGLMVec2 GeneralIndexFaceAccuracyModel::removeUnusedMapping(ListMappingGLMVec2 &mappings, IntList &commonCams)
     {
         ListMappingGLMVec2 camMappings;
         camMappings.assign(mappings.size(), std::map<int, GLMVec2>());
@@ -202,7 +202,7 @@ namespace meshac {
         return camMappings;
     }
 
-    CVMatList NCCFaceAccuracyModel::projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams)
+    CVMatList GeneralIndexFaceAccuracyModel::projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams)
     {
         CVMatList projectedFace;
 
@@ -221,7 +221,7 @@ namespace meshac {
         return projectedFace;
     }
 
-    CVMat NCCFaceAccuracyModel::generateAffineTransform(GLMVec2 &a, GLMVec2 &b, GLMVec2 &c)
+    CVMat GeneralIndexFaceAccuracyModel::generateAffineTransform(GLMVec2 &a, GLMVec2 &b, GLMVec2 &c)
     {
         CVPoint2 srcTri[3];
         CVMat warp_mat(2, 3, CV_32FC1);
@@ -236,7 +236,7 @@ namespace meshac {
         return warp_mat;
     }
 
-    CVMat NCCFaceAccuracyModel::applyAffine(CVMat &affine, int camIndex)
+    CVMat GeneralIndexFaceAccuracyModel::applyAffine(CVMat &affine, int camIndex)
     {
         CVMat src, projected;
         src = cv::imread(this->imgFilepath[camIndex]);   // 0 is grey scale but we need color!!
@@ -247,7 +247,7 @@ namespace meshac {
         return cropTriangle(projected).rowRange(0, TRIANGLE_SIDE).colRange(0, TRIANGLE_SIDE);
     }
 
-    CVMat NCCFaceAccuracyModel::cropTriangle(CVMat &projectedImage)
+    CVMat GeneralIndexFaceAccuracyModel::cropTriangle(CVMat &projectedImage)
     {
         CVMat result(projectedImage.rows, projectedImage.cols, projectedImage.type());        
         cv::bitwise_and(projectedImage, triangularMask, result);
@@ -255,40 +255,7 @@ namespace meshac {
         return result;
     }
 
-    double NCCFaceAccuracyModel::computeNCC(CVMatList triangles)
-    {
-        CVMat result;
-        int result_cols =  1;
-        int result_rows = 1;
-
-        result.create(result_rows, result_cols, triangles[0].type());
-        DoubleList maxs;
-
-        // NOTE if parallelized probably dies
-        // #pragma omp parallel for
-        for (int i = 0; i < triangles.size() - 1; i++) {    // try all possible pair of triangles only once!!!
-            for (int j = i+1; j < triangles.size(); j++) {
-
-                CVMat matArray[] = { triangles[i], triangles[j] };
-                CVMat out;
-
-                double maxVal;
-                CVPoint maxLoc;
-                // cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_CCORR_NORMED);
-                cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_SQDIFF_NORMED);     // gives more meaningful results
-                cv::minMaxLoc(result, NULL, &maxVal, NULL, &maxLoc, CVMat());
-
-                #pragma omp critical
-                maxs.push_back(1 - maxVal);
-            }
-        }
-
-        double average = std::accumulate(maxs.begin(), maxs.end(), 0.0) / (double)maxs.size(); 
-        return average;
-    }
-
-
-    IntList NCCFaceAccuracyModel::unionCamIndex(ListMappingGLMVec2 &mappings)
+    IntList GeneralIndexFaceAccuracyModel::unionCamIndex(ListMappingGLMVec2 &mappings)
     {
         IntList commonCams;
 
@@ -302,9 +269,8 @@ namespace meshac {
         return commonCams;
     }
 
-    void NCCFaceAccuracyModel::projectMeshPoints()
+    void GeneralIndexFaceAccuracyModel::projectMeshPoints()
     {
-        // NOTE this section does not work if parallelized
         #pragma omp parallel for collapse(2)
         for (int p = 0; p < this->points.size(); p++) {
             for (int c = 0; c < this->cams.size(); c++) {
@@ -318,7 +284,7 @@ namespace meshac {
         }
     }
 
-    GLMVec2 NCCFaceAccuracyModel::projectThrough(GLMVec3 &meshPoint, int camIndex)
+    GLMVec2 GeneralIndexFaceAccuracyModel::projectThrough(GLMVec3 &meshPoint, int camIndex)
     {
         GLMVec2 point = getProjectedPoint(meshPoint, camIndex);
 
@@ -331,12 +297,12 @@ namespace meshac {
         return point;
     }
 
-    bool NCCFaceAccuracyModel::isMeaningfulPose(GLMVec3 &meshPoint, int camIndex)
+    bool GeneralIndexFaceAccuracyModel::isMeaningfulPose(GLMVec3 &meshPoint, int camIndex)
     {
         return !isIntersecting(meshPoint, camIndex) && !isOppositeView(meshPoint, camIndex);
     }
 
-    bool NCCFaceAccuracyModel::isOppositeView(GLMVec3 &meshPoint, int camIndex)
+    bool GeneralIndexFaceAccuracyModel::isOppositeView(GLMVec3 &meshPoint, int camIndex)
     {
         GLMVec3 pose = getCameraCenter(camIndex);
         GLMVec3 ray = pose - meshPoint;
@@ -347,7 +313,7 @@ namespace meshac {
         return glm::dot(ray, zDirection) > 0.0f;    // if < 0.0 than it sees the object, but we want to know when it is opposite.
     }
 
-    bool NCCFaceAccuracyModel::isIntersecting(GLMVec3 &meshPoint, int camIndex)
+    bool GeneralIndexFaceAccuracyModel::isIntersecting(GLMVec3 &meshPoint, int camIndex)
     {
         GLMVec3 pose = getCameraCenter(camIndex);
         Point cam(pose[0], pose[1], pose[2]);
@@ -370,7 +336,7 @@ namespace meshac {
         }
     }
 
-    bool NCCFaceAccuracyModel::isMathemathicalError(Segment_intersection &intersection, Point &point)
+    bool GeneralIndexFaceAccuracyModel::isMathemathicalError(Segment_intersection &intersection, Point &point)
     {
         const Point* intersectedPoint = boost::get<Point>(&(intersection->first));
         if(intersectedPoint) {
@@ -379,12 +345,12 @@ namespace meshac {
         return false;
     }
 
-    bool NCCFaceAccuracyModel::isPointInsideImage(GLMVec2 &point2D, int camIndex)
+    bool GeneralIndexFaceAccuracyModel::isPointInsideImage(GLMVec2 &point2D, int camIndex)
     {
         return point2D.x < (float)getImageWidth(camIndex) && point2D.x > 0.0f && point2D.y < (float)getImageHeight(camIndex) && point2D.y > 0.0f;
     }
 
-    GLMVec2 NCCFaceAccuracyModel::getProjectedPoint(GLMVec3 &meshPoint, int camIndex)
+    GLMVec2 GeneralIndexFaceAccuracyModel::getProjectedPoint(GLMVec3 &meshPoint, int camIndex)
     {
         GLMVec4 point3D = GLMVec4(meshPoint, 1.0f);
         CameraMatrix P = getCameraMatrix(camIndex);
@@ -396,27 +362,27 @@ namespace meshac {
         return GLMVec2(point2D.x, point2D.y);
     }
 
-    int NCCFaceAccuracyModel::getImageWidth(int camIndex)
+    int GeneralIndexFaceAccuracyModel::getImageWidth(int camIndex)
     {
         return this->cams[camIndex].imageWidth;
     }
 
-    int NCCFaceAccuracyModel::getImageHeight(int camIndex)
+    int GeneralIndexFaceAccuracyModel::getImageHeight(int camIndex)
     {
         return this->cams[camIndex].imageHeight;
     }
 
-    GLMVec3 NCCFaceAccuracyModel::getCameraCenter(int indexCam)
+    GLMVec3 GeneralIndexFaceAccuracyModel::getCameraCenter(int indexCam)
     {
         return this->cams[indexCam].center;
     }
 
-    RotationMatrix NCCFaceAccuracyModel::getRotationMatrix(int indexCam)
+    RotationMatrix GeneralIndexFaceAccuracyModel::getRotationMatrix(int indexCam)
     {
         return this->cams[indexCam].rotation;
     }
 
-    CameraMatrix NCCFaceAccuracyModel::getCameraMatrix(int indexCam)
+    CameraMatrix GeneralIndexFaceAccuracyModel::getCameraMatrix(int indexCam)
     {
         return this->cams[indexCam].cameraMatrix;
     }

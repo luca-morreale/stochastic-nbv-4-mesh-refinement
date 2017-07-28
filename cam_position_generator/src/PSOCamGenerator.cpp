@@ -10,8 +10,9 @@ namespace opview {
         gsl_rng_set(randGen, SEED);
         setLogger(new SwarmReportWriter("pso_log.txt"));
 
-        omega << 2, 0.729, 0.729, 0.729, 0.729;
-        phiP << 2, 1.49445, 1.49445, 1.49445, 1.49445;
+        inertiaWeight << 0.9, 0.9, 0.9, 0.9, 0.9;   // above 1.4 looks globally, below 0.8 look locally
+        c1 << 0.70, 0.70, 0.60, 0.70, 0.70;
+        c2 << 0.70, 0.70, 0.60, 0.70, 0.70;
 
         spaceLowerBounds = psoConfig.spaceLowerBounds;
         spaceUpperBounds = psoConfig.spaceUpperBounds;

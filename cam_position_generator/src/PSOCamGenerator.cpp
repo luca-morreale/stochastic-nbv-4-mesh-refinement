@@ -45,10 +45,7 @@ namespace opview {
             particles.push_back(new Particle(sample.second, sample.first));
             samples.pop();
         }
-        // TODO build links
-        // NOTE for now link only to the best particle
     }
-    
 
     void PSOCamGenerator::updateParticles(GLMVec3 &centroid, GLMVec3 &normVector)
     {
@@ -93,11 +90,11 @@ namespace opview {
     void PSOCamGenerator::fixSpacePosition(int p)
     {
         for (int i = 0; i < 3; i++) {
-            if (particles[p]->position[i] > (spaceLowerBounds[i])) {
+            if (particles[p]->position[i] < spaceLowerBounds[i]) {
                 particles[p]->position[i] = spaceLowerBounds[i];
                 particles[p]->velocity[i] = 0.0;
-            } else if (particles[p]->position[i] < (spaceLowerBounds[i])) {
-                particles[p]->position[i] = spaceLowerBounds[i];
+            } else if (particles[p]->position[i] > spaceUpperBounds[i]) {
+                particles[p]->position[i] = spaceUpperBounds[i];
                 particles[p]->velocity[i] = 0.0;
             }
         }

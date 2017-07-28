@@ -3,7 +3,7 @@
 #include <OpenMvgParser.h>
 
 #include <meshac/FaceAccuracyModel.hpp>
-#include <meshac/NCCFaceAccuracyModel.hpp>
+#include <meshac/SSDNFaceAccuracyModel.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 
     meshac::FaceAccuracyModelPtr model;
     
-    model = new meshac::NCCFaceAccuracyModel(meshFile, sfm_data_, pathPrefix);
+    model = new meshac::SSDNFaceAccuracyModel(meshFile, sfm_data_, pathPrefix);
     std::cout << "done\n";
     for (int i = 0; i < 2021; i++) {
         cout << "result: " << model->getAccuracyForFace(i) << std::endl;

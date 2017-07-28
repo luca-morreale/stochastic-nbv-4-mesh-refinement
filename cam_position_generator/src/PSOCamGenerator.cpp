@@ -62,18 +62,15 @@ namespace opview {
 
     void PSOCamGenerator::updateVelocityParticle(int p)
     {
-        double rp = this->uniform();
-        double rg = this->uniform();
+        EigVector5 randBest = this->randVector();
+        EigVector5 randPrevious = this->randVector();
 
-        EigVector5 dp = particles[p]->bestPosition - particles[p]->position;
-        EigVector5 dg = particles[bestParticleIndex]->position - particles[p]->position;
+        EigVector5 diffPreviousBest = particles[p]->bestPosition - particles[p]->position;
+        EigVector5 diffGlobalBest = particles[bestParticleIndex]->position - particles[p]->position;
 
-        particles[p]->velocity = omega.cwiseProduct(particles[p]->velocity);
-        particles[p]->velocity += rp * phiP.cwiseProduct(dp);
-        
-        if (bestParticleIndex != p) {
-            particles[p]->velocity += rg * phiP.cwiseProduct(dg);
-        }
+        particles[p]->velocity = inertiaWeight.cwiseProduct(particles[p]->velocity);
+        particles[p]->velocity += randPrevious.cwiseProduct(c1.cwiseProduct(diffPreviousBest));
+        particles[p]->velocity += randBest.cwiseProduct(c2.cwiseProduct(diffGlobalBest));      // should be 0 if p is the best particle
 
         this->fixSpaceVelocity(p);
     }
@@ -158,14 +155,26 @@ namespace opview {
 
     double PSOCamGenerator::uniform()
     {
-        return gsl_rng_uniform(randGen) * 0.001;
+        return gsl_rng_uniform(randGen);
+    }
+
+    EigVector5 PSOCamGenerator::randVector()
+    {
+        EigVector5 random;
+        random << uniform(), uniform(), uniform(), uniform(), uniform();
+        return random;
     }
 
     void PSOCamGenerator::logParticles(int round)
     {
         ((SwarmReportWriterPtr)this->getLogger())->append(particles, round);
+
+        EigVector5 tmp = this->particles[bestParticleIndex]->position;
+        tmp[3] = rad2deg(tmp[3]);
+        tmp[4] = rad2deg(tmp[4]);
+
         std::cout << "Best Value: " << this->particles[bestParticleIndex]->value << std::endl;
-        std::cout << "Best Pose: " << this->particles[bestParticleIndex]->position.transpose() << std::endl << std::endl;
+        std::cout << "Best Pose: " << tmp.transpose() << std::endl << std::endl;
     }
 
     void PSOCamGenerator::deleteParticles()

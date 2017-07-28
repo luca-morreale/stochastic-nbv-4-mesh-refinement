@@ -56,6 +56,7 @@ namespace opview {
         virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
 
         virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
+        virtual CameraMatrix getExtrinsicMatrix(EigVector5 &pose);
         virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
         virtual GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid);
 
@@ -81,7 +82,7 @@ namespace opview {
 
     private:
         float deltaAngle;
-        const GLMVec3 zdir = GLMVec3(0.0, 0.0, 1.0);
+        const GLMVec4 zdir = GLMVec4(0.0f, 0.0f, 1.0f, 0.0f);
         std::string meshFilename;
         TreePtr tree;
 

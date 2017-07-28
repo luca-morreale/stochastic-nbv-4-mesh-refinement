@@ -269,12 +269,10 @@ namespace opview {
 
     bool MCMCCamGenerator::isOppositeView(EigVector5 &pose, GLMVec3 &centroid)
     {
-        GLMVec3 ray = GLMVec3(pose[0]-centroid.x, pose[1]-centroid.y, pose[3]-centroid.z);
-        
-        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);
-        GLMVec3 zDirection = R * zdir;
+        CameraMatrix E = getExtrinsicMatrix(pose);
 
-        return glm::dot(ray, zDirection) > 0.0f;    // if < 0.0 than it sees the object, but we want to know when it is opposite.
+        GLMVec4 p = E * GLMVec4(centroid, 1.0f);
+        return glm::dot(glm::normalize(p), zdir) < 0.0f;    // if > 0.0 than it sees the object.
     }
 
     bool MCMCCamGenerator::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
@@ -283,6 +281,7 @@ namespace opview {
         Point point(centroid.x, centroid.y, centroid.z);
         
         Segment segment_query(cam, point);
+        // return tree->do_intersect(segment_query);
         Segment_intersection intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
 
         if (intersection) {
@@ -335,24 +334,31 @@ namespace opview {
         return (Rz * Ry) * Rx;
     }
 
-    CameraMatrix MCMCCamGenerator::getCameraMatrix(EigVector5 &pose)
+    CameraMatrix MCMCCamGenerator::getExtrinsicMatrix(EigVector5 &pose)
     {
         RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);  // already radians
         R = glm::transpose(R);
+        
+        GLMVec3 t(pose[0], pose[1], pose[2]);
+        t = -R * t;
+
+        CameraMatrix E = CameraMatrix(R);
+
+        E[3][0] = t[0];
+        E[3][1] = t[1];
+        E[3][2] = t[2];
+        return E;
+    }
+
+    CameraMatrix MCMCCamGenerator::getCameraMatrix(EigVector5 &pose)
+    {
         CameraMatrix K = glm::scale(GLMVec3(camConfig.f, -camConfig.f , 1.0f));  // correct
         K[3][0] = (double)camConfig.size_x / 2.0;
         K[3][1] = (double)camConfig.size_y / 2.0;
 
-        CameraMatrix P = CameraMatrix(R);
+        CameraMatrix E = getExtrinsicMatrix(pose);
 
-        GLMVec3 t(pose[0], pose[1], pose[2]);
-        t = -R * t;
-
-        P[3][0] = t[0];
-        P[3][1] = t[1];
-        P[3][2] = t[2];
-
-        return K * P;
+        return K * E;
     }
 
     EigVector5List MCMCCamGenerator::uniformPointsGetter()

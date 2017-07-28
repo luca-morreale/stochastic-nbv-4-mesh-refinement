@@ -4,9 +4,6 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/norm.hpp>
-#include <glm/gtx/transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include <CGAL/exceptions.h>
@@ -14,6 +11,7 @@
 #include <opview/HierarchicalDiscreteGraphicalModel.hpp>
 #include <opview/type_definition.h>
 #include <opview/ReportWriter.hpp>
+#include <opview/orientation_utilities.hpp>
 
 namespace opview {
 
@@ -49,17 +47,6 @@ namespace opview {
         virtual LabelType estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
 
-        virtual bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isMathemathicalError(Segment_intersection &intersection, Point &point);
-        virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
-
-        virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
-        virtual CameraMatrix getExtrinsicMatrix(EigVector5 &pose);
-        virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
-        virtual GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid);
-
         virtual void reduceScale(LabelList &currentOptimal, int depth);
         virtual void resetPosition() override;
 
@@ -82,7 +69,7 @@ namespace opview {
 
     private:
         float deltaAngle;
-        const GLMVec4 zdir = GLMVec4(0.0f, 0.0f, 1.0f, 0.0f);
+        
         std::string meshFilename;
         TreePtr tree;
 

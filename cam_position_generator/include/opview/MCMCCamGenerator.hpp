@@ -11,6 +11,7 @@
 #include <opview/GaussianSampleGenerator.hpp>
 #include <opview/utilities.hpp>
 #include <opview/ExhaustiveReportWriter.hpp>
+#include <opview/orientation_utilities.hpp>
 
 namespace opview {
 
@@ -48,14 +49,6 @@ namespace opview {
 
         virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
         virtual LabelType imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-        virtual bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isOppositeView(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid);
-        virtual bool isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid);
-        virtual GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid);
-        virtual RotationMatrix getRotationMatrix(float roll, float pitch, float yaw);
-        virtual CameraMatrix getExtrinsicMatrix(EigVector5 &pose);
-        virtual CameraMatrix getCameraMatrix(EigVector5 &pose);
 
         bool isMathemathicalError(Segment_intersection &intersection, Point &point);
 
@@ -83,7 +76,6 @@ namespace opview {
         std::string meshFile;
 
         float deltaAngle;
-        const GLMVec4 zdir = GLMVec4(0.0f, 0.0f, 1.0f, 0.0f);
         std::string meshFilename;
         TreePtr tree;
 

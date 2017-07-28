@@ -218,7 +218,7 @@ namespace opview {
 
     LabelType OrientationHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        if (isPointInsideImage(pose, centroid) && isMeaningfulPose(pose, centroid)) {
+        if (isPointInsideImage(pose, centroid, camConfig) && isMeaningfulPose(pose, centroid, tree, camConfig)) {
             return 1.0;
         }
         return -10.0;
@@ -232,118 +232,20 @@ namespace opview {
 
     LabelType OrientationHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
-        if (!isPointInsideImage(pose, centroid)) {  // fast rejection, fast to compute.
+        if (!isPointInsideImage(pose, centroid, camConfig)) {  // fast rejection, fast to compute.
             return -10.0;
         }
-        if (!isMeaningfulPose(pose, centroid)) {
+        if (!isMeaningfulPose(pose, centroid, tree, camConfig)) {
             return -10.0;
         }
 
-        GLMVec2 point = getProjectedPoint(pose, centroid);
+        GLMVec2 point = getProjectedPoint(pose, centroid, camConfig);
         double centerx = (double)camConfig.size_x / 2.0;
         double centery = (double)camConfig.size_y / 2.0;
         double sigma_x = (double)camConfig.size_x / 3.0;
         double sigma_y = (double)camConfig.size_y / 3.0;
 
         return logBivariateGaussian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
-    }
-
-    bool OrientationHierarchicalGraphicalModel::isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid)
-    {
-        return isPointInsideImage(pose, centroid) && !isIntersecting(pose, centroid) && !isOppositeView(pose, centroid);
-    }
-
-    bool OrientationHierarchicalGraphicalModel::isOppositeView(EigVector5 &pose, GLMVec3 &centroid)
-    {
-        CameraMatrix E = getExtrinsicMatrix(pose);
-
-        GLMVec4 p = E * GLMVec4(centroid, 1.0f);
-        return glm::dot(glm::normalize(p), zdir) < 0.0f;    // if > 0.0 than it sees the object.
-    }
-
-    bool OrientationHierarchicalGraphicalModel::isIntersecting(EigVector5 &pose, GLMVec3 &centroid)
-    {
-        Point cam(pose[0], pose[1], pose[2]);
-        Point point(centroid.x, centroid.y, centroid.z);
-        
-        Segment segment_query(cam, point);
-        Segment_intersection intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
-
-        if (intersection) {
-            return !isMathemathicalError(intersection, point);
-        } else {
-            return false;
-        }
-    }
-
-    bool OrientationHierarchicalGraphicalModel::isMathemathicalError(Segment_intersection &intersection, Point &point)
-    {
-        const Point* intersectedPoint = boost::get<Point>(&(intersection->first));
-        if(intersectedPoint) {
-            return CGAL::squared_distance(*intersectedPoint, point) < 0.0001;
-        }
-        return false;
-    }
-
-    bool OrientationHierarchicalGraphicalModel::isPointInsideImage(EigVector5 &pose, GLMVec3 &centroid)
-    {
-        GLMVec2 point2D = getProjectedPoint(pose, centroid);
-
-        return point2D.x < (float)camConfig.size_x && point2D.x > 0.0f && point2D.y < (float)camConfig.size_y && point2D.y > 0.0f;
-    }
-
-    GLMVec2 OrientationHierarchicalGraphicalModel::getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid)
-    {
-        GLMVec4 point3D = GLMVec4(centroid, 1.0f);
-        CameraMatrix P = getCameraMatrix(pose);
-        GLMVec4 point2D = P * point3D;
-
-        point2D = point2D / point2D.z;
-        return GLMVec2(point2D.x, point2D.y);
-    }
-
-    RotationMatrix OrientationHierarchicalGraphicalModel::getRotationMatrix(float roll, float pitch, float yaw)
-    {
-        // Calculate rotation about x axis
-        RotationMatrix Rx = RotationMatrix(1, 0, 0, 
-                                        0, std::cos(roll), -std::sin(roll),
-                                        0, std::sin(roll), std::cos(roll));
-        // Calculate rotation about y axis
-        RotationMatrix Ry = RotationMatrix(std::cos(pitch), 0, std::sin(pitch), 
-                                        0, 1, 0,
-                                        -std::sin(pitch), 0, std::cos(pitch));
-        // Calculate rotation about z axis
-        RotationMatrix Rz = RotationMatrix(std::cos(yaw), -std::sin(yaw), 0, 
-                                        std::sin(yaw), std::cos(yaw), 0,
-                                        0, 0, 1);
-        return (Rz * Ry) * Rx;
-    }
-
-    CameraMatrix OrientationHierarchicalGraphicalModel::getExtrinsicMatrix(EigVector5 &pose)
-    {
-        RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);  // already radians
-        R = glm::transpose(R);
-        
-        GLMVec3 t(pose[0], pose[1], pose[2]);
-        t = -R * t;
-
-        CameraMatrix E = CameraMatrix(R);
-
-        E[3][0] = t[0];
-        E[3][1] = t[1];
-        E[3][2] = t[2];
-        return E;
-    }
-
-    CameraMatrix OrientationHierarchicalGraphicalModel::getCameraMatrix(EigVector5 &pose)
-    {
-        CameraMatrix K = glm::scale(GLMVec3(camConfig.f, -camConfig.f , 1.0f));  // correct
-        K[3][0] = (double)camConfig.size_x / 2.0;
-        K[3][1] = (double)camConfig.size_y / 2.0;
-
-        CameraMatrix E = getExtrinsicMatrix(pose);
-
-        return K * E;
     }
 
     void OrientationHierarchicalGraphicalModel::reduceScale(LabelList &currentOptimal, int depth)

@@ -86,11 +86,11 @@ namespace opview {
 
     double logVonMises(double angle, VonMisesConfiguration &vonMisesConfig)
     {
-        return std::cos(angle - vonMisesConfig.goalAngle) * vonMisesConfig.dispersion - std::log(2 * M_PI) - logBessel0(vonMisesConfig.dispersion); 
+        return std::cos(angle - vonMisesConfig.goalAngle) * vonMisesConfig.dispersion - std::log(2.0 * M_PI) - logBessel0(vonMisesConfig.dispersion); 
     }
 
     double logBessel0(double k)   // log of I0(x) as approximately x − 1/2 log(2 *pi * x)     https://math.stackexchange.com/questions/376758/exponential-approximation-of-the-modified-bessel-function-of-first-kind-equatio 
-    { 
+    {
         double logArg = 2.0f * M_PI * k; 
         return k - 0.5f * std::log(logArg);
     }

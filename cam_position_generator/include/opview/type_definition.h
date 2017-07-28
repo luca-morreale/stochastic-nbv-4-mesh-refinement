@@ -77,7 +77,7 @@ namespace opview {
 
     public:
         VonMisesConfiguration(double goalAngle, double dispersion) : goalAngle(goalAngle), dispersion(dispersion) { }
-        VonMisesConfiguration() : goalAngle(45), dispersion(0) { }
+        VonMisesConfiguration() : goalAngle(0.785398f), dispersion(0) { } // 45 deg
     } VonMisesConfiguration;
     typedef VonMisesConfiguration * VonMisesConfigurationPtr;
 

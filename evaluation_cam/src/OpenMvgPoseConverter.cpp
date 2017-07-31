@@ -48,7 +48,6 @@ namespace cameval {
 
     float OpenMvgPoseConverter::getAngleDisplacement(GLMVec3 &angles)
     {
-
         if (glm::all(glm::lessThan(angles, twoPi))) {
             return M_PI;
         } else {

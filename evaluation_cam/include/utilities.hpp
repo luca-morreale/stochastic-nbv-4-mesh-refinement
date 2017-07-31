@@ -2,17 +2,21 @@
 #define EVALUATION_CAMERA_POSITION_UTILITIES_H_
 
 #include <algorithm> 
-#include <functional>
-#include <fstream>
 #include <cctype>
-#include <locale>
+#include <chrono>
 #include <cmath>
+#include <fstream>
+#include <functional>
+#include <locale>
+#include <unistd.h>
 
 #include <boost/algorithm/string.hpp>
 
 #include <aliases.h>
 
 namespace cameval {
+
+    std::chrono::milliseconds now();
 
     void log(std::string msg);
 

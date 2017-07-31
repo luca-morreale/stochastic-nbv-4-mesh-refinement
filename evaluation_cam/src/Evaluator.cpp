@@ -4,7 +4,7 @@ namespace cameval {
 
     Evaluator::Evaluator(std::string &databaseFilename, std::string &groundTruthFilename, 
             std::string &basicPoseFilename, std::string &baseImageFolder, std::string &intrinsicParams, 
-            std::string &sshconfig)
+            std::string &sshconfig) : thresholdWaitSsh(THRESHOLD_SSH)
     {
         this->databaseFilename = databaseFilename;                  // file from which read poses to evaluate
         this->groundTruthFilename = groundTruthFilename;            // file containing the g-t cloud of points
@@ -18,11 +18,13 @@ namespace cameval {
         log("\nBasic poses size: " + std::to_string(basicPoses.size()));
 
         log("\nPopulating Database");
-        this->database = InputReader::readDatabase(databaseFilename);
+        stringDB = InputReader::readDatabase(databaseFilename);
+        remapListToQueue(stringDB);
         log("\nDatabase size: " + std::to_string(database.size()));
 
-        this->filePrefix = database[0].substr(0, database[0].find_first_of("_"));
-        this->fileExtention = database[0].substr(database[0].find_last_of(".") + 1, database[0].size());
+        std::string fileExample = database.front().second;
+        this->filePrefix = fileExample.substr(0, fileExample.find_first_of("_"));
+        this->fileExtention = fileExample.substr(fileExample.find_last_of(".") + 1, fileExample.size());
 
         this->sshHandler = new SshHandler(sshconfig);
     }
@@ -31,6 +33,13 @@ namespace cameval {
     {
         delete sshHandler;
         delete mvgJsonHandler;
+    }
+
+    void Evaluator::remapListToQueue(StringList &dataList)
+    {
+        for (int i = 0; i < dataList.size(); i++) {
+            this->database.push(IntStringPair(i, dataList[i]));
+        }
     }
 
     void Evaluator::evaluate()
@@ -42,24 +51,31 @@ namespace cameval {
         DoubleList distances;
         distances.assign(database.size(), 0.0);
 
+        while (!database.empty()) {
+            IntStringPair entry = database.front();
+            database.pop();
 
-        for (int i = 2; i < database.size(); ++i) {
-            log("\nStart analysis pose #" + std::to_string(i));
-            double tmp = evaluatePose(database[i], basicFolder);
-            distances[i] = tmp;
-            out << database[i] << " " << distances[i] << std::endl;
-            out.flush();
-            log("\nDone analysis pose #" + std::to_string(i));
+            log("\nStart analysis pose #" + std::to_string(entry.first));
+
+            double tmp = evaluatePose(entry, basicFolder);
+            distances[entry.first] = tmp;
+
+            if (tmp != DBL_MAX) {
+                out << entry.second << " " << distances[entry.first] << std::endl;
+                out.flush();
+            }
+
+            log("\nDone analysis pose #" + std::to_string(entry.first));
         }
 
         log("\nDone computation of all poses");
         
         int index = getIndexOfSmallestDistance(distances);
         std::cout << "min distance: " << distances[index] << std::endl;
-        std::cout << "pose: " << database[index] << std::endl;
+        std::cout << "pose: " << stringDB[index] << std::endl;
 
         out << "min distance: " << distances[index] << std::endl;
-        out << "pose: " << database[index] << std::endl;
+        out << "pose: " << stringDB[index] << std::endl;
 
         out.close();
 
@@ -77,13 +93,28 @@ namespace cameval {
 
         return "matches";
     }
+
+    std::string Evaluator::robustDownload(IntStringPair &entry)
+    {
+        std::chrono::milliseconds start = now();
+        while (now() - start < thresholdWaitSsh) {
+            try {
+                return sshHandler->download(entry.second);
+            } catch (const SSHException &ex) { }
+            usleep(SLEEP_SSH_ERROR);
+        }
+        database.push(entry);
+        return "";      // put back name in a map to redo
+    }
     
-    double Evaluator::evaluatePose(std::string &file, std::string &basicFolder)
+    double Evaluator::evaluatePose(IntStringPair &entry, std::string &basicFolder)
     {
         log("\nParsing filename to pose");
-        Pose pose = Mapper::slowMappingToPose(file);    // FIXME this might be empty, so check, if not here just parse.
+        Pose pose = Mapper::slowMappingToPose(entry.second);    // FIXME this might be empty, so check, if not here just parse.
         log("\nDownloading image");
-        std::string filename = sshHandler->download(file);
+
+        std::string filename = robustDownload(entry);
+        if (filename.size() == 0) return DBL_MAX;
 
         std::string jsonFile = basicFolder + "/sfm_data.json";
 

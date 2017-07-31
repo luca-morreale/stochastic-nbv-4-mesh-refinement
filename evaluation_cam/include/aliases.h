@@ -1,8 +1,9 @@
 #ifndef EVALUATION_CAMERA_POSITION_ALIAS_H_
 #define EVALUATION_CAMERA_POSITION_ALIAS_H_
 
-#include <unordered_set>
+#include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -19,8 +20,6 @@
 
 #include <glm/glm.hpp>
 
-#include <Eigen/Dense>
-
 #include <boost/system/error_code.hpp>
 
 namespace cameval {
@@ -31,6 +30,9 @@ namespace cameval {
     typedef std::vector<int> IntList;
     typedef std::vector<float> FloatList;
     typedef std::vector<double> DoubleList;
+
+    typedef std::pair<int, std::string> IntStringPair;
+    typedef std::queue<IntStringPair> QueueIntStringPair;
 
 
     typedef pcl::PointWithViewpoint PCLPoint;

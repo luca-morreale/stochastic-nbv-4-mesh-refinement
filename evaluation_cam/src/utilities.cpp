@@ -2,6 +2,11 @@
 
 namespace cameval {
 
+    std::chrono::milliseconds now()
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    }
+
     void log(std::string msg)
     {
         std::cout << std::endl << msg << std::endl;

@@ -4,7 +4,6 @@
 #include <regex>
 
 #include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
 
 #include <aliases.h>
 #include <FileHandler.hpp>
@@ -17,6 +16,9 @@
 #include <utilities.hpp>
 
 namespace cameval {
+
+    #define SLEEP_SSH_ERROR 10000000    // 10 sec
+    #define THRESHOLD_SSH 120000000    // 120 sec
     
     class Evaluator {
     public:
@@ -28,7 +30,7 @@ namespace cameval {
 
     protected:
         virtual std::string initOpenMvg();
-        virtual double evaluatePose(std::string &file, std::string &basicFolder);
+        virtual double evaluatePose(IntStringPair &entry, std::string &basicFolder);
         virtual void setDefaultCameraPoses();
         virtual std::string generatePairFile(size_t uniqueId);
         virtual size_t appendImageToJson(std::string &sfmFile, std::string &imageFile);
@@ -38,6 +40,7 @@ namespace cameval {
         virtual double parseDistance(std::string &logFile);
         virtual void generateBasicPairFile();
         virtual AnglePose extractPose(std::string &filename);
+        virtual std::string robustDownload(IntStringPair &entry);
 
     private:
         std::string groundTruthFilename;
@@ -50,7 +53,8 @@ namespace cameval {
         std::string fileExtention;
 
         PoseList basicPoses;
-        StringList database;
+        QueueIntStringPair database;
+        StringList stringDB;
 
         SshHandlerPtr sshHandler;
 
@@ -61,8 +65,11 @@ namespace cameval {
         OpenMvgJsonHandlerPtr mvgJsonHandler;
         size_t defaultCamNumber;
 
+        const std::chrono::milliseconds thresholdWaitSsh;
+
         int getIndexOfSmallestDistance(DoubleList &distances);
         void moveImageIntoImagesFolder(std::string &filename);
+        void remapListToQueue(StringList &dataList);
         
     };
 

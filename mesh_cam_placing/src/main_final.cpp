@@ -23,14 +23,10 @@ int main(int argc, char **argv)
 
     input_file = argv[2];
     cams_file = argv[1];
-    std::cout << "Using default configuration res/config/default.json" << std::endl;
-    std::cout << "max_iterations not set" << std::endl << std::endl;
-
-    std::cout << "parsing" << std::endl;
+    
     OpenMvgParser op_openmvg(input_file);
     op_openmvg.parse();
-    std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
-
+    
     sfm_data_ = op_openmvg.getSfmData();
 
     auto tmpCams = sfm_data_.camerasList_;
@@ -42,7 +38,6 @@ int main(int argc, char **argv)
         defaultRots.push_back(cam.rotation);
     }
 
-    std::cout<<"parsed \n";
     CamReader reader(cams_file);
     reader.parse();
     GLMVec3List cams = { reader.getFinalCamera() };

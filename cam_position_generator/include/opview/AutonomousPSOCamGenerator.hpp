@@ -12,7 +12,7 @@ namespace opview {
     public:
         AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
                                             PSOConfiguration &psoConfig, size_t maxPoints, long double maxUncertainty, 
-                                            double goalAngle=55, double dispersion=8);
+                                            double goalAngle=45, double dispersion=5);
 
         ~AutonomousPSOCamGenerator();
 

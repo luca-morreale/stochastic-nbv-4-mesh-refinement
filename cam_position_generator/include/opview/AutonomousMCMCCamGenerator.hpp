@@ -11,7 +11,7 @@ namespace opview {
     class AutonomousMCMCCamGenerator : public MCMCCamGenerator {
     public:
         AutonomousMCMCCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                            MCConfiguration &mcConfig, size_t maxPoints, long double maxUncertainty, double goalAngle=55, double dispersion=8);
+                                            MCConfiguration &mcConfig, size_t maxPoints, long double maxUncertainty, double goalAngle=45, double dispersion=5);
 
         ~AutonomousMCMCCamGenerator();
 

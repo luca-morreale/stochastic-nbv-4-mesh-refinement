@@ -25,7 +25,7 @@ namespace opview {
     class MCMCCamGenerator {
     public:
         MCMCCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            MCConfiguration &mcConfig, double goalAngle=45, double dispersion=8);
+                                            MCConfiguration &mcConfig, double goalAngle=45, double dispersion=5);
 
         ~MCMCCamGenerator();
 

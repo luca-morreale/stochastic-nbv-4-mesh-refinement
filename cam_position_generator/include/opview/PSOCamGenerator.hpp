@@ -17,7 +17,7 @@ namespace opview {
     class PSOCamGenerator : public MCMCCamGenerator {
     public:
         PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            PSOConfiguration &psoConfig, double goalAngle=45, double dispersion=8);
+                                            PSOConfiguration &psoConfig, double goalAngle=45, double dispersion=5);
 
         ~PSOCamGenerator();
 

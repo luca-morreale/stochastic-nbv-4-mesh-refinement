@@ -71,16 +71,17 @@ namespace opview {
 
     double logVonMises(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normalVector, VonMisesConfiguration &config)
     {
-        GLMVec3 v = point - centroid;
+        GLMVec3 v = centroid - point;
+        v = glm::normalize(v);
         return logVonMises(v, normalVector, config);
     }
 
     double logVonMises(GLMVec3 &v, GLMVec3 &normalVector, VonMisesConfiguration &config)
     {
-        double dotProduct = glm::dot(normalVector, v);
-        double normProduct = glm::l2Norm(normalVector) * glm::l2Norm(v);
+        double dotProduct = glm::dot(glm::normalize(normalVector), v);
+        double normProduct = glm::l2Norm(glm::normalize(normalVector)) * glm::l2Norm(v);
         double angle = std::acos(dotProduct / normProduct);
- 
+
         return logVonMises(angle, config);
     }
 

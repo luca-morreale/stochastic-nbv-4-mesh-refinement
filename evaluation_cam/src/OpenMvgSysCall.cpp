@@ -52,8 +52,9 @@ namespace cameval {
         command = "openMVG_main_ComputeStructureFromKnownPoses -i matches/sfm_data.json -o "+outFolder+"/sfm_data.json -m matches/ -f matches/matches.f.bin -b";
         system(command.c_str());
 
+        // required refinement executeble, modified version of openMVG_main_ComputeStructureFromKnownPoses
         log("OpenMvg: refinement with Compute structure from known poses");
-        command = "openMVG_main_ComputeStructureFromKnownPoses -i "+outFolder+"/sfm_data.json -o "+outFolder+"/sfm_data.json -m matches/ -f matches/matches.f.bin -b";
+        command = "openMVG_main_refinement -i "+outFolder+"/sfm_data.json -o "+outFolder+"/sfm_data.json -m matches/ -f matches/matches.f.bin -b";
         system(command.c_str());
 
         return outFolder;

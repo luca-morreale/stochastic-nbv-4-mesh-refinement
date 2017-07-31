@@ -31,6 +31,9 @@ namespace opview {
     double logVonMises(double angle, VonMisesConfiguration &vonMisesConfig);
     double logBessel0(double k);
 
+    double modAngle(double x);
+    double constrainAngle(double x);
+
 
     template<typename K, typename V>
     std::map<V, K> invertMap(std::map<K, V> &mapping)

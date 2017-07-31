@@ -95,4 +95,22 @@ namespace opview {
         return k - 0.5f * std::log(logArg);
     }
 
+    double modAngle(double x)
+    {
+        x = std::fmod(x, M_PI);
+        if (x < 0) {
+            x += M_PI;
+        }
+        return x;
+    }
+
+    double constrainAngle(double x)
+    {
+        x = std::fmod(x + M_PI, 2.0 * M_PI);
+        if (x < 0) {
+            x += 2.0 * M_PI;
+        }
+        return x - M_PI;
+    }
+
 } // namespace opview

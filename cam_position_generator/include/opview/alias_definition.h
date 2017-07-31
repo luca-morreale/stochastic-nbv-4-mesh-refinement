@@ -8,7 +8,9 @@
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/Polyhedron_3.h>
+#include <CGAL/Simple_cartesian.h>
 #include <CGAL/Vector_3.h>
+#include <CGAL/Point_3.h>
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>

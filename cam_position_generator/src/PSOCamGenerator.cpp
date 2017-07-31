@@ -34,6 +34,8 @@ namespace opview {
         for (int d = 0; d < getMCConfiguration().resamplingNum; d++) {
             updateParticles(centroid, normVector);
             logParticles(d);
+            c1 = c1 * 0.75f;
+            c2 = c2 * 0.75f;
         }
     }
 
@@ -145,6 +147,12 @@ namespace opview {
             particles[p]->updateValue(values[p]);
 
             #pragma omp critical
+            if (values[p] > particles[bestParticleIndex]->value) {
+                this->bestParticleIndex = p;
+            }
+        }
+
+        for (int p = 0; p < particles.size(); p++) {
             if (values[p] > particles[bestParticleIndex]->value) {
                 this->bestParticleIndex = p;
             }

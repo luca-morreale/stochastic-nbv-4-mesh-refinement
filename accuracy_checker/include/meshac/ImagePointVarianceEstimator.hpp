@@ -15,8 +15,8 @@ namespace meshac {
         /*
          * Computes the variance for a 2D point in the given camera.
          */
-        virtual EigMatrix estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex);
-        virtual EigMatrixList collectPointVarianceMatrix(GLMVec2 &point, int camIndex);
+        virtual CrossRatioTupleSetVariance estimateVarianceMatrixForPoint(GLMVec2 &point, int camIndex);
+        
 
         /*
          * Setter and getter for camera's observations.
@@ -28,6 +28,11 @@ namespace meshac {
 
     protected:
         /*
+         * Computes the variances for each CrossRatio tuple containing a given 2D point.
+         */
+        virtual EigMatrixList collectPointVarianceMatrix(CrossRatioTupleSet &imageTupleSet, GLMVec2 &point);
+
+        /*
          * Getter and setter for the variances of a given cameraId. 
          */
         double getVarianceSet(int camIndex);
@@ -36,16 +41,17 @@ namespace meshac {
         /*
          * Computes the standard deviation for the given tuple. 
          */
-        virtual EigMatrix estimateSTDForTuple(CrossRatioTuple &tuple, int setIndex);
+        virtual EigMatrix estimateSTDForTuple(CrossRatioTuple &tuple, CrossRatioTupleSet &tupleSet);
 
         /*
          * Computes the standard deviation for the set of tuples.
          */
-        virtual double estimateSTDTupleSet(int indexSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
+        virtual double estimateSTDTupleSet(CrossRatioTupleSet &tupleSet); // variance of CR is 1/ (N-1) * sum of (cr_i - cr_avg)^2
 
     private:
 
         void buildPixelSizeMatrix();
+        CrossRatioTupleSet removeTuples(CrossRatioTupleSet &imageTupleSet, GLMVec2 &point);
 
         //ListCrossRatioTupleSet listTupleSet;
 

@@ -18,7 +18,7 @@ namespace meshac {
     #define CANNY_LOW_THRESHOLD 200
     #define CANNY_KERNEL_SIZE 3
     #define SKIP_TUPLE_RATE 0.8
-    #define MAX_SAMPLE_SIZE 50
+    #define MAX_SAMPLE_SIZE 300
     #define MIN_NUM_POINTS_IN_IMAGE 10
 
     class CRTuplesGenerator {

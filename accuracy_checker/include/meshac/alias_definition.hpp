@@ -10,7 +10,8 @@
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Vector_3.h>
 
-#include <CGAL/Simple_cartesian.h>
+// #include <CGAL/Simple_cartesian.h>
+#include <CGAL/Cartesian.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -94,7 +95,7 @@ namespace meshac {
     typedef glm::mat4 CameraMatrix;
     typedef std::vector<CameraMatrix> CameraMatrixList;
 
-    typedef CGAL::Simple_cartesian<double> TreeKernel;
+    typedef CGAL::Cartesian<double> TreeKernel;
     typedef TreeKernel::Point_3 Point;
     typedef TreeKernel::Vector_3 Vector;
     typedef TreeKernel::Segment_3 Segment;

@@ -34,6 +34,7 @@ namespace meshac {
     typedef std::vector<int> IntList;
     typedef std::vector<IntList> IntArrayList;
     typedef std::vector<std::string> StringList;
+    typedef std::map<int, DoubleList> IntDoubleListMap;
 
     /* Shortcuts for OpenCV types */
     typedef cv::line_descriptor::KeyLine CVSegment;
@@ -58,7 +59,9 @@ namespace meshac {
     typedef std::vector<GLMVec3> GLMVec3List;
     typedef std::vector<std::vector<GLMVec2>> GLMVec2ArrayList;
 
-    typedef std::vector<std::map<int, glm::vec2>> ListMappingGLMVec2;
+    typedef std::map<int, GLMVec2> CamToPointMap;
+    typedef std::pair<int, GLMVec2> CamPointPair;
+    typedef std::vector<CamToPointMap> ListMappingGLMVec2;
 
     /* Shortcuts for Eigen types */
     typedef Eigen::Matrix3d EigMatrix3;
@@ -75,6 +78,7 @@ namespace meshac {
     typedef std::vector<EigMatrix> EigMatrixList;
     typedef std::vector<EigVector3> EigVector3List;
     typedef std::vector<EigVector> EigVectorList;
+    typedef std::map<int, EigMatrixList> IntEigMatrixListMap;
 
     inline EigMatrix EigIdentity(int n) { return Eigen::MatrixXd::Identity(n, n); };
 

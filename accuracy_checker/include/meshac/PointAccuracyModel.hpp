@@ -7,16 +7,11 @@ namespace meshac {
     
     class PointAccuracyModel {
     public:
-
         /*
-         * Computes all the matrixs that represents the accuracy of the point.
+         * Computes the matrix that represents the accuracy of the 3D point.
+         * A matrix for each image is returned.
          */
-        virtual EigMatrixList getAccuracyForPoint(int index3DPoint) = 0;
-
-        /*
-         *Computes the matrix that represents the accuracy of the 3D point.
-         */
-        virtual EigMatrix getCompleteAccuracyForPoint(int index3DPoint) = 0;
+        virtual EigMatrixList getAccuracyForPointByImage(int index3DPoint) = 0;
 
     };
 

@@ -73,64 +73,100 @@ namespace meshac {
     /*
      * Estimates the uncertainties for the 3D point.
      */
-    EigMatrixList PhotogrammetristAccuracyModel::getAccuracyForPoint(int index3DPoint)
-    {
-        EigMatrixList uncertaintyMatrix;
+    // EigMatrixList PhotogrammetristAccuracyModel::getAccuracyForPointByImage(int index3DPoint)
+    // {
+    //     IntDoubleListMap variances;
+    //     IntEigMatrixListMap jacobianList;
 
-        for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
-            GLMVec2 point2D = cameraObsPair.second;
-            EigMatrixList pointMatrixList = this->varianceEstimator->collectPointVarianceMatrix(point2D, cameraObsPair.first);
+    //     CamToPointMap mapping = point3DTo2DThroughCam[index3DPoint];
+    //     for (CamPointPair cameraObsPair : mapping) {
             
-            EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);
+    //         GLMVec2 point2D = cameraObsPair.second;
 
-            this->iterativeEstimationOfCovariance(uncertaintyMatrix, pointMatrixList, jacobian);
+    //         EigMatrix pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(point2D, cameraObsPair.first);
+    //         EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
+
+    //         this->updateVariancesList(variances[cameraObsPair.first], pointVariance, jacobianList[cameraObsPair.first], jacobian);
+    //     }
+
+    //     EigMatrixList pointCovariance = generateDiagonalMatrix(variances);
+    //     EigMatrixList jacobian = juxtaposeMatrixs(jacobianList, pointCovariance);
+
+    //     return computesProducts(jacobian, pointCovariance);
+    // }
+
+    EigMatrixList PhotogrammetristAccuracyModel::getAccuracyForPointByImage(int index3DPoint)
+    {
+        EigMatrixList uncertainties;
+        CamToPointMap mapping = point3DTo2DThroughCam[index3DPoint];
+        for (CamPointPair cameraObsPair : mapping) {        // get a camera-point for each projection
+
+            // get cross ratio tuple set
+            // for each tuple estimate jacobian
+            // for each tuple estimate jacobian * variance * jacobian^T
+            // do average of each matrix obtained above
+            // return matrix list
+            
+            EigMatrix uncertainty = getAccuracyForPointInImage(cameraObsPair);
+            uncertainties.push_back(uncertainty);
         }
-        return uncertaintyMatrix;
+        return uncertainties;
     }
 
-    EigMatrix PhotogrammetristAccuracyModel::getCompleteAccuracyForPoint(int index3DPoint)
+    EigMatrix PhotogrammetristAccuracyModel::getAccuracyForPointInImage(CamPointPair &cameraObsPair)
     {
-        DoubleList variances;
-        EigMatrixList jacobianList;
-        
-        for (auto cameraObsPair : point3DTo2DThroughCam[index3DPoint]) {
-            
-            GLMVec2 point2D = cameraObsPair.second;
+        CrossRatioTupleSetVariance pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(cameraObsPair.second, cameraObsPair.first);
+        CrossRatioTupleSet tuples = pointVariance.first;
+        EigMatrix variance = pointVariance.second;
 
-            EigMatrix pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(point2D, cameraObsPair.first);
-            EigMatrix jacobian = this->computeJacobian(this->cameras[cameraObsPair.first], point2D);  // 3x2 vector
+        EigMatrixList uncertainties;
+        for (auto tuple : tuples) {
+            EigMatrix jacobian = this->computeJacobian(tuple, this->cameras[cameraObsPair.first]);  // 3x(2*4) vector
+            uncertainties.push_back(jacobian * variance * jacobian.transpose());
 
-            this->updateVariancesList(variances, pointVariance, jacobianList, jacobian);
         }
-
-        EigMatrix pointCovariance = generateDiagonalMatrix(variances);
-        EigMatrix jacobian = juxtaposeMatrixs(jacobianList, pointCovariance.size());
-
-        return jacobian * pointCovariance * jacobian.transpose();
+        return average(uncertainties);
     }
 
     /*
      * Computes the Jacobian of the photogrammetrist's function wrt x and y.
      */
-    EigMatrix PhotogrammetristAccuracyModel::computeJacobian(CameraMatrix &cam, GLMVec2 &point)
+    EigMatrix PhotogrammetristAccuracyModel::computeJacobian(CrossRatioTuple &tuple, CameraMatrix &cam)
     {
-        GLMVec2 pointXh = point + GLMVec2(1.0f, 0.f);
-        GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
+        EigMatrixList jacobians;
+        for (auto point : tuple.getPoints()) {
+            GLMVec2 pointXh = point + GLMVec2(1.0f, 0.f);
+            GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
 
-        EigVector original = this->evaluateFunctionIn(cam, point);
+            EigVector original = this->evaluateFunctionIn(cam, point);
 
-        EigVector Jx = this->computeSingleJacobianFor(original, cam, pointXh);
-        EigVector Jy = this->computeSingleJacobianFor(original, cam, pointYh);
+            EigVector Jx = this->computeSingleJacobianFor(original, cam, pointXh);
+            EigVector Jy = this->computeSingleJacobianFor(original, cam, pointYh);
 
-        EigMatrix jacobian(Jx.rows(), 2);
-        jacobian << Jx, Jy;
-
-        return jacobian;
+            EigMatrix singleJacobian(Jx.rows(), 2);
+            singleJacobian << Jx, Jy;
+            jacobians.push_back(singleJacobian);
+        }
+        return juxtaposeMatrixs(jacobians);
     }
 
     EigVector PhotogrammetristAccuracyModel::computeSingleJacobianFor(EigVector &original, CameraMatrix &cam, GLMVec2 &pointH)
     {
         return this->evaluateFunctionIn(cam, pointH) - original;
+    }
+
+    EigMatrixList PhotogrammetristAccuracyModel::computesProducts(EigMatrixList &jacobian, EigMatrixList &pointCovariance)
+    {
+        EigMatrixList results;
+        #pragma omp parallel for
+        for (int i = 0; i < jacobian.size(); i++) {
+            EigMatrix mat = jacobian[i] * pointCovariance[i] * jacobian[i].transpose();
+
+            #pragma omp critical
+            results.push_back(mat);
+
+        }
+        return results;
     }
 
     /*

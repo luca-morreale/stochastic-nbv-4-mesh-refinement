@@ -82,6 +82,15 @@ namespace meshac {
         return tmp.asDiagonal();
     }
 
+    EigMatrixList generateDiagonalMatrix(IntDoubleListMap &mapping)
+    {
+        EigMatrixList list;
+        for (auto el : mapping) {
+            list.push_back(generateDiagonalMatrix(el.second));
+        }
+        return list;
+    }
+
     EigMatrix juxtaposeMatrixs(EigMatrixList &list)
     {
         int size = 0;
@@ -102,6 +111,27 @@ namespace meshac {
             position += el.cols();
         }
         return matrix;
+    }
+
+    EigMatrixList juxtaposeMatrixs(IntEigMatrixListMap &mapping, EigMatrixList &matrixList)
+    {
+        EigMatrixList list;
+        int i = 0;
+        for (auto el : mapping) {
+            EigMatrix mat = juxtaposeMatrixs(el.second, matrixList[i++].size());
+            list.push_back(mat);
+        }
+        return list;
+    }
+
+    EigMatrix average(EigMatrixList &list)
+    {
+        if (list.size() == 0) {
+            return EigZeros(1);
+        }
+
+        EigMatrix mat = std::accumulate(list.begin(), list.end(), EigZeros(list[0].rows(), list[0].cols()));
+        return mat / list.size();
     }
 
     float rad2deg(float rad)

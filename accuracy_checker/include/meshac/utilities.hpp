@@ -34,8 +34,13 @@ namespace meshac {
     // methods to make std::vector interacts with eigen::matrix
     void appendMatrixDiagonalToVector(EigMatrix &mat, DoubleList &list);
     EigMatrix generateDiagonalMatrix(DoubleList &list);
+    EigMatrixList generateDiagonalMatrix(IntDoubleListMap &mapping);
+    
     EigMatrix juxtaposeMatrixs(EigMatrixList &list, int size);
     EigMatrix juxtaposeMatrixs(EigMatrixList &list);
+    EigMatrixList juxtaposeMatrixs(IntEigMatrixListMap &mapping, EigMatrixList &matrixList);
+
+    EigMatrix average(EigMatrixList &list);
 
 
     float rad2deg(float rad);

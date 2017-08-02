@@ -45,6 +45,8 @@ namespace meshac {
          */
         bool isInTuple(GLMVec2 &point);
 
+        GLMVec2List getPoints();
+
         std::string to_string();
 
         /*
@@ -74,6 +76,7 @@ namespace meshac {
     typedef CrossRatioTuple * CrossRatioTuplePtr;
     typedef std::set<CrossRatioTuple> CrossRatioTupleSet;
     typedef std::vector<CrossRatioTupleSet> ListCrossRatioTupleSet;
+    typedef std::pair<CrossRatioTupleSet, EigMatrix> CrossRatioTupleSetVariance;
 
 }   // namespace meshacac
 

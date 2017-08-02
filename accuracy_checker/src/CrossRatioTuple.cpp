@@ -49,6 +49,11 @@ namespace meshac {
         return false;
     }
 
+    GLMVec2List CrossRatioTuple::getPoints()
+    {
+        return this->points;
+    }
+
 
     void CrossRatioTuple::precomputeDistancesBetweenPoints()
     {        

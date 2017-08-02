@@ -90,6 +90,8 @@ namespace meshac {
 
         virtual EigMatrix getAccuracyForPointInImage(CamPointPair &cameraObsPair);
 
+        virtual EigMatrix replicateVarianceForTuple(EigMatrix &singleVariance);
+
     private:
         CameraMatrixList extractCameraMatrix(CameraList &cameras);
         EigMatrixList computesProducts(EigMatrixList &jacobian, EigMatrixList &pointCovariance);

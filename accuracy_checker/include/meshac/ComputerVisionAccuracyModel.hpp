@@ -34,6 +34,9 @@ namespace meshac {
         
         virtual void updateVariancesList(DoubleList &varianesList, EigMatrix &varianceMat, EigMatrixList &jacobianList, EigMatrix &jacobianMat);
 
+        virtual EigMatrix getAccuracyForPointInImage(CamPointPair &cameraObsPair) override;
+        virtual EigMatrix replicateVarianceForTuple(EigMatrix &singleVariance) override;
+
     private:
         typedef PhotogrammetristAccuracyModel super;
     };

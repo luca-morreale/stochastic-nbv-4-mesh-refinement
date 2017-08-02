@@ -117,15 +117,29 @@ namespace meshac {
     {
         CrossRatioTupleSetVariance pointVariance = this->varianceEstimator->estimateVarianceMatrixForPoint(cameraObsPair.second, cameraObsPair.first);
         CrossRatioTupleSet tuples = pointVariance.first;
-        EigMatrix variance = pointVariance.second;
+        EigMatrix variance = replicateVarianceForTuple(pointVariance.second);
 
         EigMatrixList uncertainties;
         for (auto tuple : tuples) {
             EigMatrix jacobian = this->computeJacobian(tuple, this->cameras[cameraObsPair.first]);  // 3x(2*4) vector
             uncertainties.push_back(jacobian * variance * jacobian.transpose());
-
         }
         return average(uncertainties);
+    }
+
+    EigMatrix PhotogrammetristAccuracyModel::replicateVarianceForTuple(EigMatrix &singleVariance)
+    {
+        EigMatrix variance = EigZeros(4 * 2);
+        variance(0,0) = singleVariance(0, 0);
+        variance(1,1) = singleVariance(1, 1);
+        variance(2,2) = singleVariance(0, 0);
+        variance(3,3) = singleVariance(1, 1);
+        variance(4,4) = singleVariance(0, 0);
+        variance(3,3) = singleVariance(1, 1);
+        variance(6,6) = singleVariance(0, 0);
+        variance(7,7) = singleVariance(1, 1);
+
+        return variance;
     }
 
     /*
@@ -214,7 +228,6 @@ namespace meshac {
         }
         return matList;
     }
-
 
     CameraMatrixList PhotogrammetristAccuracyModel::getCamerasMatrix()
     {

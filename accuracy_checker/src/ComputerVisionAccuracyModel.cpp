@@ -20,6 +20,37 @@ namespace meshac {
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize) 
                                     : PhotogrammetristAccuracyModel(data, pathPrefix, pixelSize) 
     { /*    */ }
+
+    EigMatrix ComputerVisionAccuracyModel::getAccuracyForPointInImage(CamPointPair &cameraObsPair)
+    {
+        CrossRatioTupleSetVariance pointVariance = this->getVarianceEstimator()->estimateVarianceMatrixForPoint(cameraObsPair.second, cameraObsPair.first);
+        CrossRatioTupleSet tuples = pointVariance.first;
+        EigMatrix variance = replicateVarianceForTuple(pointVariance.second);
+
+        EigMatrixList uncertainties;
+        for (auto tuple : tuples) {
+            EigMatrix jacobian = this->computeJacobian(tuple, this->getCameras()[cameraObsPair.first]);  // 3x(2*4) vector
+            uncertainties.push_back(jacobian * variance * jacobian.transpose());
+        }
+        return average(uncertainties);
+    }
+
+    EigMatrix ComputerVisionAccuracyModel::replicateVarianceForTuple(EigMatrix &singleVariance)
+    {
+        EigMatrix variance = EigZeros(4 * 3);
+        variance(0,0) = singleVariance(0, 0);
+        variance(1,1) = singleVariance(1, 1);
+
+        variance(3,3) = singleVariance(0, 0);
+        variance(4,4) = singleVariance(1, 1);
+
+        variance(6,6) = singleVariance(0, 0);
+        variance(7,7) = singleVariance(1, 1);
+
+        variance(9,9) = singleVariance(0, 0);
+        variance(10,10) = singleVariance(1, 1);
+        return variance;
+    }
     
 
     /*
@@ -38,7 +69,7 @@ namespace meshac {
             EigVector Jy = this->computeSingleJacobianFor(original, cam, pointYh);
             EigVector padding = EigZeros(Jx.rows(), 1);
 
-            EigMatrix singleJacobian(Jx.rows(), 2);
+            EigMatrix singleJacobian(Jx.rows(), 3);
             singleJacobian << Jx, Jy, padding;
             jacobians.push_back(singleJacobian);
         }

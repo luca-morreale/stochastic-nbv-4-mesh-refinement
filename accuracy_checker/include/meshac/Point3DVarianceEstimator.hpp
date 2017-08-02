@@ -22,9 +22,6 @@ namespace meshac {
         /*
          * Computes the uncertainity measure for the given point.
          */
-        virtual double computeTotalVarianceForPoint(GLMVec3 &point);
-        virtual double computeTotalVarianceForPoint(int pointIndex);
-
         virtual double computeSingleVarianceForPoint(GLMVec3 &point);
         virtual double computeSingleVarianceForPoint(int pointIndex);
         /*

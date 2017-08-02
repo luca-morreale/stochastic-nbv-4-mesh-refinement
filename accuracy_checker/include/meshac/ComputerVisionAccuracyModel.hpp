@@ -28,7 +28,7 @@ namespace meshac {
          */
         virtual EigVector evaluateFunctionIn(CameraMatrix &cam, GLMVec2 &point);
 
-        virtual EigMatrix computeJacobian(CameraMatrix &cam, GLMVec2 &point);
+        virtual EigMatrix computeJacobian(CrossRatioTuple &tuple, CameraMatrix &cam);
 
         virtual void iterativeEstimationOfCovariance(EigMatrixList &destList, EigMatrixList &pointMatrixList, EigMatrix &jacobian);
         

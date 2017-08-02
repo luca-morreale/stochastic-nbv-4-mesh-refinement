@@ -25,15 +25,24 @@ namespace meshac {
     /*
      * Computes the Jacobian of the photogrammetrist's function wrt x and y.
      */
-    EigMatrix ComputerVisionAccuracyModel::computeJacobian(CameraMatrix &cam, GLMVec2 &point)
+    EigMatrix ComputerVisionAccuracyModel::computeJacobian(CrossRatioTuple &tuple, CameraMatrix &cam)
     {
-        EigMatrix partialJ = super::computeJacobian(cam, point);
-        EigVector padding = EigZeros(partialJ.rows(), 1);
+        EigMatrixList jacobians;
+        for (auto point : tuple.getPoints()) {
+            GLMVec2 pointXh = point + GLMVec2(1.0f, 0.f);
+            GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
 
-        EigMatrix jacobian(partialJ.rows(), 3);
-        jacobian << partialJ, padding;
+            EigVector original = this->evaluateFunctionIn(cam, point);
 
-        return jacobian;
+            EigVector Jx = this->computeSingleJacobianFor(original, cam, pointXh);
+            EigVector Jy = this->computeSingleJacobianFor(original, cam, pointYh);
+            EigVector padding = EigZeros(Jx.rows(), 1);
+
+            EigMatrix singleJacobian(Jx.rows(), 2);
+            singleJacobian << Jx, Jy, padding;
+            jacobians.push_back(singleJacobian);
+        }
+        return juxtaposeMatrixs(jacobians);
     }
     
     /*

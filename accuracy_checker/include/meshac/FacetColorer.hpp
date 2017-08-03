@@ -11,6 +11,7 @@
 #include <meshac/FaceAccuracyModel.hpp>
 #include <meshac/ThresholdColor.hpp>
 #include <meshac/UnexpectedPointException.hpp>
+#include <meshac/UnexpectedTriangleException.hpp>
 
 namespace meshac {
 

@@ -30,11 +30,14 @@ namespace meshac {
         }
         
         for (int f = 0; f < facets.size(); f++) {
-            double accuracy = computeAccuracyForFacet(facets[f]);
+            
+            try {
+                double accuracy = computeAccuracyForFacet(facets[f]);
 
-            Color color = colors->getColorFor(accuracy);
+                Color color = colors->getColorFor(accuracy);
 
-            addFaceToOff(out, facets[f].vertex(0), facets[f].vertex(1), facets[f].vertex(2), pointToIndex, color);
+                addFaceToOff(out, facets[f].vertex(0), facets[f].vertex(1), facets[f].vertex(2), pointToIndex, color);
+            } catch (UnexpectedTriangleException &ex) { }
         }
 
         out.close();

@@ -10,6 +10,7 @@
 
 #include <realtimeMR/SfMData.h>
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/gtx/norm.hpp>
 
@@ -20,6 +21,7 @@
 #include <meshac/UndefinedFaceIndexException.hpp>
 #include <meshac/UnprojectablePointThroughCamException.hpp>
 #include <meshac/utilities.hpp>
+
 
 namespace meshac {
 
@@ -54,8 +56,10 @@ namespace meshac {
         virtual bool isMathemathicalError(Segment_intersection &intersection, Point &point);
         virtual bool isPointInsideImage(GLMVec2 &point2D, int camIndex);
         virtual GLMVec2 getProjectedPoint(GLMVec3 &meshPoint, int camIndex);
+
         GLMVec3 getCameraCenter(int indexCam);
         RotationMatrix getRotationMatrix(int indexCam);
+        CameraMatrix getExtrinsicMatrix(int indexCam);
         CameraMatrix getCameraMatrix(int indexCam);
 
         int getImageWidth(int camIndex);
@@ -74,7 +78,7 @@ namespace meshac {
         CVPoint2 destTriangle[3];
         CVMat triangularMask;
 
-        const GLMVec3 zdir = GLMVec3(0.0, 0.0, 1.0);
+        const GLMVec4 zdir = GLMVec4(0.0, 0.0, 1.0, 0.0);
 
         void initAffineTriangle();
         void setTriangularMask();

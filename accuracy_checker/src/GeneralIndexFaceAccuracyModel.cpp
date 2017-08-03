@@ -71,6 +71,7 @@ namespace meshac {
             try {
                 FaceIndex face;
                 for (int v = 0; v < 3; v++) {
+                    
                     Point vertex = facets[f].vertex(v);
                     size_t index = retreiveIndex(vertex);
                     face.set(v, index);
@@ -116,6 +117,7 @@ namespace meshac {
         int ia = retreiveIndex(a);
         int ib = retreiveIndex(b);
         int ic = retreiveIndex(c);
+
         double acc = -1.0;
 
         #pragma omp parallel for
@@ -287,7 +289,7 @@ namespace meshac {
     GLMVec2 GeneralIndexFaceAccuracyModel::projectThrough(GLMVec3 &meshPoint, int camIndex)
     {
         GLMVec2 point = getProjectedPoint(meshPoint, camIndex);
-
+        
         if (!isPointInsideImage(point, camIndex)) {  // fast rejection, fast to compute
             throw UnprojectablePointThroughCamException();
         }
@@ -304,13 +306,10 @@ namespace meshac {
 
     bool GeneralIndexFaceAccuracyModel::isOppositeView(GLMVec3 &meshPoint, int camIndex)
     {
-        GLMVec3 pose = getCameraCenter(camIndex);
-        GLMVec3 ray = pose - meshPoint;
+        CameraMatrix E = getExtrinsicMatrix(camIndex);
 
-        RotationMatrix R = getRotationMatrix(camIndex);
-        GLMVec3 zDirection = R * zdir;
-
-        return glm::dot(ray, zDirection) > 0.0f;    // if < 0.0 than it sees the object, but we want to know when it is opposite.
+        GLMVec4 p = E * GLMVec4(meshPoint, 1.0f);
+        return glm::dot(glm::normalize(p), zdir) < 0.0f;    // if > 0.0 than it sees the object.
     }
 
     bool GeneralIndexFaceAccuracyModel::isIntersecting(GLMVec3 &meshPoint, int camIndex)
@@ -375,6 +374,12 @@ namespace meshac {
     GLMVec3 GeneralIndexFaceAccuracyModel::getCameraCenter(int indexCam)
     {
         return this->cams[indexCam].center;
+    }
+
+    CameraMatrix GeneralIndexFaceAccuracyModel::getExtrinsicMatrix(int indexCam)
+    {
+        CameraMatrix cam = CameraMatrix(getRotationMatrix(indexCam));
+        return glm::translate(cam, getCameraCenter(indexCam));
     }
 
     RotationMatrix GeneralIndexFaceAccuracyModel::getRotationMatrix(int indexCam)

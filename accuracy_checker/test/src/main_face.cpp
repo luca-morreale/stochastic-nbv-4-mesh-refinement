@@ -4,6 +4,7 @@
 
 #include <meshac/FaceAccuracyModel.hpp>
 #include <meshac/SSDNFaceAccuracyModel.hpp>
+#include <meshac/FacetColorer.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -19,8 +20,6 @@ int main(int argc, char **argv) {
     std::string jsonFile = argv[1];
     std::string meshFile = argv[2];
     std::string log = argv[3];
-
-    std::ofstream cout(log);
     
     OpenMvgParser op_openmvg(jsonFile);
     op_openmvg.parse();
@@ -31,14 +30,21 @@ int main(int argc, char **argv) {
     std::string pathPrefix = jsonFile.substr(0, jsonFile.find_last_of("/"));
     pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
 
-    meshac::FaceAccuracyModelPtr model;
+    std::cout << log << std::endl;
+
+    meshac::FaceAccuracyModelPtr model = new meshac::SSDNFaceAccuracyModel(meshFile, sfm_data_, pathPrefix);
     
-    model = new meshac::SSDNFaceAccuracyModel(meshFile, sfm_data_, pathPrefix);
     std::cout << "done\n";
-    for (int i = 0; i < 2021; i++) {
-        cout << "result: " << model->getAccuracyForFace(i) << std::endl;
-        std::cout << "result: " << model->getAccuracyForFace(i) << std::endl;
-    }
+
+    std::string colors = "res/config/facet_colors.json";
+    std::string mesh_out = log + ".off";
+    std::string report_out = log + ".txt";
+    meshac::FacetColorer colorer(colors, model);
+
+    std::cout << "ok\n";
+
+    colorer.generateColoredMesh(mesh_out);
+    // colorer.generateReport("color_facets.txt"); 
 
     // poche viste comuni dalle diverse camere
     

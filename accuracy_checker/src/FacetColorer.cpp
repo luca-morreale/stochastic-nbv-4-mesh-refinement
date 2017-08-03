@@ -68,7 +68,7 @@ namespace meshac {
         for (int f = 0; f < facets.size(); f++) {
             for (int v = 0; v < 3; v++) {
                 Point vertex = facets[f].vertex(v);
-                if (pointToIndex[vertex] != 0) {
+                if (pointToIndex[vertex] == 0) {
                     pointToIndex[vertex] = index++;
                 }
             }
@@ -89,8 +89,8 @@ namespace meshac {
 
     void FacetColorer::addFaceToOff(std::ofstream &out, const Point &p1, const Point &p2, const Point &p3, std::map<Point, int> &pointToIndex, Color &color)
     {
-        out << pointToIndex[p1] << " " << pointToIndex[p2] << " " << pointToIndex[p3] << "  ";
-        out << color.to_string() << std::endl;
+        out << "3 "<< pointToIndex[p1] << " " << pointToIndex[p2] << " " << pointToIndex[p3] << "  ";
+        out << (double)color.r / 255.0 << " " << (double)color.b / 255.0 << " " << (double)color.g / 255.0 << " " << color.a << std::endl;
     }
 
     void FacetColorer::generateReport(std::string &output)

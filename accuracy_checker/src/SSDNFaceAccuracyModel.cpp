@@ -33,7 +33,7 @@ namespace meshac {
                 cv::minMaxLoc(result, NULL, &maxVal, NULL, &maxLoc, CVMat());
 
                 #pragma omp critical
-                maxs.push_back(1 - maxVal);
+                maxs.push_back(maxVal);
             }
         }
 

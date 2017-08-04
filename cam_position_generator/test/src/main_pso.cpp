@@ -42,10 +42,10 @@ int main(int argc, char **argv) {
     opview::MCConfiguration mcConfig(30, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
 
-    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-3, -3, -3), glm::vec3(1, 1, 1));
+    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-3, -3, -3), glm::vec3(3, 3, 3));
     
-    // opview::PSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
-    opview::LocalPSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
+    opview::PSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
+    // opview::LocalPSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
 
     model.estimateBestCameraPosition(centroid, normal);
 

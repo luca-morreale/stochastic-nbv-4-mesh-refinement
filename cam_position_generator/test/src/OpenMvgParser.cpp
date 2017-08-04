@@ -5,15 +5,10 @@
  *      Author: andrea
  */
 
+#include <OpenMvgParser.h>
 
 #include <rapidjson/reader.h>
 
-#include <realtimeMR/Exceptions.hpp>
-#include <realtimeMR/utilities/utilities.hpp>
-
-#include <stdexcept>
-
-#include <OpenMvgParser.h>
 
 OpenMvgParser::OpenMvgParser(std::string path) {
   fileStream_.open(path.c_str());

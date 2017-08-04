@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     opview::MCConfiguration mcConfig(30, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
 
-    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-3, -3, -3), glm::vec3(1, 1, 1));
+    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-4, -4, -4), glm::vec3(1, 1, 1));
 
     size_t maxPoints = 10;
     long double thresholdUncertainty = 100000;

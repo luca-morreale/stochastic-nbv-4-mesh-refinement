@@ -37,9 +37,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 # ------------------------ BUILD -------------------------------
 
-add_executable(sequencegen src/main_sequence.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp)
-add_executable(scoregen src/main_best_score.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp)
-add_executable(finalgen src/main_final.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp)
+add_executable(sequencegen src/main_sequence.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp src/sphere_handler.cpp)
+add_executable(scoregen src/main_best_score.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp src/sphere_handler.cpp)
+add_executable(finalgen src/main_final.cpp src/OpenMvgParser.cpp src/CamReader.cpp src/visualization_utils.cpp src/sphere_handler.cpp)
 
 target_link_libraries(sequencegen ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}

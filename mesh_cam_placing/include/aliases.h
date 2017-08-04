@@ -26,6 +26,12 @@ namespace camplacing {
     typedef glm::mat3 GLMMat3;
     typedef std::vector<GLMMat3> GLMMat3List;
 
+    typedef struct TriangularFacet {
+        int x, y, z;
+        double r, g, b, a;
+    } TriangularFacet;
+    typedef std::vector<TriangularFacet> TriangularFacetList;
+
 } // namespace camplacing
 
 #endif // ALIASES_CENTERS_READER_H

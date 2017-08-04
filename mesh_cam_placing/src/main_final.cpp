@@ -3,6 +3,7 @@
 #include <CamReader.hpp>
 #include <aliases.h>
 #include <visualization_utils.hpp>
+#include <sphere_handler.hpp>
 
 using namespace camplacing;
 
@@ -10,8 +11,8 @@ SfMData sfm_data_;
 
 int main(int argc, char **argv)
 {
-    if (argc < 3) {
-        std::cout << "missing arguments" << std::endl;
+    if (argc < 6) {
+        std::cout << argv[0] << " camfile.txt mvg.json x y z" << std::endl;
         return 1;
     }
 
@@ -23,6 +24,11 @@ int main(int argc, char **argv)
 
     input_file = argv[2];
     cams_file = argv[1];
+    float x = std::strtod(argv[3], NULL);
+    float y = std::strtod(argv[4], NULL);
+    float z = std::strtod(argv[5], NULL);
+
+    GLMVec3 poi = GLMVec3(x, y, z);
     
     OpenMvgParser op_openmvg(input_file);
     op_openmvg.parse();
@@ -45,7 +51,7 @@ int main(int argc, char **argv)
 
     std::string outname = cams_file.substr(0, cams_file.find_last_of(".json")-4) + "_final";
 
-    generateJsonFromData(cams, defaultCams, rots, defaultRots, outname);
+    generateJsonFromData(cams, defaultCams, rots, defaultRots, outname, poi);
     
     return 0;
 }

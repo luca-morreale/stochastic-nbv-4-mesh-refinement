@@ -79,17 +79,17 @@ namespace meshac {
     void FacetColorer::initOffFile(std::ofstream &out, size_t points, size_t facets)
     {
         out << "OFF" << std::endl;
-        out << points << " " << facets << std::endl;
+        out << points << " " << facets << " 0" << std::endl;
     }
 
     void FacetColorer::addPointToOff(std::ofstream &out, const Point &p)
     {
-        out << p[0] << " " << p[1] << " " << p[2] << std::endl;
+        out << p[0] << "  " << p[1] << "  " << p[2] << std::endl;
     }
 
     void FacetColorer::addFaceToOff(std::ofstream &out, const Point &p1, const Point &p2, const Point &p3, std::map<Point, int> &pointToIndex, Color &color)
     {
-        out << "3 "<< pointToIndex[p1] << " " << pointToIndex[p2] << " " << pointToIndex[p3] << "  ";
+        out << "3  "<< pointToIndex[p1] << "  " << pointToIndex[p2] << "  " << pointToIndex[p3] << "  ";
         out << (double)color.r / 255.0 << " " << (double)color.b / 255.0 << " " << (double)color.g / 255.0 << " " << color.a << std::endl;
     }
 

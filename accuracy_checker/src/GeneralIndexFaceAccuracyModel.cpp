@@ -49,7 +49,7 @@ namespace meshac {
         const int num_points = 3;
         const int num_polygons = 1;
         const int line_type = 8;
-        CVMat mask(getImageHeight(0), getImageWidth(0), CV_8UC3, cv::Scalar(0,0,0));
+        CVMat mask(getImageHeight(this->cams[0]), getImageWidth(this->cams[0]), CV_8UC3, cv::Scalar(0,0,0));
         cv::fillPoly(mask, corner_list, &num_points, num_polygons, cv::Scalar(255, 255, 255));
 
         this->triangularMask = mask;
@@ -277,119 +277,13 @@ namespace meshac {
         for (int p = 0; p < this->points.size(); p++) {
             for (int c = 0; c < this->cams.size(); c++) {
                 try {
-                    GLMVec2 point = projectThrough(points[p], c);
+                    GLMVec2 point = projectThrough(points[p], cams[c], tree);
                     #pragma omp critical
                     this->point3DTo2DThroughCam[p].insert(std::make_pair(c, point));
                 } catch (const UnprojectablePointThroughCamException &ex) 
                 { } // do nothing because it makes no sense to project it
             }
         }
-    }
-
-    GLMVec2 GeneralIndexFaceAccuracyModel::projectThrough(GLMVec3 &meshPoint, int camIndex)
-    {
-        GLMVec2 point = getProjectedPoint(meshPoint, camIndex);
-        
-        if (!isPointInsideImage(point, camIndex)) {  // fast rejection, fast to compute
-            throw UnprojectablePointThroughCamException();
-        }
-        if (!isMeaningfulPose(meshPoint, camIndex)) {
-            throw UnprojectablePointThroughCamException();
-        }
-        return point;
-    }
-
-    bool GeneralIndexFaceAccuracyModel::isMeaningfulPose(GLMVec3 &meshPoint, int camIndex)
-    {
-        return !isIntersecting(meshPoint, camIndex) && !isOppositeView(meshPoint, camIndex);
-    }
-
-    bool GeneralIndexFaceAccuracyModel::isOppositeView(GLMVec3 &meshPoint, int camIndex)
-    {
-        CameraMatrix E = getExtrinsicMatrix(camIndex);
-
-        GLMVec4 p = E * GLMVec4(meshPoint, 1.0f);
-        return glm::dot(glm::normalize(p), zdir) < 0.0f;    // if > 0.0 than it sees the object.
-    }
-
-    bool GeneralIndexFaceAccuracyModel::isIntersecting(GLMVec3 &meshPoint, int camIndex)
-    {
-        GLMVec3 pose = getCameraCenter(camIndex);
-        Point cam(pose[0], pose[1], pose[2]);
-        Point point(meshPoint[0], meshPoint[1], meshPoint[2]);
-        
-        try {
-            Segment segment_query(cam, point);
-            Segment_intersection intersection;
-            
-            #pragma omp critical
-            intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
-            
-            if (intersection) {
-                return !isMathemathicalError(intersection, point);
-            } else {
-                return false;
-            }
-        } catch (const CGAL::Assertion_exception &ex) {
-            return true;
-        }
-    }
-
-    bool GeneralIndexFaceAccuracyModel::isMathemathicalError(Segment_intersection &intersection, Point &point)
-    {
-        const Point* intersectedPoint = boost::get<Point>(&(intersection->first));
-        if(intersectedPoint) {
-            return CGAL::squared_distance(*intersectedPoint, point) < 0.0001f;
-        }
-        return false;
-    }
-
-    bool GeneralIndexFaceAccuracyModel::isPointInsideImage(GLMVec2 &point2D, int camIndex)
-    {
-        return point2D.x < (float)getImageWidth(camIndex) && point2D.x > 0.0f && point2D.y < (float)getImageHeight(camIndex) && point2D.y > 0.0f;
-    }
-
-    GLMVec2 GeneralIndexFaceAccuracyModel::getProjectedPoint(GLMVec3 &meshPoint, int camIndex)
-    {
-        GLMVec4 point3D = GLMVec4(meshPoint, 1.0f);
-        CameraMatrix P = getCameraMatrix(camIndex);
-        P = glm::transpose(P);
-        GLMVec4 point2D = P * point3D;
-
-        point2D = point2D / point2D.z;
-
-        return GLMVec2(point2D.x, point2D.y);
-    }
-
-    int GeneralIndexFaceAccuracyModel::getImageWidth(int camIndex)
-    {
-        return this->cams[camIndex].imageWidth;
-    }
-
-    int GeneralIndexFaceAccuracyModel::getImageHeight(int camIndex)
-    {
-        return this->cams[camIndex].imageHeight;
-    }
-
-    GLMVec3 GeneralIndexFaceAccuracyModel::getCameraCenter(int indexCam)
-    {
-        return this->cams[indexCam].center;
-    }
-
-    CameraMatrix GeneralIndexFaceAccuracyModel::getExtrinsicMatrix(int indexCam)
-    {
-        CameraMatrix cam = CameraMatrix(getRotationMatrix(indexCam));
-        return glm::translate(cam, getCameraCenter(indexCam));
-    }
-
-    RotationMatrix GeneralIndexFaceAccuracyModel::getRotationMatrix(int indexCam)
-    {
-        return this->cams[indexCam].rotation;
-    }
-
-    CameraMatrix GeneralIndexFaceAccuracyModel::getCameraMatrix(int indexCam)
-    {
-        return this->cams[indexCam].cameraMatrix;
     }
 
 } // namespace meshac

@@ -6,21 +6,15 @@
 #include <iostream>
 #include <cstdio>
 
-#include <CGAL/exceptions.h>
-
 #include <realtimeMR/SfMData.h>
-
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/epsilon.hpp>
-#include <glm/gtx/norm.hpp>
 
 #include <meshac/FaceAccuracyModel.hpp>
 #include <meshac/type_definition.hpp>
 #include <meshac/UnexpectedPointException.hpp>
 #include <meshac/UnexpectedTriangleException.hpp>
 #include <meshac/UndefinedFaceIndexException.hpp>
-#include <meshac/UnprojectablePointThroughCamException.hpp>
 #include <meshac/utilities.hpp>
+#include <meshac/camera_utilities.hpp>
 
 
 namespace meshac {
@@ -48,22 +42,6 @@ namespace meshac {
         virtual CVMatList projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams);
 
         virtual double computeIndex(CVMatList triangles) = 0;
-
-        virtual GLMVec2 projectThrough(GLMVec3 &meshPoint, int camIndex);
-        virtual bool isMeaningfulPose(GLMVec3 &meshPoint, int camIndex);
-        virtual bool isOppositeView(GLMVec3 &centroid, int camIndex);
-        virtual bool isIntersecting(GLMVec3 &meshPoint, int camIndex);
-        virtual bool isMathemathicalError(Segment_intersection &intersection, Point &point);
-        virtual bool isPointInsideImage(GLMVec2 &point2D, int camIndex);
-        virtual GLMVec2 getProjectedPoint(GLMVec3 &meshPoint, int camIndex);
-
-        GLMVec3 getCameraCenter(int indexCam);
-        RotationMatrix getRotationMatrix(int indexCam);
-        CameraMatrix getExtrinsicMatrix(int indexCam);
-        CameraMatrix getCameraMatrix(int indexCam);
-
-        int getImageWidth(int camIndex);
-        int getImageHeight(int camIndex);
 
     private:
         StringList imgFilepath;

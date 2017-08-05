@@ -3,26 +3,19 @@
 
 #include <realtimeMR/SfMData.h>
 
-#include <meshac/PointAccuracyModel.hpp>
+#include <meshac/ResidualPointAccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
 #include <meshac/ImagePointVarianceEstimator.hpp>
 #include <meshac/InvalidUpdateException.hpp>
 
 namespace meshac {
     
-    class PhotogrammetristAccuracyModel : public PointAccuracyModel {
+    class PhotogrammetristAccuracyModel : public ResidualPointAccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMVec2ArrayList &camObservations,
-                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
-        
-        PhotogrammetristAccuracyModel(StringList &fileList, CameraList &cameras, GLMVec2ArrayList &camObservations, 
-                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
-        
         PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize);
         PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         
-        virtual ~PhotogrammetristAccuracyModel();
-        
+        ~PhotogrammetristAccuracyModel();
         
         /*
          * Computes the matrix representing the uncertainty of the 3D point.
@@ -33,21 +26,12 @@ namespace meshac {
         /*
          * Getter and setter of all the private variables.
          */
-        CameraMatrixList getCameras();
-        CameraMatrixList getCamerasMatrix();
-        GLMVec2ArrayList getCamObservations();
         ImagePointVarianceEstimatorPtr getVarianceEstimator();
-        ListMappingGLMVec2 getMapping3DTo2DThroughCam();
-        StringList getFileList();
 
-        void setCameras(CameraMatrixList &cameras);
-        void setCameras(CameraList &cameras);
-        void appendCamera(CameraMatrix &cam);
-        void setCameraObservations(GLMVec2ArrayList &newCamObservations);
-        void setCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs);
-        void updateCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs);
-        void updateMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
-        void setMapping3DTo2DThroughCam(ListMappingGLMVec2 &indexCams, IntList &index3DPoints);
+        virtual void setCameraObservations(GLMVec2ArrayList &newCamObservations);
+        virtual void setCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs);
+        virtual void updateCameraObservations(GLMVec2ArrayList &newCamObservations, IntList &camIndexs);
+        
 
     protected:
         /*
@@ -81,28 +65,17 @@ namespace meshac {
          * 
          */
         virtual void updateVariancesList(DoubleList &varianesList, EigMatrix &varianceMat, EigMatrixList &jacobianList, EigMatrix &jacobianMat);
-
-        /*
-         * Generalized method to update the lists.
-         */
-        virtual void camObservationGeneralUpdate(IntList &indexs, GLMVec2ArrayList &list, GLMVec2ArrayList &targetList, std::string errorMsg);
-        virtual void mappingGeneralUpdate(IntList &indexs, ListMappingGLMVec2 &list, ListMappingGLMVec2 &targetList);
-
+        
         virtual EigMatrix getAccuracyForPointInImage(CamPointPair &cameraObsPair);
 
         virtual EigMatrix replicateVarianceForTuple(EigMatrix &singleVariance);
 
     private:
-        CameraMatrixList extractCameraMatrix(CameraList &cameras);
         EigMatrixList computesProducts(EigMatrixList &jacobian, EigMatrixList &pointCovariance);
 
         ImagePointVarianceEstimatorPtr varianceEstimator;
 
-        StringList fileList;
-        CameraMatrixList cameras;
-        GLMVec2ArrayList camObservations;
-        ListMappingGLMVec2 point3DTo2DThroughCam;
-
+        typedef ResidualPointAccuracyModel super;
     };
 
 

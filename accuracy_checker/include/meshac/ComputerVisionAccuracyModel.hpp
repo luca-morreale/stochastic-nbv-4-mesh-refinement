@@ -10,13 +10,6 @@ namespace meshac {
     
     class ComputerVisionAccuracyModel : public PhotogrammetristAccuracyModel {
     public:
-
-        ComputerVisionAccuracyModel(StringList &fileList, CameraMatrixList &cameras, GLMVec2ArrayList &camObservations,
-                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
-        
-        ComputerVisionAccuracyModel(StringList &fileList, CameraList &cameras, GLMVec2ArrayList &camObservations,
-                                        ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize);
-
         ComputerVisionAccuracyModel(SfMData &data, DoublePair &pixelSize);
         ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         

@@ -3,16 +3,6 @@
 
 namespace meshac {
 
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(StringList &fileList, CameraMatrixList &cameras, 
-                                    GLMVec2ArrayList &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize) 
-                                    : PhotogrammetristAccuracyModel(fileList, cameras, camObservations, point3DTo2DThroughCam, pixelSize)
-    { /*    */ }
-
-    ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(StringList &fileList, CameraList &cameras, 
-                                    GLMVec2ArrayList &camObservations, ListMappingGLMVec2 &point3DTo2DThroughCam, DoublePair &pixelSize)
-                                    : PhotogrammetristAccuracyModel(fileList, cameras, camObservations, point3DTo2DThroughCam, pixelSize)
-    { /*    */ }
-
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, DoublePair &pixelSize) 
                                     : PhotogrammetristAccuracyModel(data, pixelSize) 
     { /*    */ }
@@ -29,7 +19,8 @@ namespace meshac {
 
         EigMatrixList uncertainties;
         for (auto tuple : tuples) {
-            EigMatrix jacobian = this->computeJacobian(tuple, this->getCameras()[cameraObsPair.first]);  // 3x(2*4) vector
+            CameraMatrix P = this->getCameraMatrix(cameraObsPair.first);
+            EigMatrix jacobian = this->computeJacobian(tuple, P);  // 3x(2*4) vector
             uncertainties.push_back(jacobian * variance * jacobian.transpose());
         }
         return average(uncertainties);

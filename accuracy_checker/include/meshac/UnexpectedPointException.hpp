@@ -10,6 +10,10 @@ namespace meshac {
         UnexpectedPointException(std::string msg) : std::runtime_error(msg)
         { /*    */ }
 
+        UnexpectedPointException(Point &point) : std::runtime_error("Point ("+ std::to_string(point[0]) + ", " + 
+                                std::to_string(point[1]) + ", " + std::to_string(point[2]) + ") is not part of the mesh.")
+        { /*    */ }
+
         UnexpectedPointException(GLMVec3 &point) : std::runtime_error("Point ("+ std::to_string(point.x) + ", " + 
                                 std::to_string(point.y) + ", " + std::to_string(point.z) + ") is not part of the mesh.")
         { /*    */ }

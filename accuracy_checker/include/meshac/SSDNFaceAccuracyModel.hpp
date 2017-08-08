@@ -16,6 +16,7 @@ namespace meshac {
 
     protected:
         virtual double computeIndex(CVMatList triangles);
+        virtual double worstIndex();
 
     };
 

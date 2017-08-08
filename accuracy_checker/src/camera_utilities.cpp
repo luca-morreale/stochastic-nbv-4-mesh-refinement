@@ -4,6 +4,26 @@ namespace meshac {
 
     const GLMVec4 zdir = GLMVec4(0.0f, 0.0f, 1.0f, 0.0f);
 
+    ListMappingGLMVec2 projectMeshPointsThroughCameras(GLMVec3List &points, CameraList &cams, TreePtr tree)
+    {
+        ListMappingGLMVec2 point3DTo2DThroughCam;
+        point3DTo2DThroughCam.assign(points.size(), CamToPointMap());
+
+        #pragma omp parallel for collapse(2)
+        for (int p = 0; p < points.size(); p++) {
+            for (int c = 0; c < cams.size(); c++) {
+                try {
+                    GLMVec2 point = projectThrough(points[p], cams[c], tree);
+                    #pragma omp critical
+                    point3DTo2DThroughCam[p].insert(CamPointPair(c, point));
+                } catch (const UnprojectablePointThroughCamException &ex) 
+                { } // do nothing because it makes no sense to project it
+            }
+        }
+        return point3DTo2DThroughCam;
+    }
+
+
     GLMVec2 projectThrough(GLMVec3 &meshPoint, CameraType &P, TreePtr tree)
     {
         GLMVec2 point = getProjectedPoint(meshPoint, P.cameraMatrix);
@@ -73,7 +93,7 @@ namespace meshac {
         P = glm::transpose(P);
         GLMVec4 point2D = P * point3D;
 
-        point2D = point2D / point2D.z;
+        // point2D = point2D / point2D.z;
 
         return GLMVec2(point2D.x, point2D.y);
     }

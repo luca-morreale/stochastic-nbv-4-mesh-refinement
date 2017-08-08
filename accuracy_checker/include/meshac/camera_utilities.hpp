@@ -12,6 +12,8 @@
 
 namespace meshac {
 
+    ListMappingGLMVec2 projectMeshPointsThroughCameras(GLMVec3List &points, CameraList &acams, TreePtr tree);
+    
     GLMVec2 projectThrough(GLMVec3 &meshPoint, CameraType &P, TreePtr tree);
     
     bool isMeaningfulPose(GLMVec3 &meshPoint, CameraType &P, TreePtr tree);

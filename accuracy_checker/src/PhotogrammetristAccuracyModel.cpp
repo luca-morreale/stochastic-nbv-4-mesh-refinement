@@ -34,7 +34,9 @@ namespace meshac {
 
     void PhotogrammetristAccuracyModel::fixImagesPath(std::string &pathPrefix)
     {
-        std::for_each(this->getFileList().begin(), this->getFileList().end(), [pathPrefix](std::string &path) { path.insert(0, pathPrefix); } );
+        StringList fileList = this->getFileList();
+        std::for_each(fileList.begin(), fileList.end(), [pathPrefix](std::string &path) { path.insert(0, pathPrefix); } );
+        this->setFileList(fileList);
     }
 
     /*

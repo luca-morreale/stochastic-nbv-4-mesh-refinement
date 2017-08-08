@@ -45,6 +45,7 @@ namespace meshac {
 
     float rad2deg(float rad);
     float deg2rad(float deg);
+    GLMVec3List convert(PointList points);
 
     /*
      * Subsample the data given.
@@ -111,6 +112,16 @@ namespace meshac {
             values.push_back(it->second);
         }
         return values;
+    }
+
+    template<typename K, typename E>
+    std::map<E, K> invert(std::map<K, E> map) 
+    {
+        std::map<E, K> inverse;
+        for (std::pair<K, E> el : map) {
+            inverse.insert(std::make_pair(el.second, el.first));
+        }
+        return inverse;
     }
 
 

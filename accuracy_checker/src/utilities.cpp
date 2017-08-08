@@ -144,4 +144,13 @@ namespace meshac {
         return deg * M_PI / 180.0f;
     }
 
+    GLMVec3List convert(PointList points)
+    {
+        GLMVec3List list;
+        for (int i = 0; i < points.size(); i++) {
+            list.push_back(GLMVec3(points[i][0], points[i][1], points[i][2]));
+        }
+        return list;
+    }
+
 } // namespace meshac

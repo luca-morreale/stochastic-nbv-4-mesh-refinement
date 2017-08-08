@@ -2,112 +2,110 @@
 
 namespace meshac {
 
-    FacetColorer::FacetColorer(std::string &confiFileName, FaceAccuracyModelPtr uncertantyEstimator)
+    FacetColorer::FacetColorer(std::string &confiFileName, FaceAccuracyModelPtr uncertantyEstimator) : Colorer(confiFileName)
     {
-        this->fileName = confiFileName;
         this->uncertantyEstimator = uncertantyEstimator;
-        this->colors = new ThresholdColor();
-        this->readColors();
     }
 
     FacetColorer::~FacetColorer()
     {
         delete this->uncertantyEstimator;
-        delete this->colors;
     }
 
     void FacetColorer::generateColoredMesh(std::string &output)
     {
+        std::stringstream stream;
+
+        PointList points = uncertantyEstimator->getPoints();
+        FaceIndexList facets = uncertantyEstimator->getFacetsIndex();
+
+        initOffFile(stream, points.size(), facets.size());
+
+        for (int i = 0; i < points.size(); i++) {
+            addPointToOff(stream, points[i]);
+        }
+
+        #pragma omp parallel for
+        for (int i = 0; i < facets.size(); i++) {
+            Color color = getColorForFacet(i);
+            
+            #pragma omp critical
+            addFaceToOff(stream, facets[i].vs[0], facets[i].vs[1], facets[i].vs[2], color);
+        }
+
+        std::ofstream out(output);
+        out << stream.str();
+        out.close();
+    }
+
+    void FacetColorer::generateReport(std::string &output)
+    {
+        std::stringstream stream;
         std::ofstream out(output);
         TriangleList facets = uncertantyEstimator->getFaces();
-
-        std::map<Point, int> pointToIndex = extractPointToIndexMap(facets);
-
-        initOffFile(out, pointToIndex.size(), facets.size());   // before this I should know the number of points and the number of vertex
         
-        for (auto pair : pointToIndex) {
-            addPointToOff(out, pair.first);
-        }
-        
+        #pragma omp parallel for
         for (int f = 0; f < facets.size(); f++) {
-            
-            try {
-                double accuracy = computeAccuracyForFacet(facets[f]);
-
-                Color color = colors->getColorFor(accuracy);
-
-                addFaceToOff(out, facets[f].vertex(0), facets[f].vertex(1), facets[f].vertex(2), pointToIndex, color);
-            } catch (UnexpectedTriangleException &ex) { }
+            double accuracy = computeAccuracyForFacet(facets[f]);
+            #pragma omp critical
+            addEntryToReport(stream, facets[f].vertex(0), facets[f].vertex(1), facets[f].vertex(2), accuracy);
         }
 
+        out << stream.str();
         out.close();
+    }
+
+    double FacetColorer::computeAccuracyForFacet(Point p1, Point p2, Point p3)
+    {
+        try {
+            return uncertantyEstimator->getAccuracyForFace(p1, p2, p3);
+        } catch (UnexpectedPointException &ex) { }
+        return 1.0;
+    }
+
+    double FacetColorer::computeAccuracyForFacet(int i)
+    {
+        try {
+            return uncertantyEstimator->getAccuracyForFace(i);
+        } catch (UnexpectedPointException &ex) { }
+        return 1.0;
     }
 
     double FacetColorer::computeAccuracyForFacet(Triangle &facet)
     {
         try {
-            const Point v1 = facet.vertex(0);
-            const Point v2 = facet.vertex(1);
-            const Point v3 = facet.vertex(2);
+            Point v1 = facet.vertex(0);
+            Point v2 = facet.vertex(1);
+            Point v3 = facet.vertex(2);
 
-            GLMVec3 a = GLMVec3(v1.x(), v1.y(), v1.z());
-            GLMVec3 b = GLMVec3(v2.x(), v2.y(), v2.z());
-            GLMVec3 c = GLMVec3(v3.x(), v3.y(), v3.z());
-
-            return uncertantyEstimator->getAccuracyForFace(a, b, c);
+            return uncertantyEstimator->getAccuracyForFace(v1, v2, v3);
 
         } catch (UnexpectedPointException &ex) { }
         return 1.0;
     }
 
-    std::map<Point, int> FacetColorer::extractPointToIndexMap(TriangleList &facets)
-    {
-        std::map<Point, int> pointToIndex;
-        int index = 1;
-
-        for (int f = 0; f < facets.size(); f++) {
-            for (int v = 0; v < 3; v++) {
-                Point vertex = facets[f].vertex(v);
-                if (pointToIndex[vertex] == 0) {
-                    pointToIndex[vertex] = index++;
-                }
-            }
-        }
-        return pointToIndex;
-    }
-
-    void FacetColorer::initOffFile(std::ofstream &out, size_t points, size_t facets)
+    void FacetColorer::initOffFile(std::iostream &out, size_t points, size_t facets)
     {
         out << "OFF" << std::endl;
         out << points << " " << facets << " 0" << std::endl;
     }
 
-    void FacetColorer::addPointToOff(std::ofstream &out, const Point &p)
+    void FacetColorer::addPointToOff(std::iostream &out, const Point &p)
     {
-        out << p[0] << "  " << p[1] << "  " << p[2] << std::endl;
+        out << p.x() << " " << p.y() << " " << p.z() << std::endl;
     }
 
-    void FacetColorer::addFaceToOff(std::ofstream &out, const Point &p1, const Point &p2, const Point &p3, std::map<Point, int> &pointToIndex, Color &color)
+    void FacetColorer::addFaceToOff(std::iostream &out, int v1, int v2, int v3, Color &color)
     {
-        out << "3  "<< pointToIndex[p1] << "  " << pointToIndex[p2] << "  " << pointToIndex[p3] << "  ";
-        out << (double)color.r / 255.0 << " " << (double)color.b / 255.0 << " " << (double)color.g / 255.0 << " " << color.a << std::endl;
+        out << "3 "<< v1 << " " << v2 << " " << v3 << "  " << stringfyColor(color) << std::endl;
     }
 
-    void FacetColorer::generateReport(std::string &output)
+    void FacetColorer::addFaceToOff(std::iostream &out, int v1, int v2, int v3, std::string &color)
     {
-        std::ofstream out(output);
-        TriangleList facets = uncertantyEstimator->getFaces();
-        
-        for (int f = 0; f < facets.size(); f++) {
-
-            double accuracy = computeAccuracyForFacet(facets[f]);
-
-            addEntryToReport(out, facets[f].vertex(0), facets[f].vertex(1), facets[f].vertex(2), accuracy);
-        }
-        out.close();
+        out << "3 "<< v1 << " " << v2 << " " << v3 << "  " << color << std::endl;
     }
 
-    void FacetColorer::addEntryToReport(std::ofstream &out, const Point &p1, const Point &p2, const Point &p3, double accuracy)
+    void FacetColorer::addEntryToReport(std::iostream &out, const Point &p1, const Point &p2, const Point &p3, double accuracy)
     {
         Point barycenter = computeBarycenter(p1, p2, p3);
         Vector normal = computeNormal(p1, p2, p3);
@@ -126,63 +124,15 @@ namespace meshac {
         return CGAL::normal(p1, p2, p3);
     }
 
-    void FacetColorer::readColors()
+    Color FacetColorer::getColorForFacet(int facetIndex)
     {
-        rapidjson::Document document = this->getJsonDocument();
-
-        this->colors->clearColors();
-        
-        if (!document.IsObject()) throw InvalidJsonFileException("Invalid format for color file. \nRoot element is not an object.");
-        if (!document.HasMember("colors")) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' does not exists.");
-        
-        const rapidjson::Value& colorsArray = document["colors"];
-
-        if (!colorsArray.IsArray()) throw InvalidJsonFileException("Invalid format for color file. \nElement 'colors' is not an array.");
-
-        
-        this->extractColors(colorsArray);
-    }
-
-    void FacetColorer::extractColors(const rapidjson::Value& colors)
-    {
-        for (rapidjson::SizeType i = 0; i < colors.Size(); i++) {  // Uses SizeType instead of size_t
-            if (this->hasCorrectMembers(colors[i])) {
-                Color c = this->buildColor(colors[i]);
-                this->colors->addColor(colors[i]["threshold"].GetFloat(), c);
-            }
+        try {
+            double accuracy = computeAccuracyForFacet(facetIndex);
+            return getColorForAccuracy(accuracy);
+        } catch (const UnexpectedTriangleException &ex) {
+            std::cerr << ex.what() << std::endl;
+            return Color(1.0, 1.0, 1.0, 0.3);
         }
-    }
-
-    rapidjson::Document FacetColorer::getJsonDocument()
-    {
-        std::ifstream jsonStream(this->fileName);
-        std::string str((std::istreambuf_iterator<char>(jsonStream)), std::istreambuf_iterator<char>());
-
-        rapidjson::Document document;
-        document.Parse(str.c_str());
-        return document;
-    }
-
-    bool FacetColorer::hasCorrectMembers(const rapidjson::Value& color)
-    {
-        return color.HasMember("threshold") && color.HasMember("r") && 
-                color.HasMember("g") && color.HasMember("b") && color.HasMember("a");
-    }
-
-    Color FacetColorer::buildColor(const rapidjson::Value& color)
-    {
-        return {(byte)color["r"].GetInt(), (byte)color["g"].GetInt(), (byte)color["b"].GetInt(), color["a"].GetFloat()};
-    }
-
-    std::string FacetColorer::getConfigFileName()
-    {
-        return this->fileName;
-    }
-
-    void FacetColorer::setConfigFilename(std::string &confiFileName)
-    {
-        this->fileName = confiFileName;
-        this->readColors();
     }
 
 } // namespace meshac

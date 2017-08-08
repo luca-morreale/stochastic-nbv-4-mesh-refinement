@@ -2,20 +2,19 @@
 #define MESH_ACCURACY_GENERAL_INDEX_FACE_ACCURACY_MODEL_H
 
 #include <algorithm>
+#include <cstdio>
 #include <ctime>
 #include <iostream>
-#include <cstdio>
 
 #include <realtimeMR/SfMData.h>
 
+#include <meshac/camera_utilities.hpp>
 #include <meshac/FaceAccuracyModel.hpp>
 #include <meshac/type_definition.hpp>
+#include <meshac/UndefinedFaceIndexException.hpp>
 #include <meshac/UnexpectedPointException.hpp>
 #include <meshac/UnexpectedTriangleException.hpp>
-#include <meshac/UndefinedFaceIndexException.hpp>
 #include <meshac/utilities.hpp>
-#include <meshac/camera_utilities.hpp>
-
 
 namespace meshac {
 
@@ -31,22 +30,31 @@ namespace meshac {
          * Computes all the matrixs that represents the accuracy of the point.
          */
         virtual double getAccuracyForFace(int faceIndex);
-        virtual double getAccuracyForFace(GLMVec3 &a, GLMVec3 &b, GLMVec3 &c);
+        virtual double getAccuracyForFace(Point &a, Point &b, Point &c);
 
     protected:
-        virtual void projectMeshPoints();
-        virtual IntList selectCommonCameras(ListMappingGLMVec2 &mappings);
+        void fixImagesPath(std::string &pathPrefix);
+        void initMap3DTo2D();
+        void initAffineTriangle();
+        void setTriangularMask();
 
+        virtual ListMappingGLMVec2 getMappings(int faceIndex);
+        virtual IntList selectCommonCameras(ListMappingGLMVec2 &mappings);
+        virtual ListMappingGLMVec2 removeUnusedMapping(ListMappingGLMVec2 &mappings, IntList &commonCams);
         virtual CVMat generateAffineTransform(GLMVec2 &a, GLMVec2 &b, GLMVec2 &c);
         virtual CVMat applyAffine(CVMat &affine, int camIndex);
         virtual CVMatList projectTriangles(ListMappingGLMVec2 &mappings, IntList &commonCams);
 
         virtual double computeIndex(CVMatList triangles) = 0;
+        virtual double worstIndex() = 0;
+
+        int retreiveIndex(Point &vertex);
+        int retreiveIndex(GLMVec3 &point);
 
     private:
         StringList imgFilepath;
 
-        GLMVec3List points;
+        PointIntMap pointToIndex;
         CameraList cams;
         GLMVec2ArrayList camObservations;
         ListMappingGLMVec2 point3DTo2DThroughCam;
@@ -56,21 +64,10 @@ namespace meshac {
         CVPoint2 destTriangle[3];
         CVMat triangularMask;
 
+
         const GLMVec4 zdir = GLMVec4(0.0, 0.0, 1.0, 0.0);
 
-        void initAffineTriangle();
-        void setTriangularMask();
-        void initTree();
-
-        void fixImagesPath(std::string &pathPrefix);
-        void convertTriangleToIndex();
-
-        int retreiveIndex(Point &vertex);
-        int retreiveIndex(GLMVec3 &point);
-        ListMappingGLMVec2 getMappings(int faceIndex);
-        ListMappingGLMVec2 removeUnusedMapping(ListMappingGLMVec2 &mappings, IntList &commonCams);
         IntList unionCamIndex(ListMappingGLMVec2 &mappings);
-
         CVMat cropTriangle(CVMat &projectedImage);
 
     };

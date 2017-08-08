@@ -5,24 +5,28 @@ namespace meshac {
     GeneralIndexFaceAccuracyModel::GeneralIndexFaceAccuracyModel(std::string &meshFile, SfMData &data, std::string &pathPrefix) : FaceAccuracyModel(meshFile)
     {
         this->imgFilepath = data.camerasPaths_;
-        this->points = data.points_;
         this->cams = data.camerasList_;
-        this->point3DTo2DThroughCam.assign(this->points.size(), std::map<int, GLMVec2>());
-
+        
         this->fixImagesPath(pathPrefix);
         
-        this->convertTriangleToIndex();
-        
         this->initAffineTriangle();
-        
-        this->initTree();
-        
-        this->projectMeshPoints();
+
+        this->initMap3DTo2D();
     }
 
     GeneralIndexFaceAccuracyModel::~GeneralIndexFaceAccuracyModel()
+    { /*    */ }
+
+    void GeneralIndexFaceAccuracyModel::fixImagesPath(std::string &pathPrefix)
     {
-        delete tree;
+        std::for_each(this->imgFilepath.begin(), this->imgFilepath.end(), [pathPrefix](std::string &path) { path.insert(0, pathPrefix); } );
+    }
+
+    void GeneralIndexFaceAccuracyModel::initMap3DTo2D()
+    {
+        PointList points = getPoints();
+        GLMVec3List glmPoints = convert(points);
+        this->point3DTo2DThroughCam = projectMeshPointsThroughCameras(glmPoints, cams, getTree());
     }
 
     void GeneralIndexFaceAccuracyModel::initAffineTriangle()
@@ -55,88 +59,50 @@ namespace meshac {
         this->triangularMask = mask;
     }
 
-    void GeneralIndexFaceAccuracyModel::initTree()
-    {
-        TriangleList facets = this->getFaces();
-        this->tree = new Tree(facets.begin(), facets.end());
-    }
-
-    void GeneralIndexFaceAccuracyModel::convertTriangleToIndex()
-    {
-        FaceIndexList newFaces;
-        TriangleList facets = this->getFaces();
-
-        #pragma omp parallel for
-        for (int f = 0; f < facets.size(); f++) {
-            try {
-                FaceIndex face;
-                for (int v = 0; v < 3; v++) {
-                    
-                    Point vertex = facets[f].vertex(v);
-                    size_t index = retreiveIndex(vertex);
-                    face.set(v, index);
-                }
-                #pragma omp critical
-                newFaces.push_back(face);
-            } catch (UnexpectedPointException &ex) { }
-        }
-
-        this->faces = newFaces;
-    }
-
     int GeneralIndexFaceAccuracyModel::retreiveIndex(Point &vertex)
     {
-        GLMVec3 point(vertex.x(), vertex.y(), vertex.z());
-        return retreiveIndex(point);
+        try {
+            return pointToIndex.at(vertex);
+        } catch (const std::out_of_range &ex) {
+            throw UnexpectedPointException(vertex); 
+        }
     }
 
     int GeneralIndexFaceAccuracyModel::retreiveIndex(GLMVec3 &point)
     {
-        int index = -1;
-        #pragma omp parallel for
-        for (size_t p = 0; p < points.size(); p++) {
-            if (glm::all(glm::epsilonEqual(point, points[p], SENSIBILITY))) {
-                #pragma omp critical
-                index = p;
-            }
-        }
-
-        if (index >= 0) {
-            return index;
-        }
-        throw UnexpectedPointException(point);
+        Point p(point.x, point.y, point.z);
+        return retreiveIndex(p);
     }
 
-    void GeneralIndexFaceAccuracyModel::fixImagesPath(std::string &pathPrefix)
-    {
-        std::for_each(this->imgFilepath.begin(), this->imgFilepath.end(), [pathPrefix](std::string &path) { path.insert(0, pathPrefix); } );
-    }
-
-    double GeneralIndexFaceAccuracyModel::getAccuracyForFace(GLMVec3 &a, GLMVec3 &b, GLMVec3 &c)
+    double GeneralIndexFaceAccuracyModel::getAccuracyForFace(Point &a, Point &b, Point &c)
     {
         int ia = retreiveIndex(a);
         int ib = retreiveIndex(b);
         int ic = retreiveIndex(c);
 
-        double acc = -1.0;
+        double acc = worstIndex();
+        bool foundface = false;
+
+        FaceIndexList facetIndex = getFacetsIndex();
 
         #pragma omp parallel for
-        for (int i = 0; i < faces.size(); i++) {
-            if (faces[i].is(ia, ib, ic)) {
+        for (int i = 0; i < facetIndex.size(); i++) {
+            if (facetIndex[i].is(ia, ib, ic)) {
+                foundface = true;
                 acc = getAccuracyForFace(i);        // assume there are not duplicate triangles
             }
         }
 
-        if (acc >= 0) {
-            return acc;
+        if (!foundface) {
+            throw UnexpectedTriangleException(a, b, c);
         }
 
-        throw UnexpectedTriangleException(a, b, c);
+        return acc;
     }
 
     double GeneralIndexFaceAccuracyModel::getAccuracyForFace(int faceIndex)
     {
-        if (faceIndex >= faces.size() || faceIndex < 0) {
+        if (faceIndex >= getFacetsIndex().size() || faceIndex < 0) {
             throw UndefinedFaceIndexException(faceIndex);
         }
 
@@ -144,7 +110,7 @@ namespace meshac {
 
         IntList commonCams = selectCommonCameras(mappings);
 
-        if (commonCams.size() < 2) return -10.0;
+        if (commonCams.size() < 2) return worstIndex();
 
         mappings = removeUnusedMapping(mappings, commonCams);
 
@@ -155,11 +121,11 @@ namespace meshac {
 
     ListMappingGLMVec2 GeneralIndexFaceAccuracyModel::getMappings(int faceIndex)
     {
-        FaceIndex face = faces[faceIndex];
+        FaceIndex face = getFacetsIndex()[faceIndex];
         ListMappingGLMVec2 mappings;
 
         for (int i = 0; i < 3; i++) {
-            int pointIndex = face.vs[i];
+            int pointIndex = face.vs[i]; // because in pointToIndex index starts from 1 not 0
             mappings.push_back(point3DTo2DThroughCam[pointIndex]);
         }
 
@@ -269,21 +235,6 @@ namespace meshac {
         }
 
         return commonCams;
-    }
-
-    void GeneralIndexFaceAccuracyModel::projectMeshPoints()
-    {
-        #pragma omp parallel for collapse(2)
-        for (int p = 0; p < this->points.size(); p++) {
-            for (int c = 0; c < this->cams.size(); c++) {
-                try {
-                    GLMVec2 point = projectThrough(points[p], cams[c], tree);
-                    #pragma omp critical
-                    this->point3DTo2DThroughCam[p].insert(std::make_pair(c, point));
-                } catch (const UnprojectablePointThroughCamException &ex) 
-                { } // do nothing because it makes no sense to project it
-            }
-        }
     }
 
 } // namespace meshac

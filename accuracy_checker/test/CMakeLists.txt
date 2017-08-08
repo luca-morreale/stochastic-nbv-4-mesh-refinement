@@ -38,11 +38,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 file(GLOB_RECURSE main_SOURCE )
 
-add_executable(pointColorer src/Main.cpp src/OpenMvgParser.cpp)
-
+add_executable(pointColorer src/main_point.cpp src/OpenMvgParser.cpp)
+add_executable(residualColorer src/main_residual.cpp src/OpenMvgParser.cpp)
 add_executable(faceColorer src/main_face.cpp src/OpenMvgParser.cpp)
 
 target_link_libraries(pointColorer ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} )
+target_link_libraries(residualColorer ${OpenCV_LIBS} 
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
                                             ${GMP_LIBRARIES}

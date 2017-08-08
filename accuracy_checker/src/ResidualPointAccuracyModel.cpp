@@ -63,6 +63,11 @@ namespace meshac {
         return this->fileList;
     }
 
+    void ResidualPointAccuracyModel::setFileList(StringList &fileList)
+    {
+        this->fileList = fileList;
+    }
+
     CameraList ResidualPointAccuracyModel::getCameras()
     {
         return this->cameras;

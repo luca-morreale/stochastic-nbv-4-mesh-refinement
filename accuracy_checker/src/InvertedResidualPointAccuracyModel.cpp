@@ -26,8 +26,9 @@ namespace meshac {
 
     GLMVec3 InvertedResidualPointAccuracyModel::getRetroProjection(CameraMatrix &P, GLMVec2 &point2D)
     {
-        GLMVec4 projectedPoint = glm::inverse(glm::transpose(P) * P) * glm::transpose(P) * GLMVec4(point2D, 1.0f, 0.0f);
-        projectedPoint /= projectedPoint.w;
+        CameraMatrix Pinv = glm::transpose(P) * glm::inverse(P * glm::transpose(P));
+        GLMVec4 projectedPoint = Pinv * GLMVec4(point2D, 1.0f, 0.0f);
+        // projectedPoint /= projectedPoint.w;    // w component is infinite
 
         return GLMVec3(projectedPoint.x, projectedPoint.y, projectedPoint.z);
     }

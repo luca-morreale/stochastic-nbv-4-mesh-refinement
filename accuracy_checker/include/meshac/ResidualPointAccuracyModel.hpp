@@ -29,6 +29,7 @@ namespace meshac {
         ListMappingGLMVec2 getMapping3DTo2DThroughCam();
         StringList getFileList();
 
+        void setFileList(StringList &fileList);
         virtual void setCameras(CameraList &cameras);
         virtual void appendCamera(CameraType &cam);
         virtual void setCameraObservations(GLMVec2ArrayList &newCamObservations);

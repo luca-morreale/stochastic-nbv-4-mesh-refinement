@@ -41,7 +41,7 @@
 #include <meshac/DeterminantVarianceEstimator.hpp>
 #include <meshac/WorstEigenvalueVarianceEstimator.hpp>
 #include <meshac/AverageVarianceEstimator.hpp>
-#include <meshac/MeshColorer.hpp>
+#include <meshac/VertexColorer.hpp>
 
 #define OMP_THREADS 8
 
@@ -50,7 +50,7 @@
 //#define SAVE_POINTS_TO_OFF_AND_EXIT
 
 SfMData sfm_data_;
-meshac::MeshColorerPtr meshColorer;
+meshac::VertexColorerPtr meshColorer;
 
 int point2D3DJacobian(const std::vector<cv::Mat> &cameras, const cv::Mat &cur3Dpoint, cv::Mat &J, cv::Mat &hessian) {
 
@@ -269,9 +269,9 @@ int main(int argc, char **argv) {
     std::pair<double, double> pixelSize(0.0003527, 0.0003527);
     // meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
     meshac::ComputerVisionAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
-    meshColorer = new meshac::MeshColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
-    // meshColorer = new meshac::MeshColorer(color_file, new meshac::DeterminantVarianceEstimator(&accuracyModel, sfm_data_.points_));
-    // meshColorer = new meshac::MeshColorer(color_file, new meshac::AverageVarianceEstimator(&accuracyModel, sfm_data_.points_));
+    meshColorer = new meshac::VertexColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
+    // meshColorer = new meshac::VertexColorer(color_file, new meshac::DeterminantVarianceEstimator(&accuracyModel, sfm_data_.points_));
+    // meshColorer = new meshac::VertexColorer(color_file, new meshac::AverageVarianceEstimator(&accuracyModel, sfm_data_.points_));
 
     m.setExpectedTotalIterationsNumber((maxIterations_) ? maxIterations_ + 1 : sfm_data_.numCameras_);
 
@@ -285,7 +285,6 @@ int main(int argc, char **argv) {
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
         CameraType* camera = &sfm_data_.camerasList_[cameraIndex];
         camera->idCam = cameraIndex;
-//      std::cout << "camera " << camera->idCam << std::endl;
 
         incData.addCamera(camera);
     }
@@ -308,7 +307,7 @@ int main(int argc, char **argv) {
             incData.addPoint(point);
         }
     }
-    //delete(meshColorer);
+    delete meshColorer;
 
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
 

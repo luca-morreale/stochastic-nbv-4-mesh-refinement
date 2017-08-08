@@ -44,11 +44,11 @@ int main(int argc, char **argv) {
     std::cout << "ok\n";
 
     colorer.generateColoredMesh(mesh_out);
-    // colorer.generateReport("color_facets.txt"); 
+    // colorer.generateReport(report_out); 
 
     // poche viste comuni dalle diverse camere
     
-    delete model;
+    // delete model;
     
     return 0;
 }

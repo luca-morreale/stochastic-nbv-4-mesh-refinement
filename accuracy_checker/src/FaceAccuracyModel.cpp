@@ -5,12 +5,27 @@ namespace meshac {
     FaceAccuracyModel::FaceAccuracyModel(std::string &meshFile)
     {
         this->meshFilename = meshFile;
-        this->faces = generateTriangleList();        
+        this->faces = generateTriangleList();   
+
+        OffParser parser(meshFile);
+        this->pointToIndex = parser.getPointToIndexMap();
+        this->trianglesIndex = parser.getFaceIndexList();
+        
+        this->initTree();
     }
 
     FaceAccuracyModel::~FaceAccuracyModel()
     {
-        this->faces.clear();        
+        this->faces.clear();
+        this->pointToIndex.clear();
+        this->trianglesIndex.clear();
+        delete tree;
+    }
+
+    PointList FaceAccuracyModel::getPoints()
+    {
+        IntPointMap indexToPoint = invert(pointToIndex);
+        return values(indexToPoint);
     }
 
     TriangleList FaceAccuracyModel::getFaces()
@@ -18,10 +33,26 @@ namespace meshac {
         return this->faces;
     }
 
-    void FaceAccuracyModel::changeMesh(std::string meshFile)
+    FaceIndexList FaceAccuracyModel::getFacetsIndex()
+    {
+        return this->trianglesIndex;
+    }
+
+    void FaceAccuracyModel::setMeshFile(std::string meshFile)
     {
         this->meshFilename = meshFile;
         this->faces = generateTriangleList();
+    }
+
+    TreePtr FaceAccuracyModel::getTree()
+    {
+        return tree;
+    }
+
+    void FaceAccuracyModel::initTree()
+    {
+        TriangleList facets = this->getFaces();
+        this->tree = new Tree(facets.begin(), facets.end());
     }
 
     TriangleList FaceAccuracyModel::generateTriangleList()

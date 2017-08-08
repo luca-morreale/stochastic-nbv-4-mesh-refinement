@@ -116,6 +116,10 @@ namespace meshac {
 
     typedef Tree* TreePtr;
 
-}
+    typedef std::map<int, Point> IntPointMap;
+    typedef std::map<Point, int> PointIntMap;
+    typedef std::vector<Point> PointList;
+
+} // namespace meshac
 
 #endif // MESH_ACCURACY_TYPE_DEFINITION_H

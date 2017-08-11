@@ -51,17 +51,17 @@ namespace cameval {
     std::string removePartsFromEntry(std::string &entry)
     {
         size_t charPos = entry.find_last_of("/");
-        if (charPos >= entry.size()) {
+        if (charPos < entry.size()) {
             entry = entry.substr(charPos + 1, entry.size());
         }
 
         charPos = entry.find_last_of(".");
-        if (charPos >= entry.size()) {
+        if (charPos < entry.size()) {
             entry = entry.substr(0, charPos);
         }
 
         charPos = entry.find_first_of("_");
-        if (charPos >= entry.size()) {
+        if (charPos < entry.size()) {
             entry = entry.substr(charPos + 1, entry.size());
         }
 

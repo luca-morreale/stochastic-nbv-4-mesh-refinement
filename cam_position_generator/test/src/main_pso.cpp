@@ -12,11 +12,15 @@
 
 
 #define OMP_THREADS 8
-
+#define ARGS 2
 
 int main(int argc, char **argv) {
     
     omp_set_num_threads(OMP_THREADS);
+    if (argc < ARGS + 1) {
+        std::cout << "Usage: " << argv[0] << " mgvjson.json meshfile.off" << std::endl;
+        return 1;
+    }
 
     std::string jsonFile = argv[1];
     std::string meshFile = argv[2];

@@ -4,15 +4,6 @@ namespace cameval {
 
     const GLMVec3 OpenMvgPoseConverter::twoPi = GLMVec3((float)(2.0f * M_PI));
 
-    // OpenMvgPoseConverter::OpenMvgPoseConverter(GLMVec3 &lookingWith, GLMVec3 &targetLookingWith)
-    // {
-    //     OpenMvgPoseConverter::lookingWith = lookingWith;
-    //     OpenMvgPoseConverter::targetLookingWith = targetLookingWith;
-    // }
-
-    // OpenMvgPoseConverter::~OpenMvgPoseConverter()
-    // { /*    */ }
-
     /*
      * NOTE
      * can do this by inferring from direction vectors? like using acos of the 

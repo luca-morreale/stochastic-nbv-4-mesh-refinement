@@ -20,6 +20,7 @@ namespace cameval {
     class KDTree {
     public:
         KDTree(StringList &database);
+        KDTree(AnglePoseList &database);
         ~KDTree();
 
         AnglePose searchClosestPoint(AnglePose &pose);

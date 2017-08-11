@@ -10,6 +10,22 @@ namespace cameval {
         this->generateTree();
     }
 
+    KDTree::KDTree(AnglePoseList &database)
+    {
+        tree = PCLKDTree().makeShared();
+        cloud = PCLPointCloud().makeShared();
+
+        cloud->width = database.size();
+        cloud->height = 1;
+        cloud->points.resize(cloud->width * cloud->height);
+
+        for (int i = 0; i < database.size(); i++) {
+            fillPoint(database[i], cloud->points[i]);
+        }
+
+        tree->setInputCloud(cloud);
+    }
+
     KDTree::~KDTree()
     {
         cloud.reset();

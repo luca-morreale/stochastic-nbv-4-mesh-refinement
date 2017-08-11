@@ -39,23 +39,73 @@ namespace cameval {
         return content;
     }
 
+    std::string concatBlocks(StringList &blocks)
+    {
+        std::string out;
+        for (std::string el : blocks) {
+            out += el + "_";
+        }
+        return out.substr(0, out.find_last_of("_"));
+    }
+
+    std::string removePartsFromEntry(std::string &entry)
+    {
+        size_t charPos = entry.find_last_of("/");
+        if (charPos >= entry.size()) {
+            entry = entry.substr(charPos + 1, entry.size());
+        }
+
+        charPos = entry.find_last_of(".");
+        if (charPos >= entry.size()) {
+            entry = entry.substr(0, charPos);
+        }
+
+        charPos = entry.find_first_of("_");
+        if (charPos >= entry.size()) {
+            entry = entry.substr(charPos + 1, entry.size());
+        }
+
+        return entry;
+    }
+
+    StringList divideStringPose(std::string &stringPose)
+    {
+        StringList blocks;
+        boost::split(blocks, stringPose, boost::is_any_of("_"));
+
+        return StringList(blocks.end() - 6, blocks.end());
+    }
+
     AnglePose parseEntry(std::string &entry)
     {
         AnglePose pose;
+        std::string stringPose = removePartsFromEntry(entry);
+        StringList blocks = divideStringPose(stringPose);
 
-        entry = entry.substr(0, entry.find_last_of("."));
-        StringList blocks;
-        boost::split(blocks, entry, boost::is_any_of("_"));
-        
         for (int i = 0; i < 3; i++) {
-            pose.first[i] = std::strtod(blocks[i + 1].c_str(), NULL);
+            pose.first[i] = std::strtod(blocks[i].c_str(), NULL);
         }
         for (int i = 0; i < 3; i++) {
-            pose.second[i] = std::strtod(blocks[i + 1 + 3].c_str(), NULL);
+            pose.second[i] = std::strtod(blocks[i + 3].c_str(), NULL);
         }
         
         return pose;
     }
+
+    std::string getPoseString(std::string &entry)
+    {
+        std::string stringPose = removePartsFromEntry(entry);
+        StringList blocks = divideStringPose(stringPose);
+        return concatBlocks(blocks);
+    }
+
+    void eraseFromVector(IntList &removeIndex, GLMVec3List &list)
+    {
+        for (auto it = removeIndex.rbegin(); it != removeIndex.rend(); it++) {
+            list.erase(list.begin() + *it);
+        }
+    }
+
 
     GLMVec3 convert(EigVector3 &arr)
     {

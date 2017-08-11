@@ -2,29 +2,54 @@
 
 namespace cameval {
 
-    Mapper::Mapper()
+    Mapper::Mapper(std::string mappingFile)
     {
-        std::string mappingFile = "output_mapping.txt";
+        // std::string mappingFile = "output_mapping.txt";
+        this->mappingFile = mappingFile;
         StringPoseMapping mapping = InputReader::readMappingDatabase(mappingFile);
-        
         this->poses = mapping.second;
-        for (int i = 0; i < mapping.first.size(); i++) {
-            this->strings.insert(std::make_pair(mapping.first[i], i));
-        }
+
+        setStringIndexMap(mapping.first);
+        setFilenameMap();
     }
 
     Mapper::~Mapper()
     {
         this->poses.clear();
         this->strings.clear();
+        this->filenameMap.clear();
+    }
+
+    void Mapper::setStringIndexMap(StringList &mapping)
+    {
+        for (int i = 0; i < mapping.size(); i++) {
+            this->strings.insert(std::make_pair(mapping[i], i));
+        }
+    }
+
+    void Mapper::setFilenameMap()
+    {
+        StringList files = keys(strings);
+        for (std::string file : files) {
+            std::string poseString = removePartsFromEntry(file);
+            StringList coords = divideStringPose(poseString);
+
+            filenameMap.insert(std::make_pair(concatBlocks(coords), file));
+        }
+    }
+
+    std::string Mapper::mapStringToFile(std::string &entry)
+    {
+        std::string key = getPoseString(entry);
+
+        return filenameMap[key];
     }
 
     Pose Mapper::mapFileToPose(std::string entry)
     {
-        entry = entry.substr(entry.find_last_of("/"), entry.size());
-        entry = entry.substr(0, entry.find_last_of("."));
+        std::string key = getPoseString(entry);
 
-        auto position = strings.find(entry);
+        auto position = strings.find(key);
         if (position == strings.end()) {
             // FIXME error
             return Pose();
@@ -33,25 +58,22 @@ namespace cameval {
         return poses[index];
     }
 
-    Pose Mapper::slowMappingToPose(std::string entry)
+    Pose Mapper::slowMappingToPose(std::string entry, std::string mappingFile)
     {
-        entry = entry.substr(entry.find_last_of("/") + 1, entry.size());
-        entry = entry.substr(0, entry.find_last_of("."));
+        std::string key = getPoseString(entry);
         
-        std::ifstream cin("output_mapping.txt");
+        std::ifstream cin(mappingFile);
 
         while (!cin.eof()) {
             std::string filename, poseString;
             cin >> filename >> poseString;
 
             filename = trim(filename);
+            filename = getPoseString(entry);
             // std::cout << filename << std::endl;
             if (filename.compare(entry) == 0) {
 
-                poseString = "prefix_" + poseString;
-                poseString += ".suffix";
                 AnglePose position_lookAt = parseEntry(poseString);
-
                 ProjectionMatrix view = glm::lookAt(position_lookAt.first, position_lookAt.second, GLMVec3(0, 1, 0));
                 RotationMatrix rot(view);
                 

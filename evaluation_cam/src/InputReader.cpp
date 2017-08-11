@@ -2,7 +2,7 @@
 
 namespace cameval {
 
-    StringList InputReader::readDatabase(std::string &database) 
+    StringList InputReader::readDatabase(std::string &database)     // file should contain an entry for each line with no space
     {
         std::ifstream cin(database);
         StringList filelist;
@@ -34,14 +34,12 @@ namespace cameval {
                 continue;
             }
 
-            poseString = "prefix_" + poseString;
-            poseString += ".suffix";
             AnglePose pose = parseEntry(poseString);            
 
             ProjectionMatrix view = glm::lookAt(pose.first, pose.second, GLMVec3(0, 1, 0));
             RotationMatrix rot(view);
             
-            fileList.push_back(filename);
+            fileList.push_back(getPoseString(filename));
             poses.push_back(std::make_pair(pose.first, rot));
         }
 

@@ -27,6 +27,7 @@ namespace cameval {
     typedef std::vector<std::string> StringList;
     typedef std::unordered_set<std::string> StringUSet;
     typedef std::unordered_map<std::string, int> StringIntUMap;
+    typedef std::map<std::string, std::string> StringStringMap;
     typedef std::vector<int> IntList;
     typedef std::vector<float> FloatList;
     typedef std::vector<double> DoubleList;

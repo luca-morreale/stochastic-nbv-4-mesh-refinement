@@ -1,59 +1,61 @@
-#include <Evaluator.hpp>
+#include <BasicEvaluator.hpp>
 
 namespace cameval {
 
-    Evaluator::Evaluator(std::string &databaseFilename, std::string &groundTruthFilename, 
-            std::string &basicPoseFilename, std::string &baseImageFolder, std::string &intrinsicParams, 
-            std::string &sshconfig) : thresholdWaitSsh(THRESHOLD_SSH)
+    BasicEvaluator::BasicEvaluator(std::string &posesFilename, std::string &groundTruthFilename, std::string &basicPoseFilename, 
+                        std::string &baseImageFolder, std::string &intrinsicParams, std::string &outputFile)
     {
-        this->databaseFilename = databaseFilename;                  // file from which read poses to evaluate
-        this->groundTruthFilename = groundTruthFilename;            // file containing the g-t cloud of points
-        OpenMvgSysCall::baseImageFolder = baseImageFolder;                    // name of folder containing the images of current cloud
-        OpenMvgSysCall::intrinsicParams = intrinsicParams;                    // file containing the intrinisc params in format ready for opengm
+        this->posesFilename = posesFilename;                          // file from which read poses to evaluate
+        this->groundTruthFilename = groundTruthFilename;              // file containing the g-t cloud of points
+        this->outputFile = outputFile;
+        OpenMvgSysCall::baseImageFolder = baseImageFolder;            // name of folder containing the images of current cloud
+        OpenMvgSysCall::intrinsicParams = intrinsicParams;            // file containing the intrinisc params in format ready for opengm
         this->distanceRegex = std::regex("\\[(.*)\\] \\[ComputeDistances\\] Mean distance = (.*) / std deviation = (.*)");
 
         log("\nPopulating basic camera poses");
         PoseReader reader(basicPoseFilename);
-        this->basicPoses = reader.getPoses();
-        log("\nBasic poses size: " + std::to_string(basicPoses.size()));
+        this->cameraPoses = reader.getPoses();
+        log("\nBasic poses size: " + std::to_string(cameraPoses.size()));
 
-        log("\nPopulating Database");
-        stringDB = InputReader::readDatabase(databaseFilename);
-        remapListToQueue(stringDB);
-        log("\nDatabase size: " + std::to_string(database.size()));
+        log("\nPopulating Poses To be Analyzed");
+        posesString = InputReader::readDatabase(posesFilename);
+        remapListToQueue(posesString);
+        log("\nPoses size: " + std::to_string(posesFilename.size()));
 
-        std::string fileExample = database.front().second;
+        std::string fileExample = poses.front().second;
         this->filePrefix = fileExample.substr(0, fileExample.find_first_of("_"));
         this->fileExtention = fileExample.substr(fileExample.find_last_of(".") + 1, fileExample.size());
-
-        this->sshHandler = new SshHandler(sshconfig);
     }
 
-    Evaluator::~Evaluator()
+    BasicEvaluator::~BasicEvaluator()
     {
-        delete sshHandler;
         delete mvgJsonHandler;
     }
 
-    void Evaluator::remapListToQueue(StringList &dataList)
+    void BasicEvaluator::appendToPoses(IntStringPair &pair)
+    {
+        poses.push(pair);
+    }
+
+    void BasicEvaluator::remapListToQueue(StringList &dataList)
     {
         for (int i = 0; i < dataList.size(); i++) {
-            this->database.push(IntStringPair(i, dataList[i]));
+            this->poses.push(IntStringPair(i, dataList[i]));
         }
     }
 
-    void Evaluator::evaluate()
+    void BasicEvaluator::evaluate()
     {
-        std::ofstream out("report.txt");
+        std::ofstream out(this->outputFile);
         std::string basicFolder = initOpenMvg();
         log("\nInitialized folders");
 
         DoubleList distances;
-        distances.assign(database.size(), 0.0);
+        distances.assign(poses.size(), 0.0);
 
-        while (!database.empty()) {
-            IntStringPair entry = database.front();
-            database.pop();
+        while (!poses.empty()) {
+            IntStringPair entry = poses.front();
+            poses.pop();
 
             log("\nStart analysis pose #" + std::to_string(entry.first));
 
@@ -71,18 +73,19 @@ namespace cameval {
         log("\nDone computation of all poses");
         
         int index = getIndexOfSmallestDistance(distances);
-        std::cout << "min distance: " << distances[index] << std::endl;
-        std::cout << "pose: " << stringDB[index] << std::endl;
+
+        log("min distance: " + std::to_string(distances[index]));
+        log("pose: " + posesString[index]);
 
         out << "min distance: " << distances[index] << std::endl;
-        out << "pose: " << stringDB[index] << std::endl;
+        out << "pose: " << posesString[index] << std::endl;
 
         out.close();
 
         FileHandler::cleanAll({basicFolder, "matches/", "poses_sfm_data/"});     // remove all folders created!
     }
 
-    std::string Evaluator::initOpenMvg()
+    std::string BasicEvaluator::initOpenMvg()
     {
         OpenMvgSysCall::initOpenMvg();
 
@@ -93,27 +96,14 @@ namespace cameval {
 
         return "matches";
     }
-
-    std::string Evaluator::robustDownload(IntStringPair &entry)
-    {
-        std::chrono::milliseconds start = now();
-        while (now() - start < thresholdWaitSsh) {
-            try {
-                return sshHandler->download(entry.second);
-            } catch (const SSHException &ex) { }
-            usleep(SLEEP_SSH_ERROR);
-        }
-        database.push(entry);
-        return "";      // put back name in a map to redo
-    }
     
-    double Evaluator::evaluatePose(IntStringPair &entry, std::string &basicFolder)
+    double BasicEvaluator::evaluatePose(IntStringPair &entry, std::string &basicFolder)
     {
         log("\nParsing filename to pose");
-        Pose pose = Mapper::slowMappingToPose(entry.second);    // FIXME this might be empty, so check, if not here just parse.
-        log("\nDownloading image");
+        Pose pose = getPose(entry.second);
 
-        std::string filename = robustDownload(entry);
+        log("\nDownloading image");
+        std::string filename = getImage(entry);
         if (filename.size() == 0) return DBL_MAX;
 
         std::string jsonFile = basicFolder + "/sfm_data.json";
@@ -130,10 +120,12 @@ namespace cameval {
         std::string pairFile = generatePairFile(imgId);
 
         OpenMvgSysCall::extractMvgFeatures(jsonFile, pairFile);
+
         log("\nCompute Structure");
         std::string mvgFolder = OpenMvgSysCall::computeStructureFromPoses(jsonFile, imgId);
 
         std::string inputCloud = mvgFolder + "/sfm_data.ply";
+        
         log("\nCompute Distance");
         std::string logFile = computeDistance(inputCloud, groundTruthFilename); 
 
@@ -145,15 +137,15 @@ namespace cameval {
         return distance;
     }
 
-    void Evaluator::setDefaultCameraPoses()
+    void BasicEvaluator::setDefaultCameraPoses()
     {
-        for (int index = 0; index < basicPoses.size(); index++) {
-            mvgJsonHandler->setCamPosition(index, basicPoses[index].first, basicPoses[index].second);
+        for (int index = 0; index < cameraPoses.size(); index++) {
+            mvgJsonHandler->setCamPosition(index, cameraPoses[index].first, cameraPoses[index].second);
         }
-        defaultCamNumber = basicPoses.size();
+        defaultCamNumber = cameraPoses.size();
     }
 
-    size_t Evaluator::appendImageToJson(std::string &sfmFile, std::string &imageFile)
+    size_t BasicEvaluator::appendImageToJson(std::string &sfmFile, std::string &imageFile)
     {
         std::string prefix = sfmFile.substr(0, sfmFile.find_last_of("/"));
 
@@ -166,7 +158,7 @@ namespace cameval {
         return key;
     }
 
-    void Evaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
+    void BasicEvaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
     {
         GLMMat3 rotation = rotationMatrix(pose.second);
         #pragma omp critical
@@ -175,7 +167,7 @@ namespace cameval {
         mvgJsonHandler->saveChanges();
     }
 
-    void Evaluator::setPositionOfCameras(std::string &sfmFile, Pose &pose, size_t imgId)
+    void BasicEvaluator::setPositionOfCameras(std::string &sfmFile, Pose &pose, size_t imgId)
     {
         #pragma omp critical
         mvgJsonHandler->setCamPosition(imgId, pose.first, pose.second);
@@ -183,7 +175,7 @@ namespace cameval {
         mvgJsonHandler->saveChanges();
     }
 
-    std::string Evaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
+    std::string BasicEvaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
     {
         std::string logfilename = alignedCloud.substr(0, alignedCloud.find_last_of("/")) + "/log_distance.txt";
 
@@ -195,7 +187,7 @@ namespace cameval {
         return logfilename;
     }
 
-    double Evaluator::parseDistance(std::string &logFile)
+    double BasicEvaluator::parseDistance(std::string &logFile)
     {
         std::string content = readStringFromFile(logFile);
         
@@ -221,16 +213,8 @@ namespace cameval {
         std::cerr << "Pattern not found" << std::endl;
         return DBL_MAX;
     }
-    
-    AnglePose Evaluator::extractPose(std::string &filename)
-    {
-        std::string path = filename.substr(0, filename.find_last_of("/") + 1);
-        std::string name = filename.substr(filename.find_last_of("/") + 1, filename.size());
 
-        return parseEntry(name);
-    }
-
-    int Evaluator::getIndexOfSmallestDistance(DoubleList &distances)
+    int BasicEvaluator::getIndexOfSmallestDistance(DoubleList &distances)
     {
         int index = 0;
         for (int i = 0; i < distances.size(); i++) {
@@ -241,13 +225,13 @@ namespace cameval {
         return index;
     }
 
-    void Evaluator::generateBasicPairFile()
+    void BasicEvaluator::generateBasicPairFile()
     {
         std::string pairFile = "matches_pairs.txt";
         if (!FileHandler::checkSourceExistence(pairFile)) {
             std::ofstream out("matches_pairs.txt");
-            for (int i = 0; i < basicPoses.size() - 1; i++) {
-                for (int j = i + 1; j < basicPoses.size(); j++) {
+            for (int i = 0; i < cameraPoses.size() - 1; i++) {
+                for (int j = i + 1; j < cameraPoses.size(); j++) {
                     out << i << " " << j << std::endl;
                 }
             }
@@ -255,7 +239,7 @@ namespace cameval {
         }
     }
     
-    std::string Evaluator::generatePairFile(size_t uniqueId)
+    std::string BasicEvaluator::generatePairFile(size_t uniqueId)
     {
         std::string original = "matches_pairs.txt";
         std::string filename = "matches_pairs_" + std::to_string(uniqueId) + ".txt";
@@ -271,7 +255,7 @@ namespace cameval {
         return filename;
     }
 
-    void Evaluator::moveImageIntoImagesFolder(std::string &filename)
+    void BasicEvaluator::moveImageIntoImagesFolder(std::string &filename)
     {
         try {
             std::string imagesFolder = "images";

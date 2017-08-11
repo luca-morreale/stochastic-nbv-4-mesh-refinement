@@ -1,5 +1,5 @@
-#ifndef EVALUATION_CAMERA_POSITION_EVALUATOR_H_
-#define EVALUATION_CAMERA_POSITION_EVALUATOR_H_
+#ifndef EVALUATION_CAMERA_POSITION_BASIC_EVALUATOR_H_
+#define EVALUATION_CAMERA_POSITION_BASIC_EVALUATOR_H_
 
 #include <regex>
 
@@ -8,23 +8,18 @@
 #include <aliases.h>
 #include <FileHandler.hpp>
 #include <InputReader.hpp>
-#include <Mapper.hpp>
 #include <OpenMvgJsonHandler.hpp>
 #include <OpenMvgSysCall.hpp>
 #include <PoseReader.hpp>
-#include <SshHandler.hpp>
 #include <utilities.hpp>
 
 namespace cameval {
-
-    #define SLEEP_SSH_ERROR 10000000    // 10 sec
-    #define THRESHOLD_SSH 120000000    // 120 sec
     
-    class Evaluator {
+    class BasicEvaluator {
     public:
-        Evaluator(std::string &databaseFilename, std::string &groundTruthFilename, std::string &basicPoseFilename, 
-                                        std::string &baseImageFolder, std::string &intrinsicParams, std::string &sshconfig);
-        ~Evaluator();
+        BasicEvaluator(std::string &posesFilename, std::string &groundTruthFilename, std::string &basicPoseFilename, 
+                                        std::string &baseImageFolder, std::string &intrinsicParams, std::string &outputFile);
+        ~BasicEvaluator();
 
         virtual void evaluate();
 
@@ -39,33 +34,32 @@ namespace cameval {
         virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename);
         virtual double parseDistance(std::string &logFile);
         virtual void generateBasicPairFile();
-        virtual AnglePose extractPose(std::string &filename);
-        virtual std::string robustDownload(IntStringPair &entry);
+
+        virtual void appendToPoses(IntStringPair &pair);
+
+
+        virtual std::string getImage(IntStringPair &entry) = 0;
+        virtual Pose getPose(std::string &data) = 0;
 
     private:
         std::string groundTruthFilename;
-        std::string databaseFilename;
+        std::string posesFilename;
         std::string baseImageFolder;
         std::string intrinsicParams;
         std::string basicPoseFilename;
+        std::string outputFile;
 
         std::string filePrefix;
         std::string fileExtention;
 
-        PoseList basicPoses;
-        QueueIntStringPair database;
-        StringList stringDB;
-
-        SshHandlerPtr sshHandler;
-
-        MapperPtr mapper;
+        PoseList cameraPoses;
+        QueueIntStringPair poses;
+        StringList posesString;
 
         std::regex distanceRegex;
 
         OpenMvgJsonHandlerPtr mvgJsonHandler;
         size_t defaultCamNumber;
-
-        const std::chrono::milliseconds thresholdWaitSsh;
 
         int getIndexOfSmallestDistance(DoubleList &distances);
         void moveImageIntoImagesFolder(std::string &filename);
@@ -75,4 +69,4 @@ namespace cameval {
 
 } // namespace cameval
 
-#endif // EVALUATION_CAMERA_POSITION_EVALUATOR_H_
+#endif // EVALUATION_CAMERA_POSITION_BASIC_EVALUATOR_H_

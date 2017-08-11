@@ -62,9 +62,33 @@ target_link_libraries(testssh ${GMPXX_LIBRARIES}
                                 ${PCL_LIBRARIES}
                                 )
 
-add_executable(result main/main_closest.cpp ${SOURCE} )
+add_executable(closest main/main_closest.cpp ${SOURCE} )
 
-target_link_libraries(result ${GMPXX_LIBRARIES}
+target_link_libraries(closest ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
+
+add_executable(transform main/main_povray.cpp ${SOURCE} )
+
+target_link_libraries(transform ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
+
+add_executable(pipeline main/pipeline.cpp ${SOURCE} )
+
+target_link_libraries(pipeline ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}
                                 ${GMP_LIBRARY}
                                 ${CGAL_LIBRARY}

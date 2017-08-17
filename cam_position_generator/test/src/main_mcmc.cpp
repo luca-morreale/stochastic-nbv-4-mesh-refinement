@@ -9,6 +9,9 @@
 #include <opview/MCMCCamGenerator.hpp>
 #include <opview/utilities.hpp>
 
+#include <aliases.hpp>
+#define TIMING
+
 #define OMP_THREADS 8
 #define ARGS 2
 
@@ -47,7 +50,15 @@ int main(int argc, char **argv) {
     
     opview::MCMCCamGenerator model(camConfig, meshFile, cams, mcConfig);
 
+#ifdef TIMING
+    millis start = now();
+#endif
+
     model.estimateBestCameraPosition(centroid, normal);
+
+#ifdef TIMING
+        std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;
+#endif
 
     return 0;
 }

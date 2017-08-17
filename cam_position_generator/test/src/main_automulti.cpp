@@ -11,6 +11,9 @@
 #include <opview/SolverGenerator.hpp>
 #include <opview/type_definition.h>
 
+#include <aliases.hpp>
+#define TIMING
+
 #define OMP_THREADS 8
 #define DEPTH 30
 #define DISCRETE_LABELS 3
@@ -74,10 +77,15 @@ int main(int argc, char **argv) {
 
     opview::AutonomousMultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, thresholdUncertainty);
 
-
+#ifdef TIMING
+    millis start = now();
+#endif
 
     model.estimateBestCameraPosition();
 
+#ifdef TIMING
+        std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;
+#endif
 
     return 0;
 }

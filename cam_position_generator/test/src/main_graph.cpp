@@ -17,6 +17,9 @@
 #include <opview/type_definition.h>
 #include <opview/utilities.hpp>
 
+#include <aliases.hpp>
+#define TIMING
+
 #define OMP_THREADS 8
 #define DEPTH 10
 #define DISCRETE_LABELS 3
@@ -107,10 +110,17 @@ int main(int argc, char **argv) {
                     glm::vec3(-0.215338, 0.405714, -0.888271)
                     };
 
+#ifdef TIMING
+    millis start = now();
+#endif
+
     // centroid, normal
     // model.estimateBestCameraPosition(centroids, normals);
     model.estimateBestCameraPosition(centroid, normal);
 
+#ifdef TIMING
+        std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;
+#endif
 
     return 0;
 }

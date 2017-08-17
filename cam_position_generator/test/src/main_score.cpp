@@ -7,9 +7,13 @@
 #include <opview/SolverGenerator.hpp>
 #include <opview/type_definition.h>
 
+#include <aliases.hpp>
+#define TIMING
+
 #define OMP_THREADS 8
 #define DEPTH 10
 #define DISCRETE_LABELS 3
+
 #define ARGS 2
 
 int main(int argc, char **argv) {
@@ -47,11 +51,18 @@ int main(int argc, char **argv) {
     auto normal = glm::vec3(-0.14341, 0.238821, -0.960416);
     opview::EigVector5 camPose;
     camPose << 0.0166327, -0.484079, -0.16239, 350, 340;
+
+#ifdef TIMING
+    millis start = now();
+#endif
     
     // centroid, normal
     double score = model.score(camPose, centroid, normal);
     std::cout << score << std::endl;
 
+#ifdef TIMING
+        std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;
+#endif
 
     return 0;
 }

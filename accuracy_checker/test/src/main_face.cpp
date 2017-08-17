@@ -9,13 +9,20 @@
 #include <iostream>
 #include <fstream>
 
+#include <aliases.hpp>
 
+#define TIMING
 #define OMP_THREADS 8
 
 
 int main(int argc, char **argv) {
     
     omp_set_num_threads(OMP_THREADS);
+
+    if (argc < 3) {
+        std::cout << argv[0] << " mvg.json mesh.off outputlog" << std::endl;
+        return 1;
+    }
 
     std::string jsonFile = argv[1];
     std::string meshFile = argv[2];
@@ -43,12 +50,32 @@ int main(int argc, char **argv) {
 
     std::cout << "ok\n";
 
+#ifdef TIMING
+    millis accCount, accStart;
+    accStart = now();
+#endif
+
     colorer.generateColoredMesh(mesh_out);
     // colorer.generateReport(report_out); 
 
-    // poche viste comuni dalle diverse camere
-    
     // delete model;
+
+#ifdef TIMING
+        accCount += now() - accStart; 
+        std::cout << std::endl << std::endl << "Total time to estimate accuracy: " << accCount.count() << "ms" << std::endl;
+#endif
+
     
     return 0;
 }
+
+/*****
+Building:
+    Total time to estimate accuracy: 9970649ms
+    Total time to estimate accuracy: 9239321ms
+Fortress:
+    Total time to estimate accuracy: 17971ms
+
+Car:
+    Total time to estimate accuracy: 36245ms
+ *****/

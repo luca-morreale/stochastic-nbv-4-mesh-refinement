@@ -43,11 +43,12 @@
 #include <meshac/AverageVarianceEstimator.hpp>
 #include <meshac/VertexColorer.hpp>
 
-#define OMP_THREADS 8
+#include <aliases.hpp>
 
+#define OMP_THREADS 8
+#define TIMING
 #define COLOR
-//#define PRODUCE_STATS
-//#define SAVE_POINTS_TO_OFF_AND_EXIT
+
 
 SfMData sfm_data_;
 meshac::VertexColorerPtr meshColorer;
@@ -275,12 +276,20 @@ int main(int argc, char **argv) {
 
     m.setExpectedTotalIterationsNumber((maxIterations_) ? maxIterations_ + 1 : sfm_data_.numCameras_);
 
+
+#ifdef TIMING
+    millis accCount, accStart;
+    millis meshCount, meshStart;
+    meshStart = now();
+#endif
     
 
     std::cout << "computing inliers" << std::endl;
 
     std::vector<bool> inliers;
     outlierFiltering(inliers, confManif.outlierFilteringThreshold);
+
+
 
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
         CameraType* camera = &sfm_data_.camerasList_[cameraIndex];
@@ -296,6 +305,9 @@ int main(int argc, char **argv) {
             point->position = sfm_data_.points_[pointIndex];
 
 #ifdef COLOR
+    #ifdef TIMING
+        accStart = now();    
+    #endif
             // this is already after the outlier filtering, thus no outlier are computed??mkdi
             meshac::Color color = meshColorer->getColorForPoint(pointIndex);
             std::cout << "color " << color.to_string() << std::endl;
@@ -303,6 +315,9 @@ int main(int argc, char **argv) {
             point->g = color.g;
             point->b = color.b;
             point->a = color.a;
+    #ifdef TIMING
+        accCount += now() - accStart;    
+    #endif
 #endif
             incData.addPoint(point);
         }
@@ -379,6 +394,13 @@ int main(int argc, char **argv) {
     m.saveMesh("output/from_gen_config/", "final", true);
 
     log.endEventAndPrint("main\t\t\t\t\t\t", true);
+
+#ifdef TIMING
+        meshCount += now() - meshStart; 
+        std::cout << std::endl << std::endl << "Total time to estimate accuracy: " << accCount.count() << "ms" << std::endl;
+        std::cout << std::endl << std::endl << "Total time to create mesh: " << meshCount.count() << "ms" << std::endl;
+#endif
+
 
     return 0;
 }

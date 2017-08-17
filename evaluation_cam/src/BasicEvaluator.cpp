@@ -20,7 +20,7 @@ namespace cameval {
         log("\nPopulating Poses To be Analyzed");
         posesString = InputReader::readDatabase(posesFilename);
         remapListToQueue(posesString);
-        log("\nPoses size: " + std::to_string(posesFilename.size()));
+        log("\nPoses size: " + std::to_string(posesString.size()));
 
         std::string fileExample = poses.front().second;
         this->filePrefix = fileExample.substr(0, fileExample.find_first_of("_"));
@@ -82,7 +82,7 @@ namespace cameval {
 
         out.close();
 
-        FileHandler::cleanAll({basicFolder, "matches/", "poses_sfm_data/"});     // remove all folders created!
+        // FileHandler::cleanAll({basicFolder, "matches/", "poses_sfm_data/"});     // remove all folders created!
     }
 
     std::string BasicEvaluator::initOpenMvg()

@@ -98,6 +98,18 @@ target_link_libraries(pipeline ${GMPXX_LIBRARIES}
                                 ${PCL_LIBRARIES}
                                 )
 
+add_executable(emulate main/emulate.cpp ${SOURCE} )
+
+target_link_libraries(emulate ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
+
 # ------------------------ INSTALLATION ------------------------
 
 

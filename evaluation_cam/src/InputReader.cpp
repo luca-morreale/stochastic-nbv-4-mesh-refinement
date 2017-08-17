@@ -10,6 +10,7 @@ namespace cameval {
         while (!cin.eof()) {
             std::string file;
             cin >> file;
+            
             file = trim(file);
             if (file.size() > 0){
                 filelist.push_back(file);
@@ -19,10 +20,9 @@ namespace cameval {
         return filelist;
     }
 
-    StringPoseMapping InputReader::readMappingDatabase(std::string &mappingFile)
+    StringPoseMap InputReader::readMappingDatabase(std::string &mappingFile)
     {
-        PoseList poses;
-        StringList fileList;
+        StringPoseMap mapping;
         std::ifstream cin(mappingFile);
 
         while (!cin.eof()) {
@@ -34,19 +34,19 @@ namespace cameval {
                 continue;
             }
 
-            AnglePose pose = parseEntry(poseString);            
+            AnglePose anglePose = parseEntry(poseString);            
 
-            ProjectionMatrix view = glm::lookAt(pose.first, pose.second, GLMVec3(0, 1, 0));
+            ProjectionMatrix view = glm::lookAt(anglePose.first, anglePose.second, GLMVec3(0, 1, 0));
             RotationMatrix rot(view);
             
-            fileList.push_back(getPoseString(filename));
-            poses.push_back(std::make_pair(pose.first, rot));
+            Pose pose = std::make_pair(anglePose.first, rot);
+            OpenMvgPoseConverter::convertPose(pose);
+
+            mapping.insert(std::make_pair(filename, pose));
         }
 
-        OpenMvgPoseConverter::convertPoses(poses);
-
         cin.close();
-        return std::make_pair(fileList, poses);
+        return mapping;
     }
 
 } // namespace cameval

@@ -14,7 +14,8 @@ namespace cameval {
 
     std::string EvaluatorSequence::getImage(IntStringPair &entry)
     {
-        std::string filename = getMapper()->mapStringToFile(entry.second);
+        std::string tmp = entry.second + ".suffix";
+        std::string filename = getMapper()->mapStringToFile(tmp);
         IntStringPair pair(entry.first, filename);
 
         return super::getImage(pair);

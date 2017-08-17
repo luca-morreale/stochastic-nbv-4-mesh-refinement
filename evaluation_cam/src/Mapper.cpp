@@ -2,60 +2,60 @@
 
 namespace cameval {
 
-    Mapper::Mapper(std::string mappingFile)
+    Mapper::Mapper(std::string mappingFile, std::string database)
     {
-        // std::string mappingFile = "output_mapping.txt";
         this->mappingFile = mappingFile;
-        StringPoseMapping mapping = InputReader::readMappingDatabase(mappingFile);
-        this->poses = mapping.second;
+        this->databaseFile = database;
 
-        setStringIndexMap(mapping.first);
-        setFilenameMap();
+        StringPoseMap mapping = InputReader::readMappingDatabase(mappingFile);
+        StringList databaseEntries = InputReader::readDatabase(database);
+
+        setFilenameMap(databaseEntries);
+        fixStringPoseMap(mapping);
     }
 
     Mapper::~Mapper()
     {
-        this->poses.clear();
-        this->strings.clear();
+        this->poseMapping.clear();
         this->filenameMap.clear();
     }
 
-    void Mapper::setStringIndexMap(StringList &mapping)
+    void Mapper::setFilenameMap(StringList &databaseEntries)
     {
-        for (int i = 0; i < mapping.size(); i++) {
-            this->strings.insert(std::make_pair(mapping[i], i));
+        for (std::string file : databaseEntries) {
+            filenameMap.insert(std::make_pair(getKey(file), file));
         }
     }
 
-    void Mapper::setFilenameMap()
+    void Mapper::fixStringPoseMap(StringPoseMap &mapping)
     {
-        StringList files = keys(strings);
-        for (std::string file : files) {
-            std::string poseString = removePartsFromEntry(file);
-            StringList coords = divideStringPose(poseString);
-
-            filenameMap.insert(std::make_pair(concatBlocks(coords), file));
+        for (auto pair : mapping) {
+            std::string file = pair.first;
+            this->poseMapping.insert(std::make_pair(getKey(file), pair.second));
         }
     }
 
     std::string Mapper::mapStringToFile(std::string &entry)
     {
-        std::string key = getPoseString(entry);
-
+        Float6Array key = getKey(entry);
         return filenameMap[key];
     }
 
-    Pose Mapper::mapFileToPose(std::string entry)
+    Pose Mapper::mapFileToPose(std::string &entry)
     {
-        std::string key = getPoseString(entry);
+        Float6Array key = getKey(entry);
+        return poseMapping[key];
+    }
 
-        auto position = strings.find(key);
-        if (position == strings.end()) {
-            // FIXME error
-            return Pose();
+    Float6Array Mapper::getKey(std::string &entry)
+    {
+        std::string file = entry;
+        if (countBlocks(file) > 6) {
+            file = getPoseString(file);
         }
-        int index = position->second;
-        return poses[index];
+
+        StringList blocks = divideStringPose(file);
+        return convert(blocks);
     }
 
     Pose Mapper::slowMappingToPose(std::string entry, std::string mappingFile)

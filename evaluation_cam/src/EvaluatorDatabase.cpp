@@ -9,7 +9,7 @@ namespace cameval {
             thresholdWaitSsh(THRESHOLD_SSH)
     {
         this->sshHandler = new SshHandler(sshconfig);
-        this->mapper = new Mapper("output_mapping.txt");
+        this->mapper = new Mapper("output_mapping.txt", "database.txt");
     }
 
     EvaluatorDatabase::~EvaluatorDatabase()

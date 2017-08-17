@@ -14,7 +14,7 @@ namespace cameval {
     class InputReader {
     public:
         static StringList readDatabase(std::string &database);
-        static StringPoseMapping readMappingDatabase(std::string &mappingFile);
+        static StringPoseMap readMappingDatabase(std::string &mappingFile);
 
     private:
         typedef GLMMat3 RotationMatrix;

@@ -25,15 +25,18 @@ namespace cameval {
     std::string &trim(std::string &s);
     std::string readStringFromFile(std::string &filename);
     std::string concatBlocks(StringList &blocks);
+    std::string extractFilename(std::string &entry);
     std::string removePartsFromEntry(std::string &entry);
     StringList divideStringPose(std::string &stringPose);
     AnglePose parseEntry(std::string &entry);
     std::string getPoseString(std::string &entry);
+    int countBlocks(std::string &str);
 
     void eraseFromVector(IntList &removeIndex, GLMVec3List &list);
 
     GLMVec3 convert(EigVector3 &arr);
     GLMMat3 convert(EigMatrix3 &mat);
+    Float6Array convert(StringList &list);
 
     float rad(float deg);
     float deg(float rad);
@@ -61,6 +64,26 @@ namespace cameval {
             keys.push_back(pair.first);
         }
         return keys;
+    }
+
+    template<typename K, typename V>
+    std::vector<V> values(std::map<K, V> &map)
+    {
+        std::vector<V> values;
+        for (auto pair : map) {
+            values.push_back(pair.second);
+        }
+        return values;
+    }
+
+    template<typename K, typename V>
+    std::vector<V> values(std::unordered_map<K, V> &map)
+    {
+        std::vector<V> values;
+        for (auto pair : map) {
+            values.push_back(pair.second);
+        }
+        return values;
     }
 
 } // namespace cameval

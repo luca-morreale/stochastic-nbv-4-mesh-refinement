@@ -31,6 +31,7 @@ namespace cameval {
     typedef std::vector<int> IntList;
     typedef std::vector<float> FloatList;
     typedef std::vector<double> DoubleList;
+    typedef std::array<float, 6> Float6Array;
 
     typedef std::pair<int, std::string> IntStringPair;
     typedef std::queue<IntStringPair> QueueIntStringPair;
@@ -56,7 +57,9 @@ namespace cameval {
     typedef std::vector<AnglePose> AnglePoseList;
     typedef std::vector<Pose> PoseList;
 
-    typedef std::pair<StringList, PoseList> StringPoseMapping;
+    typedef std::map<Float6Array, std::string> FloatArrayStringMap;
+    typedef std::map<std::string, Pose> StringPoseMap;
+    typedef std::map<Float6Array, Pose> Float6ArrayPoseMap;
 
     typedef boost::filesystem::path BoostPath;
 

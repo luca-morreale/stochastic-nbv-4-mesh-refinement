@@ -48,21 +48,29 @@ namespace cameval {
         return out.substr(0, out.find_last_of("_"));
     }
 
-    std::string removePartsFromEntry(std::string &entry)
+    std::string extractFilename(std::string &entry)
     {
+        std::string file;
         size_t charPos = entry.find_last_of("/");
         if (charPos < entry.size()) {
-            entry = entry.substr(charPos + 1, entry.size());
+            file = entry.substr(charPos + 1, entry.size());
         }
 
-        charPos = entry.find_last_of(".");
-        if (charPos < entry.size()) {
-            entry = entry.substr(0, charPos);
+        charPos = file.find_last_of(".");
+        if (charPos < file.size()) {
+            file = file.substr(0, charPos);
         }
 
-        charPos = entry.find_first_of("_");
-        if (charPos < entry.size()) {
-            entry = entry.substr(charPos + 1, entry.size());
+        return file;
+    }
+
+    std::string removePartsFromEntry(std::string &entry)
+    {
+        std::string file = extractFilename(entry);
+
+        size_t charPos = file.find_first_of("_");
+        if (charPos < file.size()) {
+            file = file.substr(charPos + 1, file.size());
         }
 
         return entry;
@@ -99,6 +107,13 @@ namespace cameval {
         return concatBlocks(blocks);
     }
 
+    int countBlocks(std::string &str)
+    {
+        StringList blocks;
+        boost::split(blocks, str, boost::is_any_of("_"));
+        return blocks.size();
+    }
+
     void eraseFromVector(IntList &removeIndex, GLMVec3List &list)
     {
         for (auto it = removeIndex.rbegin(); it != removeIndex.rend(); it++) {
@@ -115,6 +130,15 @@ namespace cameval {
     GLMMat3 convert(EigMatrix3 &mat)
     {
         return GLMMat3(mat(0, 0), mat(0, 1), mat(0, 2), mat(1, 0), mat(1, 1), mat(1, 2), mat(2, 0), mat(2, 1), mat(2, 2));
+    }
+
+    Float6Array convert(StringList &list)
+    {
+        Float6Array arr;
+        for (int i = 0; i < arr.size(); i++) {
+            arr[i] = strtod(list[i].c_str(), NULL);
+        }
+        return arr;
     }
 
     float rad(float deg)

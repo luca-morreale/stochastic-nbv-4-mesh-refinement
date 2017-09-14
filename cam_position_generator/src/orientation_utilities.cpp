@@ -2,8 +2,6 @@
 
 namespace opview {
 
-    const GLMVec4 zdir = GLMVec4(0.0f, 0.0f, 1.0f, 0.0f);
-
     bool isMeaningfulPose(EigVector5 &pose, GLMVec3 &centroid, TreePtr tree, CameraGeneralConfiguration &camConfig)
     {
         return isPointInsideImage(pose, centroid, camConfig) && !isIntersecting(pose, centroid, tree) && !isOppositeView(pose, centroid);
@@ -13,8 +11,8 @@ namespace opview {
     {
         CameraMatrix E = getExtrinsicMatrix(pose);
 
-        GLMVec4 p = E * GLMVec4(centroid, 1.0f);
-        return glm::dot(glm::normalize(p), zdir) < 0.0f;    // if > 0.0 than it sees the object.
+        GLMVec4 point = GLMVec4(centroid, 1.0f) * E;
+        return point.z < 0.0;
     }
 
     bool isIntersecting(EigVector5 &pose, GLMVec3 &centroid, TreePtr tree)
@@ -23,6 +21,7 @@ namespace opview {
         Point point(centroid.x, centroid.y, centroid.z);
         
         Segment segment_query(cam, point);
+        if (segment_query.is_degenerate()) return true;
         Segment_intersection intersection = tree->any_intersection(segment_query);  // gives the first intersected primitives, so probably the farer one
 
         if (intersection) {
@@ -45,16 +44,17 @@ namespace opview {
     {
         GLMVec2 point2D = getProjectedPoint(pose, centroid, camConfig);
 
-        return point2D.x < (float)camConfig.size_x && point2D.x > 0.0f && point2D.y < (float)camConfig.size_y && point2D.y > 0.0f;
+        return point2D.x > 0.0f && point2D.x < camConfig.size_x && point2D.y > 0.0f && point2D.y < camConfig.size_y;
     }
 
     GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid, CameraGeneralConfiguration &camConfig)
     {
         GLMVec4 point3D = GLMVec4(centroid, 1.0f);
         CameraMatrix P = getCameraMatrix(pose, camConfig);
-        GLMVec4 point2D = P * point3D;
-
+        GLMVec4 point2D = point3D * P;
         point2D = point2D / point2D.z;
+
+        
         return GLMVec2(point2D.x, point2D.y);
     }
 
@@ -72,39 +72,45 @@ namespace opview {
         RotationMatrix Rz = RotationMatrix(std::cos(yaw), -std::sin(yaw), 0, 
                                         std::sin(yaw), std::cos(yaw), 0,
                                         0, 0, 1);
-        return (Rz * Ry) * Rx;
+        return Rz * glm::transpose(Ry) * Rx;
     }
 
     CameraMatrix getExtrinsicMatrix(EigVector5 &pose)
     {
         RotationMatrix R = getRotationMatrix(0, pose[3], pose[4]);  // already radians
-        R = glm::transpose(R);
+        // R = glm::transpose(R);
         
         GLMVec3 t(pose[0], pose[1], pose[2]);
-        t = -R * t;
+        t = -t * R;
 
         CameraMatrix E = CameraMatrix(R);
+        E[0][3] = t[0];
+        E[1][3] = t[1];
+        E[2][3] = t[2];
+        E[3][3] = 1.0f;
 
-        E[3][0] = t[0];
-        E[3][1] = t[1];
-        E[3][2] = t[2];
         return E;
     }
 
     CameraMatrix getIntrisincMatrix(CameraGeneralConfiguration &camConfig)
     {
-        CameraMatrix K = glm::scale(GLMVec3(camConfig.f, -camConfig.f , 1.0f));  // correct
-        K[3][0] = (double)camConfig.size_x / 2.0;
-        K[3][1] = (double)camConfig.size_y / 2.0;
+        CameraMatrix K(0.0f);
+        K[0][0] = (float)camConfig.f;
+        K[1][1] = (float)camConfig.f;  // correct
+        K[0][2] = (float)camConfig.size_x / 2.0f;
+        K[1][2] = (float)camConfig.size_y / 2.0f;
+        K[2][2] = 1.0f;
+        K[3][3] = 1.0f;
+
         return K;
     }
 
     CameraMatrix getCameraMatrix(EigVector5 &pose, CameraGeneralConfiguration &camConfig)
     {
-        CameraMatrix K = getIntrisincMatrix(camConfig);
         CameraMatrix E = getExtrinsicMatrix(pose);
+        CameraMatrix K = getIntrisincMatrix(camConfig);
 
-        return K * E;
+        return E * K;
     }
 
 

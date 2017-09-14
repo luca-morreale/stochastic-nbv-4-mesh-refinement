@@ -22,8 +22,6 @@ namespace opview {
     CameraMatrix getCameraMatrix(EigVector5 &pose, CameraGeneralConfiguration &camConfig);
     GLMVec2 getProjectedPoint(EigVector5 &pose, GLMVec3 &centroid, CameraGeneralConfiguration &camConfig);
 
-    extern const GLMVec4 zdir;
-
 } // namespace opview
 
 #endif // CAM_POSITION_GENERATOR_ORIENTATION_UTILITY_CHECK_H

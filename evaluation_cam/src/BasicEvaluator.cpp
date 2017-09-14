@@ -5,7 +5,7 @@ namespace cameval {
     BasicEvaluator::BasicEvaluator(std::string &posesFilename, std::string &groundTruthFilename, std::string &basicPoseFilename, 
                         std::string &baseImageFolder, std::string &intrinsicParams, std::string &outputFile)
     {
-        this->posesFilename = posesFilename;                          // file from which read poses to evaluate
+        // this->posesFilename = posesFilename;                          // file from which read poses to evaluate
         this->groundTruthFilename = groundTruthFilename;              // file containing the g-t cloud of points
         this->outputFile = outputFile;
         OpenMvgSysCall::baseImageFolder = baseImageFolder;            // name of folder containing the images of current cloud
@@ -17,10 +17,7 @@ namespace cameval {
         this->cameraPoses = reader.getPoses();
         log("\nBasic poses size: " + std::to_string(cameraPoses.size()));
 
-        log("\nPopulating Poses To be Analyzed");
-        posesString = InputReader::readDatabase(posesFilename);
-        remapListToQueue(posesString);
-        log("\nPoses size: " + std::to_string(posesString.size()));
+        setPosesFile(posesFilename);
 
         std::string fileExample = poses.front().second;
         this->filePrefix = fileExample.substr(0, fileExample.find_first_of("_"));
@@ -82,7 +79,12 @@ namespace cameval {
 
         out.close();
 
-        // FileHandler::cleanAll({basicFolder, "matches/", "poses_sfm_data/"});     // remove all folders created!
+        cleanFiles({basicFolder, "matches/", "poses_sfm_data/"});
+    }
+
+    void BasicEvaluator::cleanFiles(StringList files)
+    {
+        FileHandler::cleanAll(files);     // remove all folders created!
     }
 
     std::string BasicEvaluator::initOpenMvg()
@@ -93,6 +95,8 @@ namespace cameval {
         log("\nSet default camera poses");
         setDefaultCameraPoses();
         mvgJsonHandler->saveChanges();
+
+        generateBasicPairFile();
 
         return "matches";
     }
@@ -132,7 +136,7 @@ namespace cameval {
         log("\nExtract distance from log");
         double distance = parseDistance(logFile);     
         
-        FileHandler::cleanAll({filename, pairFile, mvgFolder, "images/"+filename, "matches/matches.f.bin"});     // remove all folders created!
+        cleanFiles({filename, pairFile, mvgFolder, "images/"+filename, "matches/matches.f.bin"});
 
         return distance;
     }
@@ -142,6 +146,7 @@ namespace cameval {
         for (int index = 0; index < cameraPoses.size(); index++) {
             mvgJsonHandler->setCamPosition(index, cameraPoses[index].first, cameraPoses[index].second);
         }
+
         defaultCamNumber = cameraPoses.size();
     }
 
@@ -267,6 +272,35 @@ namespace cameval {
                 return DBL_MAX;
             }
         }
+    }
+
+    void BasicEvaluator::setPosesFile(std::string posesFilename)
+    {
+        this->posesFilename = posesFilename;
+        log("\nPopulating Poses To be Analyzed");
+        posesString = InputReader::readDatabase(posesFilename);
+        remapListToQueue(posesString);
+        log("\nPoses size: " + std::to_string(posesString.size()));
+    }
+
+    std::string BasicEvaluator::getOuputFile()
+    {
+        return this->outputFile;
+    }
+
+    void BasicEvaluator::appendToCameraPoses(Pose &camPose)
+    {
+        cameraPoses.push_back(camPose);   
+    }
+
+    std::string BasicEvaluator::getGroundTruthFilename()
+    {
+        return groundTruthFilename;
+    }
+
+    PoseList BasicEvaluator::getCameraPoses()
+    {
+        return cameraPoses;
     }
 
 

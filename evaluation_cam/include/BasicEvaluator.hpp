@@ -23,6 +23,8 @@ namespace cameval {
 
         virtual void evaluate();
 
+        std::string getOuputFile();
+
     protected:
         virtual std::string initOpenMvg();
         virtual double evaluatePose(IntStringPair &entry, std::string &basicFolder);
@@ -34,12 +36,21 @@ namespace cameval {
         virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename);
         virtual double parseDistance(std::string &logFile);
         virtual void generateBasicPairFile();
+        virtual void cleanFiles(StringList files);
 
         virtual void appendToPoses(IntStringPair &pair);
-
+        virtual void appendToCameraPoses(Pose &camPose);
 
         virtual std::string getImage(IntStringPair &entry) = 0;
         virtual Pose getPose(std::string &data) = 0;
+
+        std::string getGroundTruthFilename();
+
+        void setPosesFile(std::string posesFilename);
+        void moveImageIntoImagesFolder(std::string &filename);
+
+        PoseList getCameraPoses();
+        
 
     private:
         std::string groundTruthFilename;
@@ -62,7 +73,6 @@ namespace cameval {
         size_t defaultCamNumber;
 
         int getIndexOfSmallestDistance(DoubleList &distances);
-        void moveImageIntoImagesFolder(std::string &filename);
         void remapListToQueue(StringList &dataList);
         
     };

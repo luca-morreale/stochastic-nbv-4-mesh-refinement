@@ -44,14 +44,83 @@
 #include <meshac/VertexColorer.hpp>
 
 #include <aliases.hpp>
+#include <ReportGenerator.hpp>
 
 #define OMP_THREADS 8
-#define TIMING
-#define COLOR
-
 
 SfMData sfm_data_;
-meshac::VertexColorerPtr meshColorer;
+
+int point2D3DJacobian(const std::vector<cv::Mat> &cameras, const cv::Mat &cur3Dpoint, cv::Mat &J, cv::Mat &hessian);
+int GaussNewton(const std::vector<cv::Mat> &cameras, const std::vector<cv::Point2f> &points, cv::Point3f init3Dpoint, cv::Point3f &optimizedPoint, const float outlierThreshold);
+void outlierFiltering(std::vector<bool>& inliers, const float outlierThreshold);
+
+int main(int argc, char **argv) {
+
+    omp_set_num_threads(OMP_THREADS);
+
+    ManifoldReconstructionConfig confManif;
+    std::string input_file;
+    std::string config_file;
+    std::string out_report;
+
+    int maxIterations_ = 0;
+
+
+    if (argc < 3) {
+        std::cout << argv[0] << " mvg.json off_file outputlog" << std::endl;
+        return 1;
+    }
+
+    input_file = argv[1];
+    // second param not used, required for standard
+    out_report = argv[3];
+
+    config_file = "res/config/default.json";
+    std::cout << "Using default color configuration res/config/colors.json" << std::endl;
+    std::cout << "Using default configuration res/config/default.json" << std::endl;
+    std::cout << "max_iterations not set" << std::endl << std::endl;
+
+    ConfigParser configParser = ConfigParser();
+    confManif = configParser.parse(config_file);
+
+    std::cout << "input set to: " << input_file << std::endl;
+    std::cout << "config set to: " << config_file << std::endl;
+    std::cout << "max_iterations set to: " << maxIterations_ << std::endl;
+    std::cout << confManif.toString() << std::endl;
+
+
+    CameraPointsCollection incData;
+    OpenMvgParser op_openmvg(input_file);
+    op_openmvg.parse();
+    sfm_data_ = op_openmvg.getSfmData();
+
+    std::string pathPrefix = input_file.substr(0, input_file.find_last_of("/"));
+    pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
+    std::pair<double, double> pixelSize(0.0003527, 0.0003527);
+    
+    auto accuracyModel = new meshac::PhotogrammetristAccuracyModel(sfm_data_, pathPrefix, pixelSize);
+    // auto accuracyModel = new meshac::ComputerVisionAccuracyModel(sfm_data_, pathPrefix, pixelSize);
+    auto estimator = new meshac::WorstEigenvalueVarianceEstimator(accuracyModel, sfm_data_.points_);
+    // auto estimator = new meshac::DeterminantVarianceEstimator(accuracyModel, sfm_data_.points_);
+    // auto estimator = new meshac::AverageVarianceEstimator(accuracyModel, sfm_data_.points_);
+
+    std::vector<bool> inliers;
+    outlierFiltering(inliers, confManif.outlierFilteringThreshold);
+
+    std::vector<glm::vec3> points;
+    for (int i = 0; i < inliers.size(); i++) {
+        if (inliers[i]) {
+            points.push_back(sfm_data_.points_[i]);
+        }
+    }
+    
+
+    ReportGenerator report(estimator, points);
+    report.generateReport(out_report);
+    delete estimator;
+
+    return 0;
+}
 
 int point2D3DJacobian(const std::vector<cv::Mat> &cameras, const cv::Mat &cur3Dpoint, cv::Mat &J, cv::Mat &hessian) {
 
@@ -218,213 +287,3 @@ void outlierFiltering(std::vector<bool>& inliers, const float outlierThreshold) 
     }
 
 }
-
-int main(int argc, char **argv) {
-
-    omp_set_num_threads(OMP_THREADS);
-
-    utilities::Logger log;
-    std::ofstream statsFile, visiblePointsFile;
-    ManifoldReconstructionConfig confManif;
-    std::string input_file;
-    std::string color_file;
-    std::string config_file;
-    std::string out_report;
-
-    int maxIterations_ = 0;
-
-
-    if (argc < 3) {
-        std::cout << argv[0] << " mvg.json off_file outputlog" << std::endl;
-        return 1;
-    }
-
-    input_file = argv[1];
-    // second argv not used, but required for standard
-    out_report = argv[3];
-    color_file = "res/config/colors.json";
-    config_file = "res/config/default.json";
-    std::cout << "Using default color configuration res/config/colors.json" << std::endl;
-    std::cout << "Using default configuration res/config/default.json" << std::endl;
-    std::cout << "max_iterations not set" << std::endl << std::endl;
-
-    ConfigParser configParser = ConfigParser();
-    confManif = configParser.parse(config_file);
-
-    std::cout << "input set to: " << input_file << std::endl;
-    std::cout << "config set to: " << config_file << std::endl;
-    std::cout << "max_iterations set to: " << maxIterations_ << std::endl;
-    std::cout << confManif.toString() << std::endl;
-
-    log.startEvent();
-
-    std::cout << "parsing" << std::endl;
-
-    CameraPointsCollection incData;
-    OpenMvgParser op_openmvg(input_file);
-    op_openmvg.parse();
-    sfm_data_ = op_openmvg.getSfmData();
-    std::cout << "sfm: " << sfm_data_.numCameras_ << " cams; " << sfm_data_.numPoints_ << " points" << std::endl << std::endl;
-
-    ReconstructFromSLAMData m(confManif);
-
-    std::string pathPrefix = input_file.substr(0, input_file.find_last_of("/"));
-    pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
-    std::pair<double, double> pixelSize(0.0003527, 0.0003527);
-    meshac::PhotogrammetristAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
-    // meshac::ComputerVisionAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
-    meshColorer = new meshac::VertexColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
-    // meshColorer = new meshac::VertexColorer(color_file, new meshac::DeterminantVarianceEstimator(&accuracyModel, sfm_data_.points_));
-    // meshColorer = new meshac::VertexColorer(color_file, new meshac::AverageVarianceEstimator(&accuracyModel, sfm_data_.points_));
-    std::ofstream report(out_report);
-
-    auto estimator = new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_);
-
-    m.setExpectedTotalIterationsNumber((maxIterations_) ? maxIterations_ + 1 : sfm_data_.numCameras_);
-
-
-#ifdef TIMING
-    millis accCount, accStart;
-    millis meshCount, meshStart;
-    meshStart = now();
-#endif
-    
-
-    std::cout << "computing inliers" << std::endl;
-
-    std::vector<bool> inliers;
-    outlierFiltering(inliers, confManif.outlierFilteringThreshold);
-
-
-
-    for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
-        CameraType* camera = &sfm_data_.camerasList_[cameraIndex];
-        camera->idCam = cameraIndex;
-
-        incData.addCamera(camera);
-    }
-
-    #pragma omp parallel for
-    for (int pointIndex = 0; pointIndex < sfm_data_.points_.size(); pointIndex++) {
-        if (inliers[pointIndex]) {
-            PointType* point = new PointType();
-            point->idPoint = pointIndex;
-            point->position = sfm_data_.points_[pointIndex];
-
-#ifdef COLOR
-    // #ifdef TIMING
-    //     accStart = now();    
-    // #endif
-            std::cout << pointIndex << "/" << sfm_data_.points_.size() << std::endl;
-            // this is already after the outlier filtering, thus no outlier are computed??
-            meshac::Color color = meshColorer->getColorForPoint(pointIndex);
-            std::cout << "color " << color.to_string() << std::endl;
-            point->r = color.r;
-            point->g = color.g;
-            point->b = color.b;
-            point->a = color.a;
-            // double acc = estimator->computeSingleVarianceForPoint(sfm_data_.points_[pointIndex]);
-            // report << sfm_data_.points_[pointIndex].x << " " << sfm_data_.points_[pointIndex].y << " ";
-            // report << sfm_data_.points_[pointIndex].z << " " << acc << std::endl;
-
-    // #ifdef TIMING
-    //     accCount += now() - accStart;    
-    // #endif
-#endif
-            #pragma omp critical
-            incData.addPoint(point);
-        }
-    }
-    // delete meshColorer;
-    // delete estimator;
-    report.close();
-
-    for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
-
-        int inliersCount = 0, inlierPointIndex = 0;
-        for (auto pointIndex : sfm_data_.pointsVisibleFromCamN_[cameraIndex])
-            if (inliers[pointIndex]) inliersCount++;
-
-//      std::cout << "camera " << cameraIndex << "i: " << inliersCount << "i/m" << inliersCount / confManif.maxPointsPerCamera << std::endl;
-
-        for (auto pointIndex : sfm_data_.pointsVisibleFromCamN_[cameraIndex]) {
-            if (confManif.maxPointsPerCamera < inliersCount) {
-//          std::cout <<  pointIndex << "\t" << pointCount << "%" << confManif.maxPointsPerCamera << " = " << pointCount%(inliersCount/confManif.maxPointsPerCamera) << std::endl;
-                if (inliers[pointIndex]) {
-
-                    if (inlierPointIndex < confManif.maxPointsPerCamera){// && !(inlierPointIndex % ((int)((float)inliersCount / confManif.maxPointsPerCamera)))) {
-                        incData.addVisibility(cameraIndex, pointIndex);
-                    }
-
-                    inlierPointIndex++;
-                }
-
-            } else {
-                if (inliers[pointIndex]) incData.addVisibility(cameraIndex, pointIndex);
-            }
-        }
-
-    }
-
-    for (auto index_camera : incData.getCameras()) {
-        std::cout << "camera " << index_camera.second->idCam << ":\t " << index_camera.second->visiblePointsT.size() << " points" << std::endl;
-    }
-
-    std::cout << "Inliers: " << incData.numPoints() << "\t/\t" << sfm_data_.numPoints_ << std::endl << std::endl;
-
-    // Main loop
-    for (auto index_camera : incData.getCameras()) {
-        CameraType* camera = (index_camera.second);
-
-        if (camera == NULL) {
-            continue;
-        }
-
-        // If maxIterations_ is set, only execute ReconstructFromSLAMData::addCamera maxIterations_ times
-        if (maxIterations_ && m.iterationCount >= maxIterations_) break;
-
-        log.startEvent();
-
-        m.addCamera(camera);
-
-        // Skip the manifold update for the first confManif.initial_manifold_update_skip cameras
-        if (m.iterationCount > confManif.initialTriangulationUpdateSkip && !(m.iterationCount % confManif.triangulationUpdateEvery)) m.update();
-        
-        if (m.iterationCount > confManif.initialTriangulationUpdateSkip && !(m.iterationCount % confManif.triangulationUpdateEvery)) m.integrityCheck();
-
-        if (m.iterationCount && !(m.iterationCount % confManif.saveMeshEvery)) m.saveMesh("output/from_gen_config/", "current", true);
-        //if (m.iterationCount && !(m.iterationCount % confManif.save_manifold_every)) m.saveManifold("output/partial/", std::to_string(m.iterationCount));
-
-        //if (m.iterationCount && !(m.iterationCount % confManif.saveMeshEvery)) m.getOutputManager()->writeMeshToOff("output/from_gen_config/current_from_OutputManager.off");
-
-        log.endEventAndPrint("main loop\t\t\t\t\t\t", true);
-        std::cout << std::endl;
-
-        if (m.iterationCount > confManif.initialTriangulationUpdateSkip && !(m.iterationCount % confManif.triangulationUpdateEvery)) m.insertStatValue(log.getLastDelta());
-    }
-
-    // Do a last manifold update in case op.numCameras() isn't a multiple of confManif.manifold_update_every
-    if (m.iterationCount > confManif.initialTriangulationUpdateSkip) m.update();
-
-    m.saveMesh("output/from_gen_config/", "final", true);
-
-    log.endEventAndPrint("main\t\t\t\t\t\t", true);
-
-#ifdef TIMING
-        meshCount += now() - meshStart; 
-        std::cout << std::endl << std::endl << "Total time to estimate accuracy: " << accCount.count() << "ms" << std::endl;
-        std::cout << std::endl << std::endl << "Total time to create mesh: " << meshCount.count() << "ms" << std::endl;
-#endif
-
-
-    return 0;
-}
-
-/**
-Building:
-6656124ms
-6510077ms
-
-
-
-*/

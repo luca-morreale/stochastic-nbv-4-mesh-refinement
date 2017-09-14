@@ -228,16 +228,20 @@ int main(int argc, char **argv) {
     std::string input_file;
     std::string color_file;
     std::string config_file;
+    std::string out_report;
 
     int maxIterations_ = 0;
 
 
-    if (argc < 2) {
-        std::cout << argv[0] << " mvg.json" << std::endl;
+    if (argc < 3) {
+        std::cout << argv[0] << " mvg.json off_file outputlog" << std::endl;
         return 1;
     }
 
     input_file = argv[1];
+    // second param not used, required for standard
+    out_report = argv[3];
+
     color_file = "res/config/colors.json";
     config_file = "res/config/default.json";
     std::cout << "Using default color configuration res/config/colors.json" << std::endl;
@@ -269,9 +273,12 @@ int main(int argc, char **argv) {
     std::pair<double, double> pixelSize(0.0003527, 0.0003527);
     meshac::ResidualPointAccuracyModel accuracyModel(sfm_data_);
     // meshac::InvertedResidualPointAccuracyModel accuracyModel(sfm_data_);
-    meshColorer = new meshac::VertexColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
+    auto estimator = new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_);
+    // meshColorer = new meshac::VertexColorer(color_file, estimator);
     // meshColorer = new meshac::VertexColorer(color_file, new meshac::DeterminantVarianceEstimator(&accuracyModel, sfm_data_.points_));
     // meshColorer = new meshac::VertexColorer(color_file, new meshac::AverageVarianceEstimator(&accuracyModel, sfm_data_.points_));
+
+    std::ofstream report(out_report);
 
     m.setExpectedTotalIterationsNumber((maxIterations_) ? maxIterations_ + 1 : sfm_data_.numCameras_);
 
@@ -285,6 +292,7 @@ int main(int argc, char **argv) {
 
     std::vector<bool> inliers;
     outlierFiltering(inliers, confManif.outlierFilteringThreshold);
+    std::cout << "# points: " << std::count(inliers.begin(), inliers.end(), true) << std::endl;
 
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
         CameraType* camera = &sfm_data_.camerasList_[cameraIndex];
@@ -305,12 +313,16 @@ int main(int argc, char **argv) {
         accStart = now();    
     #endif
             // this is already after the outlier filtering, thus no outlier are computed??mkdi
-            meshac::Color color = meshColorer->getColorForPoint(pointIndex);
-            std::cout << "color " << color.to_string() << std::endl;
-            point->r = color.r;
-            point->g = color.g;
-            point->b = color.b;
-            point->a = color.a;
+            // meshac::Color color = meshColorer->getColorForPoint(pointIndex);
+            // std::cout << "color " << color.to_string() << std::endl;
+            // point->r = color.r;
+            // point->g = color.g;
+            // point->b = color.b;
+            // point->a = color.a;
+
+            double acc = estimator->computeSingleVarianceForPoint(sfm_data_.points_[pointIndex]);
+            report << sfm_data_.points_[pointIndex].x << " " << sfm_data_.points_[pointIndex].y << " ";
+            report << sfm_data_.points_[pointIndex].z << " " << acc << std::endl;
 
     #ifdef TIMING
         accCount += now() - accStart;    
@@ -320,6 +332,7 @@ int main(int argc, char **argv) {
         }
     }
     //delete(meshColorer);
+    report.close();
 
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
 

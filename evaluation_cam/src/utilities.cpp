@@ -153,12 +153,12 @@ namespace cameval {
 
     GLMMat3 rotationMatrix(float yaw, float pitch, float roll)
     {
-        return (rotationYaw(yaw) * rotationPitch(pitch)) * rotationRoll(roll);
+        return rotationYaw(yaw) * glm::transpose(rotationPitch(pitch)) * rotationRoll(roll);
     }
 
     GLMMat3 rotationMatrix(GLMVec3 &angles)
     {
-        return (rotationYaw(angles.z) * rotationPitch(angles.y)) * rotationRoll(angles.x);
+        return rotationYaw(angles.z) * glm::transpose(rotationPitch(angles.y)) * rotationRoll(angles.x);
     }
 
     GLMMat3 rotationRoll(float roll)

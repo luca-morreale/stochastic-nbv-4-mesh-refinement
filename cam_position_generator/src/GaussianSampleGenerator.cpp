@@ -7,8 +7,8 @@ namespace opview {
     {
         randGen = gsl_rng_alloc(gsl_rng_mt19937); /*Define random number t*/
         gsl_rng_set(randGen, SEED); /*Initiate the random number generator with seed*/
-        coordStd = 0.5;    // standard deviation of x, y, z
-        orientStd = M_PI;  // standard deviation of roll, pitch, yaw
+        coordStd = 1.5;    // standard deviation of x, y, z
+        orientStd = M_PI /3.0;  // standard deviation of roll, pitch, yaw
     }
 
     GaussianSampleGenerator::~GaussianSampleGenerator()
@@ -19,13 +19,13 @@ namespace opview {
     GLMVec3List GaussianSampleGenerator::getUniformSamples(DoublePairList limits, size_t qt)
     {
         GLMVec3List pointList;
-        double stepx = (limits[0].second - limits[0].first) / qt;
-        double stepy = (limits[1].second - limits[1].first) / qt;
-        double stepz = (limits[2].second - limits[2].first) / qt;
+        double stepx = std::fabs(limits[0].second - limits[0].first) / qt;
+        double stepy = std::fabs(limits[1].second - limits[1].first) / qt;
+        double stepz = std::fabs(limits[2].second - limits[2].first) / qt;
 
         #pragma omp parallel for
         for (int i = 0; i < qt; i++) {
-            GLMVec3 point = GLMVec3(limits[0].first + i * stepx, limits[0].first + i * stepy, limits[0].first + i * stepz);
+            GLMVec3 point = GLMVec3(limits[0].first + i * stepx, limits[1].first + i * stepy, limits[2].first + i * stepz);
             #pragma omp critical
             pointList.push_back(point);
         }

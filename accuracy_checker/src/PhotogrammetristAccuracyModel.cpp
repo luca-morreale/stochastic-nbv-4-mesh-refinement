@@ -95,19 +95,22 @@ namespace meshac {
      */
     EigMatrix PhotogrammetristAccuracyModel::computeJacobian(CrossRatioTuple &tuple, CameraMatrix &cam)
     {
-        EigMatrixList jacobians;
-        for (auto point : tuple.getPoints()) {
-            GLMVec2 pointXh = point + GLMVec2(1.0f, 0.f);
-            GLMVec2 pointYh = point + GLMVec2(0.f, 1.0f);
+        GLMVec2List points = tuple.getPoints();
+        EigMatrixList jacobians(points.size());
 
-            EigVector original = this->evaluateFunctionIn(cam, point);
+        #pragma omp parallel for
+        for (int i = 0; i < points.size(); i++) {
+            GLMVec2 pointXh = points[i] + GLMVec2(1.0f, 0.f);
+            GLMVec2 pointYh = points[i] + GLMVec2(0.f, 1.0f);
+
+            EigVector original = this->evaluateFunctionIn(cam, points[i]);
 
             EigVector Jx = this->computeSingleJacobianFor(original, cam, pointXh);
             EigVector Jy = this->computeSingleJacobianFor(original, cam, pointYh);
 
             EigMatrix singleJacobian(Jx.rows(), 2);
             singleJacobian << Jx, Jy;
-            jacobians.push_back(singleJacobian);
+            jacobians[i] = singleJacobian;
         }
         return juxtaposeMatrixs(jacobians);
     }
@@ -119,14 +122,12 @@ namespace meshac {
 
     EigMatrixList PhotogrammetristAccuracyModel::computesProducts(EigMatrixList &jacobian, EigMatrixList &pointCovariance)
     {
-        EigMatrixList results;
+        EigMatrixList results(jacobian.size());
+
         #pragma omp parallel for
         for (int i = 0; i < jacobian.size(); i++) {
             EigMatrix mat = jacobian[i] * pointCovariance[i] * jacobian[i].transpose();
-
-            #pragma omp critical
-            results.push_back(mat);
-
+            results[i] = mat;
         }
         return results;
     }
@@ -156,9 +157,13 @@ namespace meshac {
 
     void PhotogrammetristAccuracyModel::iterativeEstimationOfCovariance(EigMatrixList &destList, EigMatrixList &pointMatrixList, EigMatrix &jacobian)
     {
-        for (EigMatrix mat : pointMatrixList) {
-            destList.push_back(jacobian * mat * jacobian.transpose());
+        destList.assign(pointMatrixList.size(), EigMatrix());
+
+        #pragma omp parallel for
+        for (int i = 0; i < pointMatrixList.size(); i++) {
+            destList[i] = jacobian * pointMatrixList[i] * jacobian.transpose();
         }
+
     }
 
     void PhotogrammetristAccuracyModel::updateVariancesList(DoubleList &varianesList, EigMatrix &varianceMat, EigMatrixList &jacobianList, EigMatrix &jacobianMat)

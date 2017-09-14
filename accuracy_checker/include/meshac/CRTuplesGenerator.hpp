@@ -9,7 +9,7 @@
 
 #include <meshac/alias_definition.hpp>
 #include <meshac/CrossRatioTuple.hpp>
-#include <meshac/meshac_type_definition.hpp>
+#include <meshac/type_definition.hpp>
 #include <meshac/utilities.hpp>
 
 namespace meshac {
@@ -18,7 +18,7 @@ namespace meshac {
     #define CANNY_LOW_THRESHOLD 200
     #define CANNY_KERNEL_SIZE 3
     #define SKIP_TUPLE_RATE 0.8
-    #define MAX_SAMPLE_SIZE 300
+    #define MAX_SAMPLE_SIZE 100
     #define MIN_NUM_POINTS_IN_IMAGE 10
 
     class CRTuplesGenerator {

@@ -42,8 +42,10 @@ namespace meshac {
     void ImagePointVarianceEstimator::updateCameraObservations(GLMVec2ArrayList &camObservations, IntList &indexs)
     {
         this->tuplesGenerator->updateCamObservations(camObservations, indexs);
-        for (auto obsInd : indexs) {
-            this->variances[obsInd] = -1;
+
+        #pragma omp parallel for
+        for (int i = 0; i < indexs.size(); i++) {
+            this->variances[indexs[i]] = -1;
         }
     }
 
@@ -74,7 +76,6 @@ namespace meshac {
     {
         CrossRatioTupleSet tmp;
         
-        #pragma omp parallel
         for(auto it = imageTupleSet.begin(); it != imageTupleSet.end(); ++it) {
             if (it->isInTuple(point)) {
                 #pragma omp critical
@@ -89,9 +90,15 @@ namespace meshac {
     {
         EigMatrixList variances;
 
-        for (CrossRatioTuple tuple : imageTupleSet) {
-            if (tuple.isInTuple(point)) {
-                EigMatrix mat = this->estimateSTDForTuple(tuple, imageTupleSet);
+        #pragma omp parallel for    // is it worthy? a lot of overhead!
+        for (int i = 0; i < imageTupleSet.size(); i++) {
+            auto tuple = imageTupleSet.begin();
+            std::advance(tuple, i);
+
+            if (tuple->isInTuple(point)) {
+                CrossRatioTuple tmp = *tuple;
+                EigMatrix mat = this->estimateSTDForTuple(tmp, imageTupleSet);
+                #pragma omp critical
                 variances.push_back(mat);
             }
         }

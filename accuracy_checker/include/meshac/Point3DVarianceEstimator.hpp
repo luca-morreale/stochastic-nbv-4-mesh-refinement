@@ -6,7 +6,7 @@
 
 #include <meshac/alias_definition.hpp>
 #include <meshac/PointAccuracyModel.hpp>
-#include <meshac/meshac_type_definition.hpp>
+#include <meshac/type_definition.hpp>
 
 
 namespace meshac {

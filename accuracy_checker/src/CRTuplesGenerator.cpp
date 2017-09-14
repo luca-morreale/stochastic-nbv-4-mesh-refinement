@@ -35,6 +35,7 @@ namespace meshac {
         int N = this->camObservations.size();
         ListCrossRatioTupleSet listTupleSet(N);
 
+        #pragma omp parallel for
         for (int camIndex = 0; camIndex < N; camIndex++) {
             listTupleSet[camIndex] = determineTupleOfFourPointsForCam(camIndex);
         }

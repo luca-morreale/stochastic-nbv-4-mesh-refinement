@@ -30,6 +30,7 @@ namespace meshac {
                 CVPoint maxLoc;
                 cv::matchTemplate(triangles[i], triangles[j], result, CV_TM_CCORR_NORMED);
                 cv::minMaxLoc(result, NULL, &maxVal, NULL, &maxLoc, CVMat());
+                maxVal = 1.0 - maxVal;
                 maxVal = (maxVal > 1.0) ? 1.0 : maxVal;
                 maxVal = (maxVal < -1.0) ? -1.0 : maxVal;
 

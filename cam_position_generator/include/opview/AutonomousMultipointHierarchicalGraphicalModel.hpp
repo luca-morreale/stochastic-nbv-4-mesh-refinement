@@ -13,7 +13,7 @@ namespace opview {
                                                         size_t maxPoints, long double maxUncertainty, double goalAngle=55, double dispersion=5);
         ~AutonomousMultipointHierarchicalGraphicalModel();
 
-        virtual void estimateBestCameraPosition();
+        virtual LabelList estimateBestCameraPosition();
 
     protected:
         // bring up overloaded function from parent

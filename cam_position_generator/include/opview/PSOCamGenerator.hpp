@@ -17,11 +17,11 @@ namespace opview {
     class PSOCamGenerator : public MCMCCamGenerator {
     public:
         PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            PSOConfiguration &psoConfig, double goalAngle=45, double dispersion=5);
+                                            MCConfiguration &config, double goalAngle=45, double dispersion=5);
 
         ~PSOCamGenerator();
 
-        virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual DoubleList estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
     protected:
 
@@ -45,9 +45,6 @@ namespace opview {
         
     private:
         const gsl_rng *randGen;
-        
-        GLMVec3 spaceLowerBounds;
-        GLMVec3 spaceUpperBounds;
 
         int bestParticleIndex;
 

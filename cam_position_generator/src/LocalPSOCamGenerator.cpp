@@ -4,8 +4,8 @@ namespace opview {
 
 
     LocalPSOCamGenerator::LocalPSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                                    PSOConfiguration &psoConfig, double goalAngle, double dispersion)
-                                                    : PSOCamGenerator(camConfig, meshFile, cams, psoConfig, goalAngle, dispersion)
+                                                    MCConfiguration &config, double goalAngle, double dispersion)
+                                                    : PSOCamGenerator(camConfig, meshFile, cams, config, goalAngle, dispersion)
     { /*    */ }
 
     LocalPSOCamGenerator::~LocalPSOCamGenerator()

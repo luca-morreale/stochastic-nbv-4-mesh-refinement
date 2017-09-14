@@ -17,7 +17,7 @@ namespace opview {
         GraphicalModelBuilder(SolverGeneratorPtr solverGen);
         ~GraphicalModelBuilder();
 
-        virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual LabelList estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
         virtual size_t numVariables() = 0;
         virtual size_t numLabels() = 0;

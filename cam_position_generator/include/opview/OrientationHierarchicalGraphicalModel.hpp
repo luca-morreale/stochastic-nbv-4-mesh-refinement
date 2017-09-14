@@ -25,7 +25,7 @@ namespace opview {
                                                     GLMVec3List &cams, double goalAngle=55, double dispersion=5);
         ~OrientationHierarchicalGraphicalModel();
 
-        virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual LabelList estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
         virtual size_t numVariables() override;
         virtual size_t orientationLabels();
@@ -75,6 +75,8 @@ namespace opview {
 
         CameraGeneralConfiguration camConfig;
         OrientationHierarchicalConfiguration orientConfig;
+
+        TriangleList triangles;
 
         ReportWriterPtr log;
 

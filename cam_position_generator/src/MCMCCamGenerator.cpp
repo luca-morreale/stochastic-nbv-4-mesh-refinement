@@ -55,13 +55,16 @@ namespace opview {
         return triangles;
     }
     
-    void MCMCCamGenerator::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
+    DoubleList MCMCCamGenerator::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
     {
         OrderedPose currentOptima = uniformMCStep(centroid, normVector, 0);
 
         for (int d = 0; d < mcConfig.resamplingNum; d++) {
             currentOptima = resamplingStep(centroid, normVector, currentOptima, d+1);
         }
+
+        ValuePose best = currentOptima.top();
+        return convertVectorToList(best.second);    
     }
 
     OrderedPose MCMCCamGenerator::uniformMCStep(GLMVec3 &centroid, GLMVec3 &normVector, int round)
@@ -75,6 +78,10 @@ namespace opview {
     {
         EigVector5List orientedPoints = resamplingPointsGetter(currentOptima);
         OrderedPose poses = generalStep(centroid, normVector, orientedPoints);
+
+        EigVector5 tmp =this->extractBestResults(poses, round).top().second;
+        GLMVec2 point = getProjectedPoint(tmp, centroid, camConfig);
+
         return this->extractBestResults(poses, round);
     }
 
@@ -178,12 +185,9 @@ namespace opview {
     
     OrderedPose MCMCCamGenerator::extractBestResults(OrderedPose &poses, int round)
     {
-        OrderedPose optima = copy(poses, (size_t)(OFFSPRING*mcConfig.particles));
+        OrderedPose optima = copy(poses, (size_t)(OFFSPRING*mcConfig.particles.num));
         
         OrderedPose convertedAnglesOptima = convertAngles(optima);
-
-        std::cout << "Best Value: " << poses.top().first << std::endl;
-        std::cout << "Best Pose: " << convertedAnglesOptima.top().second.transpose() << std::endl << std::endl;
 
         this->log->append(convertAngles(optima), round);
 
@@ -194,7 +198,7 @@ namespace opview {
     {
         OrderedPose optima;
         int c = 0;
-        while(!poses.empty() && c < (size_t)(OFFSPRING*mcConfig.particles)) {
+        while(!poses.empty() && c < (size_t)(OFFSPRING*mcConfig.particles.num)) {
             auto tmp = poses.top();
             tmp.second[3] = rad2deg(tmp.second[3]);
             tmp.second[4] = rad2deg(tmp.second[4]);
@@ -237,7 +241,7 @@ namespace opview {
     LabelType MCMCCamGenerator::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         if (isPointInsideImage(pose, centroid, camConfig) && isMeaningfulPose(pose, centroid, tree, camConfig)){
-            return 1.0;
+            return 0.0;
         }
         return -10.0;
     }
@@ -250,7 +254,7 @@ namespace opview {
         if (!isMeaningfulPose(pose, centroid, tree, camConfig)) {
             return -10.0;
         }
-
+        
         GLMVec2 point = getProjectedPoint(pose, centroid, camConfig);
         double centerx = (double)camConfig.size_x / 2.0;
         double centery = (double)camConfig.size_y / 2.0;
@@ -262,7 +266,10 @@ namespace opview {
 
     EigVector5List MCMCCamGenerator::uniformPointsGetter()
     {  
-        GLMVec3List points = sampler->getUniformSamples({std::make_pair(offsetX(), 1.0f), std::make_pair(offsetY(), 1.0f), std::make_pair(offsetZ(), 1.0f)}, mcConfig.particleUniform);  
+        GLMVec3List points = sampler->getUniformSamples(
+            {std::make_pair(mcConfig.bounds.lower.x, mcConfig.bounds.upper.x), 
+                std::make_pair(mcConfig.bounds.lower.y, mcConfig.bounds.upper.y), 
+                std::make_pair(mcConfig.bounds.lower.z, mcConfig.bounds.upper.z)}, mcConfig.particles.uniform);
         return insertOrientation(points);
     }
 
@@ -270,7 +277,7 @@ namespace opview {
     {  
         EigVector5List centers = getCentersFromOptima(currentOptima); 
         DoubleList weights = getWeightsFromOptima(currentOptima); 
-        EigVector5List newCenters = sampler->getWeightedSamples(centers, weights, mcConfig.particles * 0.9);
+        EigVector5List newCenters = sampler->getWeightedSamples(centers, weights, mcConfig.particles.num * 0.9);
         return concatLists(newCenters, centers);
     }
 
@@ -280,7 +287,7 @@ namespace opview {
 
         #pragma omp parallel for collapse(3)
         for (int p = 0; p < points.size(); p++) {
-            orientationCycles(mcConfig.deltaDegree) {
+            orientationCycles(mcConfig.particles.deltaDegree) {
                 EigVector5 pose;
                 pose << points[p].x, points[p].y, points[p].z, deg2rad((float)ptc), deg2rad((float)yaw);
                 #pragma omp critical
@@ -314,6 +321,16 @@ namespace opview {
     {
         delete this->log;
         this->log = log;
+    }
+
+    GLMVec3 MCMCCamGenerator::lowerBounds()
+    {
+        return mcConfig.bounds.lower;
+    }
+
+    GLMVec3 MCMCCamGenerator::upperBounds()
+    {
+        return mcConfig.bounds.upper;
     }
 
 } // namespace opview

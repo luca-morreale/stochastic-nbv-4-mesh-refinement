@@ -20,7 +20,7 @@ namespace opview {
                                                         GLMVec3List &cams, double goalAngle=45, double dispersion=8);
         ~HierarchicalDiscreteGraphicalModel();
 
-        virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector) override;
+        virtual LabelList estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector) override;
 
         virtual size_t setNumLabels(size_t labels);
         virtual size_t numLabels() override;
@@ -38,6 +38,9 @@ namespace opview {
 
         virtual int getXScalingFactor(float currentOptima, float halfNextSize, float scale);
         virtual int getYScalingFactor(float currentOptima, float halfNextSize, float scale);
+
+        GLMVec3 lowerBounds();
+        GLMVec3 upperBounds();
 
     private:
         HierarchicalDiscretizationConfiguration config;

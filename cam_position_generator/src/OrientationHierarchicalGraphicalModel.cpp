@@ -20,6 +20,7 @@ namespace opview {
     OrientationHierarchicalGraphicalModel::~OrientationHierarchicalGraphicalModel()
     {
         delete log;
+        delete tree;
     }
 
     void OrientationHierarchicalGraphicalModel::initShapes()
@@ -41,7 +42,7 @@ namespace opview {
     void OrientationHierarchicalGraphicalModel::fillTree()
     {
         Polyhedron poly = extractPolyhedron();
-        TriangleList triangles = getTriangleList(poly);
+        this->triangles = getTriangleList(poly);
 
         tree = new Tree(triangles.begin(), triangles.end());
     }
@@ -65,24 +66,20 @@ namespace opview {
             Vertex p1 = (++p)->vertex();
             Vertex p2 = (++p)->vertex();
 
-            Triangle t = Triangle(p0->point(), p1->point(), p2->point());
-            if (t.is_degenerate()) {
-                throw std::runtime_error("A triangle is degenerate.");
-            }
-            triangles.push_back(t);
+            triangles.push_back(Triangle(p0->point(), p1->point(), p2->point()));
         }
 
         return triangles;
     }
 
-    void OrientationHierarchicalGraphicalModel::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
+    LabelList OrientationHierarchicalGraphicalModel::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
     {
         this->resetPosition();
 
-        LabelList currentOptima = {MIN_COORDINATE, MIN_COORDINATE, MIN_COORDINATE, 0, 0};
+        LabelList currentOptima = {lowerBounds().x, lowerBounds().y, lowerBounds().z, 0, 0};
         
         for (int d = 0; d < this->getDepth(); d++) {
-            std::cout << "Current depth: " << d << std::endl;
+            // std::cout << "Current depth: " << d << std::endl;
             SimpleSpace space(shape.begin(), shape.end());
             GraphicalModelAdder model(space);
 
@@ -96,6 +93,7 @@ namespace opview {
 
             this->reduceScale(currentOptima, d+1);
         }
+        return currentOptima;
     }
 
     LabelList OrientationHierarchicalGraphicalModel::extractResults(AdderInferencePtr algorithm)
@@ -103,7 +101,7 @@ namespace opview {
         VarIndexList x;
         algorithm->arg(x);
 
-        std::cout << "Value obtained: " << algorithm->value() << std::endl;
+        // std::cout << "Value obtained: " << algorithm->value() << std::endl;
 
         LabelList convertedOpt(x.size());
         GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
@@ -114,8 +112,8 @@ namespace opview {
         convertedOpt[3] = orientOptima.x;
         convertedOpt[4] = orientOptima.y;
 
-        std::cout << "Optimal solution: " << convertedOpt[0] << ", " << convertedOpt[1] << ", " << convertedOpt[2] << ", ";
-        std::cout << convertedOpt[3] << ", " << convertedOpt[4] << std::endl << std::endl;
+        // std::cout << "Optimal solution: " << convertedOpt[0] << ", " << convertedOpt[1] << ", " << convertedOpt[2] << ", ";
+        // std::cout << convertedOpt[3] << ", " << convertedOpt[4] << std::endl << std::endl;
 
         log->append(convertedOpt, algorithm->value());
 
@@ -172,7 +170,7 @@ namespace opview {
         #pragma omp parallel for collapse(3)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-            LabelType val = -logVonMisesWrapper(pos, centroid, normVector);
+            LabelType val = logVonMisesWrapper(pos, centroid, normVector);
             orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
                 #pragma omp critical
                 vonMises(x, y, z, ptc, yaw) = val;
@@ -219,7 +217,7 @@ namespace opview {
     LabelType OrientationHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         if (isPointInsideImage(pose, centroid, camConfig) && isMeaningfulPose(pose, centroid, tree, camConfig)) {
-            return 1.0;
+            return 0.0;
         }
         return -10.0;
     }
@@ -227,7 +225,7 @@ namespace opview {
     LabelType OrientationHierarchicalGraphicalModel::estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {        
         GLMVec3 point = GLMVec3(pose[0], pose[1], pose[2]);
-        return -logVonMisesWrapper(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
+        return logVonMisesWrapper(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
     }
 
     LabelType OrientationHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)

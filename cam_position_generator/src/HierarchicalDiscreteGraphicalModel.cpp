@@ -9,19 +9,20 @@ namespace opview {
     {
         this->config = config;
         this->initShapes();
+        this->resetPosition();
     }
 
     HierarchicalDiscreteGraphicalModel::~HierarchicalDiscreteGraphicalModel()
     { /*    */ }
 
-    void HierarchicalDiscreteGraphicalModel::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
+    LabelList HierarchicalDiscreteGraphicalModel::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
     {
         this->resetPosition();
 
-        LabelList currentOptima = {MIN_COORDINATE, MIN_COORDINATE, MIN_COORDINATE, 0.0, 0.0};
+        LabelList currentOptima = {config.bounds.lower.x, config.bounds.lower.y, config.bounds.lower.z, 0.0, 0.0};
         
         for (int d = 0; d < this->getDepth(); d++) {
-            std::cout << "Current depth: " << d << std::endl;
+            // std::cout << "Current depth: " << d << std::endl;
             SimpleSpace space(shape.begin(), shape.end());
             GraphicalModelAdder model(space);
 
@@ -38,6 +39,7 @@ namespace opview {
 
             this->reduceScale(currentOptima);
         }
+        return currentOptima;
     }
 
     LabelList HierarchicalDiscreteGraphicalModel::extractResults(AdderInferencePtr algorithm)
@@ -45,7 +47,7 @@ namespace opview {
         VarIndexList x;
         algorithm->arg(x);
 
-        std::cout << "Value obtained: " << algorithm->value() << std::endl;
+        // std::cout << "Value obtained: " << algorithm->value() << std::endl;
 
         LabelList convertedOpt(x.size());
         GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
@@ -53,8 +55,8 @@ namespace opview {
         convertedOpt[1] = realOptima.y;
         convertedOpt[2] = realOptima.z;
 
-        std::cout << "Optimal solution: " << convertedOpt[0] << ' ' << convertedOpt[1] << ' ' << convertedOpt[2] << std::endl;
-        std::cout << std::endl << std::endl;
+        // std::cout << "Optimal solution: " << convertedOpt[0] << ' ' << convertedOpt[1] << ' ' << convertedOpt[2] << std::endl;
+        // std::cout << std::endl << std::endl;
 
         return convertedOpt;
     }
@@ -68,13 +70,13 @@ namespace opview {
 
     void HierarchicalDiscreteGraphicalModel::reduceScale(LabelList &currentOptimal)
     {
-        float currentSize = scale() * (float)numLabels();
-        float currentScale = scale();
+        GLMVec3 currentSize = scale() * (float)numLabels();
+        GLMVec3 currentScale = scale();
 
-        float nextSize = currentSize * 0.75f;
+        GLMVec3 nextSize = currentSize * 0.75f;
 
-        float nextScale = nextSize / (float)numLabels(); // 3/4 of the current scale
-        float halfNextSize = (float)numLabels() * nextScale / 2.0f;
+        GLMVec3 nextScale = nextSize / (float)numLabels(); // 3/4 of the current scale
+        GLMVec3 halfNextSize = nextSize / 2.0f;
 
         // offset = optima - halfNextSize + x * scale - y * scale
         // float tmpOffsetX = currentOptimal[0] - halfNextSize + getXScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale 
@@ -89,10 +91,19 @@ namespace opview {
         // // std::max to force z to stay in the positive space
         // offsetZ = [tmpOffsetZ](){ return tmpOffsetZ; };
 
-        offsetX = [currentOptimal, halfNextSize](){ return currentOptimal[0] - halfNextSize; };
-        offsetY = [currentOptimal, halfNextSize](){ return currentOptimal[1] - halfNextSize; };
-        // std::max to force z to stay in the positive space
-        offsetZ = [currentOptimal, halfNextSize](){ return currentOptimal[2] - halfNextSize; };
+                                                            
+        float tmpOffsetX = currentOptimal[0] - halfNextSize.x;
+        float tmpOffsetY = currentOptimal[1] - halfNextSize.y;
+        float tmpOffsetZ = currentOptimal[2] - halfNextSize.z;
+
+        offsetX = [tmpOffsetX, this](){ return std::max(tmpOffsetX, lowerBounds().x); };
+        offsetY = [tmpOffsetY, this](){ return std::max(tmpOffsetY, lowerBounds().y); };
+        offsetZ = [tmpOffsetZ, this](){ return std::max(tmpOffsetZ, lowerBounds().z); };
+
+        // offsetX = [currentOptimal, halfNextSize](){ return currentOptimal[0] - halfNextSize; };
+        // offsetY = [currentOptimal, halfNextSize](){ return currentOptimal[1] - halfNextSize; };
+        // // std::max to force z to stay in the positive space
+        // offsetZ = [currentOptimal, halfNextSize](){ return currentOptimal[2] - halfNextSize; };
 
         scale = [nextScale](){ return nextScale; };
     }
@@ -100,7 +111,7 @@ namespace opview {
     int HierarchicalDiscreteGraphicalModel::getXScalingFactor(float currentOptima, float halfNextSize, float scale)
     {
         int x = 0;
-        while (currentOptima - halfNextSize + x * scale <  -0.5) {
+        while (currentOptima - halfNextSize + x * scale <  lowerBounds().x) {
             x++;
         }
         return x;
@@ -109,7 +120,7 @@ namespace opview {
     int HierarchicalDiscreteGraphicalModel::getYScalingFactor(float currentOptima, float halfNextSize, float scale)
     {
         int y = 0;
-        while (currentOptima - halfNextSize - y * scale >  1.0) {
+        while (currentOptima - halfNextSize - y * scale >  lowerBounds().y) {
             y++;
         }
         return y;
@@ -117,11 +128,13 @@ namespace opview {
 
     void HierarchicalDiscreteGraphicalModel::resetPosition()
     {
-        scale = [this](){ return (float)ORIGINAL_SIDE_SIZE / (float)numLabels(); };
+        scale = [this](){ return GLMVec3(std::fabs(config.bounds.upper.x - config.bounds.lower.x),
+                                        std::fabs(config.bounds.upper.y - config.bounds.lower.y),
+                                        std::fabs(config.bounds.upper.z - config.bounds.lower.z)) / (float)numLabels(); };
 
-        offsetX = [](){ return (float)MIN_COORDINATE; };
-        offsetY = [](){ return (float)-0.5; };
-        offsetZ = [](){ return (float)MIN_COORDINATE; };
+        offsetX = [this](){ return config.bounds.lower.x; };
+        offsetY = [this](){ return config.bounds.lower.y; };
+        offsetZ = [this](){ return config.bounds.lower.z; };
     }
 
     size_t HierarchicalDiscreteGraphicalModel::setNumLabels(size_t labels)
@@ -142,6 +155,17 @@ namespace opview {
     void HierarchicalDiscreteGraphicalModel::setDepth(size_t depth)
     {
         this->config.depth = depth;
+    }
+
+    GLMVec3 HierarchicalDiscreteGraphicalModel::lowerBounds()
+    {
+        return config.bounds.lower;
+    }
+    
+
+    GLMVec3 HierarchicalDiscreteGraphicalModel::upperBounds()
+    {
+        return config.bounds.upper;
     }
 
 

@@ -27,6 +27,11 @@ namespace opview {
         return outList;
     }
 
+    DoubleList convertVectorToList(EigVector5 &vec)
+    {
+        return {vec[0], vec[1], vec[2], vec[3], vec[4]};
+    }
+
     double distanceVector(Vector &a, Vector &b)
     {   
         double distance = 0;

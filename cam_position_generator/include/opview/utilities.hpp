@@ -14,6 +14,7 @@ namespace opview {
     Vector convertPoinToCGALVec(Point &point);
     Vector convertPoinToCGALVec(GLMVec3 &point);
     VectorList convertListToCGALVecList(GLMVec3List &inList);
+    DoubleList convertVectorToList(EigVector5 &vec);
 
     double distanceVector(Vector &a, Vector &b);
 

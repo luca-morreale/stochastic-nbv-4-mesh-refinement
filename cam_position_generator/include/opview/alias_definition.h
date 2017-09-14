@@ -64,7 +64,7 @@ namespace opview {
     typedef std::pair<double, EigVector5> ValuePose;
     struct ComparePoses{
         bool operator()(ValuePose const& lhs, ValuePose const& rhs){
-            return lhs.first < rhs.first;
+            return lhs.first > rhs.first;
         }
     };
 
@@ -78,6 +78,7 @@ namespace opview {
     typedef std::vector<BoostObjFunction> BoostObjFunctionList;
 
     typedef std::function<float()> LambdaFloat;
+    typedef std::function<GLMVec3()> LambdaGLMVec3;
     typedef std::function<GLMVec3List(OrderedPose&)> LambdaGLMPointsList;
     typedef std::function<EigVector5List(OrderedPose&)> LambdaEigPointsList;
 

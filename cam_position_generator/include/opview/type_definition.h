@@ -15,7 +15,6 @@
 #include <opengm/inference/loc.hxx>
 #include <opengm/operations/adder.hxx>
 #include <opengm/operations/multiplier.hxx>
-#include <opengm/inference/listbruteforce.hxx>
 
 #include <opview/alias_definition.h>
 #include <opview/DimensionDisagreementLists.hpp>
@@ -57,7 +56,6 @@ namespace opview {
     typedef LazyFlipper::Parameter LazyFlipperParameter;
     typedef opengm::LOC<GraphicalModelAdder, opengm::Maximizer> LOC;
     typedef opengm::Bruteforce<GraphicalModelAdder, opengm::Maximizer> Bruteforce;
-    typedef opengm::MultiBruteforce<GraphicalModelAdder, opengm::Maximizer> MultiBruteforce;
 
 
     typedef AdderInference* AdderInferencePtr;
@@ -68,8 +66,6 @@ namespace opview {
     typedef LazyFlipper* LazyFlipperPtr;
     typedef LOC* LOCPtr;
     typedef Bruteforce* BruteforcePtr;
-    typedef MultiBruteforce* MultiBruteforcePtr;
-    
 
     typedef struct VonMisesConfiguration {
         double goalAngle;
@@ -81,16 +77,35 @@ namespace opview {
     } VonMisesConfiguration;
     typedef VonMisesConfiguration * VonMisesConfigurationPtr;
 
+    /*** Structs for the optimization algos informations ***/
+
+    typedef struct SpaceBounds {
+        GLMVec3 lower;
+        GLMVec3 upper;
+
+        SpaceBounds(GLMVec3 lowerBounds, GLMVec3 upperBounds) : lower(lowerBounds), upper(upperBounds)
+        { /*    */ }
+
+        SpaceBounds() : lower(GLMVec3(-10, -10, -10)), upper(GLMVec3(10, 10, 10))
+        { /*    */ }
+
+    } SpaceBounds;
+    typedef SpaceBounds* SpaceBoundsPtr;
+
+
     typedef struct HierarchicalDiscretizationConfiguration {
         size_t depth;
         size_t labels;
+        SpaceBounds bounds;
 
     public:
-        HierarchicalDiscretizationConfiguration(size_t depth, size_t labels) : depth(depth), labels(labels) { }
+        HierarchicalDiscretizationConfiguration(size_t depth, size_t labels, SpaceBounds &bounds) 
+                        : depth(depth), labels(labels), bounds(bounds) { }
         HierarchicalDiscretizationConfiguration() : depth(5), labels(10) { }
 
     } HierarchicalDiscretizationConfiguration;
     typedef HierarchicalDiscretizationConfiguration* HierarchicalDiscretizationConfigPtr;
+
 
     typedef struct OrientationHierarchicalConfiguration {
         HierarchicalDiscretizationConfiguration config;
@@ -98,14 +113,13 @@ namespace opview {
         FloatList deltaAngles;
 
     public:
-        OrientationHierarchicalConfiguration(size_t depth, size_t labels, float deltaAngle) : deltaAngle(deltaAngle)
+        OrientationHierarchicalConfiguration(size_t depth, size_t labels, SpaceBounds &bounds, FloatList deltaAngles) : deltaAngles(deltaAngles)
         {
-            config = {depth, labels};
-            deltaAngles.push_back(deltaAngle);
+            config = {depth, labels, bounds};
+            deltaAngle = deltaAngles[deltaAngles.size() - 1];
         }
-        OrientationHierarchicalConfiguration(size_t depth, size_t labels, FloatList deltaAngles) : deltaAngles(deltaAngles)
+        OrientationHierarchicalConfiguration(HierarchicalDiscretizationConfiguration &hconfig, FloatList deltaAngles) : config(hconfig), deltaAngles(deltaAngles)
         {
-            config = {depth, labels};
             deltaAngle = deltaAngles[deltaAngles.size() - 1];
         }
         OrientationHierarchicalConfiguration() : deltaAngle(10)
@@ -115,6 +129,41 @@ namespace opview {
 
     } OrientationHierarchicalConfiguration;
     typedef OrientationHierarchicalConfiguration* OrientationHierarchicalConfigPtr;
+
+
+    typedef struct ParticlesInformation {
+        size_t num;
+        size_t uniform;
+        int deltaDegree;
+
+        ParticlesInformation(size_t particles, size_t particleUniform, int deltaDegree) 
+                    : num(particles), uniform(particleUniform), deltaDegree(deltaDegree)
+        { /*    */ }
+        ParticlesInformation() : num(1000), uniform(10), deltaDegree(45)
+        { /*    */ }
+
+    } ParticlesInformation;
+    typedef ParticlesInformation* ParticlesInformationPtr;
+
+    
+    typedef struct MCConfiguration {
+        ParticlesInformation particles;
+        size_t resamplingNum;
+        SpaceBounds bounds;
+
+    public:
+        MCConfiguration(size_t resamplingNum, ParticlesInformation &particles, SpaceBounds &bounds) 
+                        : resamplingNum(resamplingNum), particles(particles), bounds(bounds)
+        { /*    */ }
+        MCConfiguration() : resamplingNum(10)
+        { /*    */ }
+        
+    } MCConfiguration;
+    typedef MCConfiguration* MCConfigurationPtr;
+
+
+
+    /*** Structs for the camera and mesh information ***/
 
     typedef struct CameraGeneralConfiguration {
         float f;
@@ -130,6 +179,7 @@ namespace opview {
 
     } CameraGeneralConfiguration;
     typedef CameraGeneralConfiguration* CameraGeneralConfigPtr;
+
 
     typedef struct MeshConfiguration {
         std::string filename;
@@ -156,37 +206,6 @@ namespace opview {
         { /*    */ }
     } MeshConfiguration;
     typedef MeshConfiguration* MeshConfigurationPtr;
-
-    typedef struct MCConfiguration {
-        size_t resamplingNum;
-        size_t particles;
-        size_t particleUniform;
-        int deltaDegree;
-
-    public:
-        MCConfiguration(size_t resamplingNum, size_t particles, size_t particleUniform, int deltaDegree) 
-                        : resamplingNum(resamplingNum), particles(particles), particleUniform(particleUniform), deltaDegree(deltaDegree)
-        { /*    */ }
-        MCConfiguration() : resamplingNum(10), particles(1000), particleUniform(10), deltaDegree(45)
-        { /*    */ }
-        
-    } MCConfiguration;
-    typedef MCConfiguration* MCConfigurationPtr;
-
-    typedef struct PSOConfiguration {
-        MCConfiguration mcConfig;
-        GLMVec3 spaceLowerBounds;
-        GLMVec3 spaceUpperBounds;
-
-        PSOConfiguration(MCConfiguration &mcConfig, GLMVec3 lowerBounds, GLMVec3 upperBounds)
-                : mcConfig(mcConfig), spaceLowerBounds(lowerBounds), spaceUpperBounds(upperBounds)
-        { /*    */ }
-
-        PSOConfiguration() : spaceLowerBounds(GLMVec3(-10, -10, -10)), spaceUpperBounds(GLMVec3(10, 10, 10))
-        { /*    */ }
-
-    } PSOConfiguration;
-    typedef PSOConfiguration* PSOConfigurationPtr;
 
 }
 

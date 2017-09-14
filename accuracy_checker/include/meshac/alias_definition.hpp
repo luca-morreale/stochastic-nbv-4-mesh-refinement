@@ -51,6 +51,8 @@ namespace meshac {
     typedef std::vector<CVSegment> CVSegmentList;
 
     /* Shortcuts for GLM types */
+    typedef glm::mat3 GLMMat3;
+    typedef glm::mat4 GLMMat4;
     typedef glm::mat3 RotationMatrix;
     typedef glm::mat4 CameraMatrix;
     typedef glm::vec2 GLMVec2;

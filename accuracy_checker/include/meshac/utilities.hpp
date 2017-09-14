@@ -46,6 +46,7 @@ namespace meshac {
     float rad2deg(float rad);
     float deg2rad(float deg);
     GLMVec3List convert(PointList points);
+    EigMatrix convert(GLMMat3 &mat);
 
     /*
      * Subsample the data given.

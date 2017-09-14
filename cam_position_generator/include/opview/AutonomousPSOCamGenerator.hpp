@@ -11,7 +11,7 @@ namespace opview {
     class AutonomousPSOCamGenerator : public PSOCamGenerator {
     public:
         AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                            PSOConfiguration &psoConfig, size_t maxPoints, long double maxUncertainty, 
+                                            MCConfiguration &config, size_t maxPoints, long double maxUncertainty, 
                                             double goalAngle=45, double dispersion=5);
 
         ~AutonomousPSOCamGenerator();
@@ -21,7 +21,7 @@ namespace opview {
         virtual void updateMeshInfo(int pointIndex, double accuracy);
         virtual void addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty);
 
-        virtual void estimateBestCameraPosition();
+        virtual DoubleList estimateBestCameraPosition();
         
     protected:
         virtual GLMVec3List getPoints();

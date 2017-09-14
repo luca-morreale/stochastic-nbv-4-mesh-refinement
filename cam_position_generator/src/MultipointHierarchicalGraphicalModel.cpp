@@ -21,7 +21,6 @@ namespace opview {
         this->maxUncertainty = maxUncertainty;
 
         getLogger()->resetFile("multipoint.json");
-        
         precomputeSumUncertainty();
         setupWorstPoints();
     }
@@ -38,7 +37,7 @@ namespace opview {
 
         this->resetPosition();
 
-        LabelList currentOptima = {MIN_COORDINATE, MIN_COORDINATE, MIN_COORDINATE, 0.0, 0.0};
+        LabelList currentOptima = {lowerBounds().x, lowerBounds().y, lowerBounds().z, 0.0, 0.0};
         
         for (int d = 0; d < this->getDepth(); d++) {
             std::cout << "Current depth: " << d << std::endl;
@@ -103,7 +102,7 @@ namespace opview {
 
             LabelType val = 0.0;
             for (int p = 0; p < centroids.size(); p++) {
-                val += -super::logVonMisesWrapper(scaledPos, centroids[p], normVectors[p]);
+                val += super::logVonMisesWrapper(scaledPos, centroids[p], normVectors[p]);
             }
             orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
                 #pragma omp critical
@@ -202,7 +201,7 @@ namespace opview {
     LabelType MultipointHierarchicalGraphicalModel::parentCallToVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
     {
         GLMVec3 scaledPos = GLMVec3(pose[0], pose[1], pose[2]);
-        return -super::logVonMisesWrapper(scaledPos, centroid, normalVector);
+        return super::logVonMisesWrapper(scaledPos, centroid, normalVector);
     }
 
     LabelType MultipointHierarchicalGraphicalModel::parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
@@ -253,12 +252,8 @@ namespace opview {
     void MultipointHierarchicalGraphicalModel::setupWorstPoints()
     {
         worstPointsList.clear();
-        #pragma omp parallel for        // not much to gain using parallelism
         for (int p = 0; p < points.size(); p++) {
-            if (uncertainty[p] > this->maxUncertainty) {    // NOTE look at definition of UNCERTAINTY_THRESHOLD
-                #pragma omp critical
-                worstPointsList.push_back(std::make_pair(uncertainty[p], p));
-            }
+            worstPointsList.push_back(std::make_pair(uncertainty[p], p));
         }
         retainWorst();
     }

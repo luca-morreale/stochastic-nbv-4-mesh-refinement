@@ -4,8 +4,8 @@
 namespace opview {
 
     AutonomousPSOCamGenerator::AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                            PSOConfiguration &psoConfig, size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
-                                                            : PSOCamGenerator(camConfig, meshConfig.filename, meshConfig.cams, psoConfig, goalAngle, dispersion)
+                                                            MCConfiguration &config, size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
+                                                            : PSOCamGenerator(camConfig, meshConfig.filename, meshConfig.cams, config, goalAngle, dispersion)
     {
         this->points = meshConfig.points;
         this->normals = meshConfig.normals;
@@ -35,12 +35,14 @@ namespace opview {
         return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
     }
 
-    void AutonomousPSOCamGenerator::estimateBestCameraPosition()
+    DoubleList AutonomousPSOCamGenerator::estimateBestCameraPosition()
     {
-        size_t worstPointIndex = worstPointsList[0].first;
+        size_t worstPointIndex = worstPointsList[0].second;
+
         GLMVec3 worstCentroid = this->points[worstPointIndex];
         GLMVec3 normal = this->normals[worstPointIndex];
-        this->estimateBestCameraPosition(worstCentroid, normal);
+        // std::cout << worstCentroid.x << " " << worstCentroid.y << " " << worstCentroid.z << std::endl;
+        return this->estimateBestCameraPosition(worstCentroid, normal);
     }
 
     LabelType AutonomousPSOCamGenerator::logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
@@ -122,12 +124,8 @@ namespace opview {
     void AutonomousPSOCamGenerator::setupWorstPoints()
     {
         worstPointsList.clear();
-        #pragma omp parallel for        // not much to gain using parallelism
         for (int p = 0; p < points.size(); p++) {
-            if (uncertainty[p] > this->maxUncertainty) {
-                #pragma omp critical
-                worstPointsList.push_back(std::make_pair(uncertainty[p], p));
-            }
+            worstPointsList.push_back(std::make_pair(uncertainty[p], p));
         }
         retainWorst();
     }

@@ -34,12 +34,12 @@ namespace opview {
         return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
     }
 
-    void AutonomousMCMCCamGenerator::estimateBestCameraPosition()
+    DoubleList AutonomousMCMCCamGenerator::estimateBestCameraPosition()
     {
-        size_t worstPointIndex = worstPointsList[0].first;
+        size_t worstPointIndex = worstPointsList[0].second;
         GLMVec3 worstCentroid = this->points[worstPointIndex];
         GLMVec3 normal = this->normals[worstPointIndex];
-        this->estimateBestCameraPosition(worstCentroid, normal);
+        return this->estimateBestCameraPosition(worstCentroid, normal);
     }
 
     LabelType AutonomousMCMCCamGenerator::logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
@@ -121,12 +121,8 @@ namespace opview {
     void AutonomousMCMCCamGenerator::setupWorstPoints()
     {
         worstPointsList.clear();
-        #pragma omp parallel for        // not much to gain using parallelism
         for (int p = 0; p < points.size(); p++) {
-            if (uncertainty[p] > this->maxUncertainty) {
-                #pragma omp critical
-                worstPointsList.push_back(std::make_pair(uncertainty[p], p));
-            }
+            worstPointsList.push_back(std::make_pair(uncertainty[p], p));
         }
         retainWorst();
     }

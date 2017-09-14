@@ -20,7 +20,7 @@ namespace opview {
         virtual void updateMeshInfo(int pointIndex, double accuracy);
         virtual void addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty);
 
-        virtual void estimateBestCameraPosition();
+        virtual DoubleList estimateBestCameraPosition();
         
     protected:
         virtual GLMVec3List getPoints();
@@ -35,9 +35,9 @@ namespace opview {
         virtual double estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function);
         virtual double computeWeightForPoint(int pointIndex);
 
-        virtual LabelType logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal);
-        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-        virtual LabelType imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+        virtual LabelType logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal) override;
+        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
+        virtual LabelType imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
 
         using MCMCCamGenerator::estimateBestCameraPosition;
 

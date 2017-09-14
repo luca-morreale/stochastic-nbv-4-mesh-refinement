@@ -42,20 +42,23 @@ namespace cameval {
         system(command.c_str());
     }
 
-    std::string OpenMvgSysCall::computeStructureFromPoses(std::string &jsonFile, size_t uniqueId) 
+    std::string OpenMvgSysCall::computeStructureFromPoses(std::string &jsonFile, size_t uniqueId, bool pairs) 
     {
         std::string outFolder = "poses_sfm_data_" + std::to_string(uniqueId);
         std::string command = "mkdir " + outFolder;
         system(command.c_str());
 
-        log("OpenMvg: Compute structure from known poses");
-        command = "openMVG_main_ComputeStructureFromKnownPoses -i matches/sfm_data.json -o "+outFolder+"/sfm_data.json -m matches/ -f matches/matches.f.bin -b";
-        system(command.c_str());
+        std::string outputjson = outFolder + "/sfm_data.json";
+        std::string outputply = outFolder + "/sfm_data.ply";
+        GLMVec3 color(255, 255, 255);
+        float outliersthreshold = 0.25;
 
-        // required refinement executeble, modified version of openMVG_main_ComputeStructureFromKnownPoses
-        // log("OpenMvg: refinement with Compute structure from known poses");
-        // command = "openMVG_main_refinement -i "+outFolder+"/sfm_data.json -o "+outFolder+"/sfm_data.json -m matches/ -f matches/matches.f.bin -b";
-        // system(command.c_str());
+        log("OpenMvg: Compute structure from known poses");
+        command = "openMVG_main_ComputeStructureFromKnownPoses -i matches/sfm_data.json -o "+outputjson+" -m matches/ -b";
+        if (pairs) {
+            command += " -f matches/matches.f.bin ";
+        }
+        system(command.c_str());
 
         return outFolder;
     }

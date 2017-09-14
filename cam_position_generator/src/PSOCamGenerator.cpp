@@ -3,8 +3,8 @@
 namespace opview {
 
     PSOCamGenerator::PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            PSOConfiguration &psoConfig, double goalAngle, double dispersion)
-                                            : MCMCCamGenerator(camConfig, meshFile, cams, psoConfig.mcConfig, goalAngle, dispersion)
+                                            MCConfiguration &config, double goalAngle, double dispersion)
+                                            : MCMCCamGenerator(camConfig, meshFile, cams, config, goalAngle, dispersion)
     {
         randGen = gsl_rng_alloc(gsl_rng_mt19937);
         gsl_rng_set(randGen, SEED);
@@ -13,9 +13,6 @@ namespace opview {
         inertiaWeight << 0.9, 0.9, 0.9, 0.9, 0.9;   // above 1.4 looks globally, below 0.8 look locally
         c1 << 0.70, 0.70, 0.60, 0.70, 0.70;
         c2 << 0.70, 0.70, 0.60, 0.70, 0.70;
-
-        spaceLowerBounds = psoConfig.spaceLowerBounds;
-        spaceUpperBounds = psoConfig.spaceUpperBounds;
     }
 
     PSOCamGenerator::~PSOCamGenerator()
@@ -25,18 +22,20 @@ namespace opview {
         gsl_rng_free(randGen);
     }
 
-    void PSOCamGenerator::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
+    DoubleList PSOCamGenerator::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
     {
         OrderedPose currentOptima = uniformMCStep(centroid, normVector, 0);
-
         convertSamplesToParticles(currentOptima);
-
+        
         for (int d = 0; d < getMCConfiguration().resamplingNum; d++) {
             updateParticles(centroid, normVector);
             logParticles(d);
             c1 = c1 * 0.75f;
             c2 = c2 * 0.75f;
         }
+
+        EigVector5 best = this->particles[bestParticleIndex]->position;
+        return convertVectorToList(best);
     }
 
     void PSOCamGenerator::convertSamplesToParticles(OrderedPose &samples)
@@ -78,8 +77,8 @@ namespace opview {
     void PSOCamGenerator::fixSpaceVelocity(int p)
     {
         for (int i = 0; i < 3; i++) {
-            if (fabs(particles[p]->velocity[i]) > (spaceUpperBounds[i] - spaceLowerBounds[i])) {
-                particles[p]->velocity[i] = this->uniform() * (spaceUpperBounds[i] - spaceLowerBounds[i]);
+            if (fabs(particles[p]->velocity[i]) > (upperBounds()[i] - lowerBounds()[i])) {
+                particles[p]->velocity[i] = this->uniform() * (upperBounds()[i] - lowerBounds()[i]);
             }
         }
     }
@@ -93,11 +92,11 @@ namespace opview {
     void PSOCamGenerator::fixSpacePosition(int p)
     {
         for (int i = 0; i < 3; i++) {
-            if (particles[p]->position[i] < spaceLowerBounds[i]) {
-                particles[p]->position[i] = spaceLowerBounds[i];
+            if (particles[p]->position[i] < lowerBounds()[i]) {
+                particles[p]->position[i] = lowerBounds()[i];
                 particles[p]->velocity[i] = 0.0;
-            } else if (particles[p]->position[i] > spaceUpperBounds[i]) {
-                particles[p]->position[i] = spaceUpperBounds[i];
+            } else if (particles[p]->position[i] > upperBounds()[i]) {
+                particles[p]->position[i] = upperBounds()[i];
                 particles[p]->velocity[i] = 0.0;
             }
         }
@@ -178,9 +177,6 @@ namespace opview {
         EigVector5 tmp = this->particles[bestParticleIndex]->position;
         tmp[3] = rad2deg(tmp[3]);
         tmp[4] = rad2deg(tmp[4]);
-
-        std::cout << "Best Value: " << this->particles[bestParticleIndex]->value << std::endl;
-        std::cout << "Best Pose: " << tmp.transpose() << std::endl << std::endl;
     }
 
     void PSOCamGenerator::deleteParticles()

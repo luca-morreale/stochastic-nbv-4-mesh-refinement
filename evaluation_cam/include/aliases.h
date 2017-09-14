@@ -9,6 +9,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include <opencv2/core.hpp>
+
 #include <pcl/point_cloud.h>
 #include <pcl/kdtree/kdtree_flann.h>
 
@@ -31,10 +33,23 @@ namespace cameval {
     typedef std::vector<int> IntList;
     typedef std::vector<float> FloatList;
     typedef std::vector<double> DoubleList;
+    typedef std::vector<bool> BoolList;
     typedef std::array<float, 6> Float6Array;
+
+    typedef std::vector<IntList> IntArrayList;
 
     typedef std::pair<int, std::string> IntStringPair;
     typedef std::queue<IntStringPair> QueueIntStringPair;
+
+    typedef cv::Mat CVMat;
+    typedef cv::Point2f CVPoint2f;
+    typedef cv::Point3f CVPoint3f;
+    typedef std::vector<CVPoint2f> CVPoint2fList;
+    typedef std::vector<cv::Mat> CVMatList;
+
+    typedef pcl::PointXYZ PCLSimplePoint;
+    typedef pcl::PointCloud<PCLSimplePoint> PCLSimplePointCloud;
+    typedef pcl::KdTreeFLANN<PCLSimplePoint> PCLSimpleKDTree;
 
 
     typedef pcl::PointWithViewpoint PCLPoint;
@@ -44,16 +59,20 @@ namespace cameval {
     typedef Eigen::Vector3f EigVector3;
     typedef Eigen::Matrix3f EigMatrix3;
 
-
+    typedef glm::vec2 GLMVec2;
     typedef glm::vec3 GLMVec3;
     typedef glm::mat3 GLMMat3;
     typedef glm::mat4 GLMMat4;
     
     typedef std::pair<GLMVec3, GLMVec3> AnglePose;
     typedef std::pair<GLMVec3, GLMMat3> Pose;
+    typedef std::map<int, glm::vec2> IntGLMVe2Map;
+    typedef std::vector<IntGLMVe2Map> IntGLMVe2MapList;
 
+    typedef std::vector<GLMVec2> GLMVec2List;
     typedef std::vector<GLMVec3> GLMVec3List;
     typedef std::vector<GLMMat3> GLMMat3List;
+    typedef std::vector<GLMMat4> GLMMat4List;
     typedef std::vector<AnglePose> AnglePoseList;
     typedef std::vector<Pose> PoseList;
 

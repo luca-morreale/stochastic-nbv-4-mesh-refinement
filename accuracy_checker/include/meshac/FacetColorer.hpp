@@ -42,6 +42,8 @@ namespace meshac {
 
         virtual void addEntryToReport(std::iostream &out, const Point &a, const Point &b, const Point &c, double accuracy);
 
+        virtual bool isSteinerFacet(int facetIndex);
+
     private:
         std::string configFileName;
 

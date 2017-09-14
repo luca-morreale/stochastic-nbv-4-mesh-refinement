@@ -15,7 +15,7 @@ namespace meshac {
     void FacetColorer::generateColoredMesh(std::string &output)
     {
         std::stringstream stream;
-
+        
         PointList points = uncertantyEstimator->getPoints();
         FaceIndexList facets = uncertantyEstimator->getFacetsIndex();
 
@@ -27,12 +27,15 @@ namespace meshac {
 
         #pragma omp parallel for
         for (int i = 0; i < facets.size(); i++) {
+            #pragma omp critical
+            std::cout << i << "/" << facets.size() << std::endl;
             Color color = getColorForFacet(i);
             
             #pragma omp critical
-            addFaceToOff(stream, facets[i].vs[0], facets[i].vs[1], facets[i].vs[2], color);
+            {
+                addFaceToOff(stream, facets[i].vs[0], facets[i].vs[1], facets[i].vs[2], color);
+            }
         }
-
         std::ofstream out(output);
         out << stream.str();
         out.close();
@@ -42,13 +45,18 @@ namespace meshac {
     {
         std::stringstream stream;
         std::ofstream out(output);
-        TriangleList facets = uncertantyEstimator->getFaces();
+        // TriangleList facets = uncertantyEstimator->getFaces();
+        PointList points = uncertantyEstimator->getPoints();
+        FaceIndexList facets = uncertantyEstimator->getFacetsIndex();
         
         #pragma omp parallel for
         for (int f = 0; f < facets.size(); f++) {
-            double accuracy = computeAccuracyForFacet(facets[f]);
             #pragma omp critical
-            addEntryToReport(stream, facets[f].vertex(0), facets[f].vertex(1), facets[f].vertex(2), accuracy);
+            std::cout << f << "/" << facets.size() << std::endl;
+            double accuracy = computeAccuracyForFacet(f);
+            
+            #pragma omp critical
+            addEntryToReport(stream, points[facets[f].vs[0]], points[facets[f].vs[1]], points[facets[f].vs[2]], accuracy);
         }
 
         out << stream.str();
@@ -65,10 +73,13 @@ namespace meshac {
 
     double FacetColorer::computeAccuracyForFacet(int i)
     {
-        try {
-            return uncertantyEstimator->getAccuracyForFace(i);
-        } catch (UnexpectedPointException &ex) { }
-        return 1.0;
+        if (!isSteinerFacet(i)) {
+            try {
+                return uncertantyEstimator->getAccuracyForFace(i);
+            } catch (UnexpectedPointException &ex) { }
+        } else {
+            return 1.0;     // low = accurate point, high = not accurate point.
+        }
     }
 
     double FacetColorer::computeAccuracyForFacet(Triangle &facet)
@@ -133,6 +144,13 @@ namespace meshac {
             std::cerr << ex.what() << std::endl;
             return Color(1.0, 1.0, 1.0, 0.3);
         }
+    }
+
+    bool FacetColorer::isSteinerFacet(int facetIndex)
+    {
+        auto facet = uncertantyEstimator->getFaces()[facetIndex];
+        // case of steiner facet
+        return facet.squared_area() > 400.0;
     }
 
 } // namespace meshac

@@ -6,7 +6,8 @@
 #include <OpenMvgParser.h>
 
 #include <opview/type_definition.h>
-#include <opview/MCMCCamGenerator.hpp>
+#include <opview/PSOCamGenerator.hpp>
+#include <opview/LocalPSOCamGenerator.hpp>
 #include <opview/utilities.hpp>
 
 #include <aliases.hpp>
@@ -16,7 +17,6 @@
 #define ARGS 2
 
 #define RESAMPLE 10
-
 
 int main(int argc, char **argv) {
     
@@ -53,13 +53,14 @@ int main(int argc, char **argv) {
     opview::MCConfiguration mcConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
     
-    opview::MCMCCamGenerator model(camConfig, meshFile, cams, mcConfig);
+    // opview::PSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
+    opview::LocalPSOCamGenerator model(camConfig, meshFile, cams, mcConfig);
 
 #ifdef TIMING
     millis start = now();
 #endif
 
-    auto result = model.estimateBestCameraPosition(centroid, normal);   // watchout angles are radian here!!!!! (not degree)
+    auto result = model.estimateBestCameraPosition(centroid, normal);
     for (int i = 0; i < result.size(); i++) {
         std::cout << result[i] << " ";
     }
@@ -67,13 +68,6 @@ int main(int argc, char **argv) {
 #ifdef TIMING
         std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;
 #endif
-
-    // opview::EigVector5 cam;
-    // cam << 0,0,0,0,0;
-    // glm::vec3 point(0,-1,10);
-
-    // auto pp = opview::getProjectedPoint(cam, point, camConfig);
-    // std::cout << pp.x << " " << pp.y << std::endl;
 
     return 0;
 }

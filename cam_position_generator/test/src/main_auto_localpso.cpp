@@ -6,28 +6,26 @@
 #include <OpenMvgParser.h>
 
 #include <opview/type_definition.h>
-#include <opview/MCMCCamGenerator.hpp>
-#include <opview/AutonomousMCMCCamGenerator.hpp>
+#include <opview/AutonomousPSOCamGenerator.hpp>
+#include <opview/AutonomousLocalPSOCamGenerator.hpp>
 #include <opview/utilities.hpp>
 
 #include <aliases.hpp>
 #include <utilities.h>
 
+#define TIMING
 
-#define OMP_THREADS 8
+#define OMP_THREADS 4
 #define ARGS 4
 
 #define RESAMPLE 10
-
-#define TIMING
-
 
 int main(int argc, char **argv) {
     
     omp_set_num_threads(OMP_THREADS);
 
     if (argc < ARGS + 1) {
-        std::cout << "Usage: " << argv[0] << " mgvjson.json meshfile.off accuracy_points.txt output.txt" << std::endl;
+        std::cout << "Usage: " << argv[0] << " mgvjson.json meshfile.off accScore.txt output.txt" << std::endl;
         return 1;
     }
 
@@ -51,13 +49,14 @@ int main(int argc, char **argv) {
 
     opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965); // building & fort
     // opview::CameraGeneralConfiguration camConfig(1920, 1080, 1662.8); // 1662.8 car
-    // centroid, normal
+    // std::cout << scores.points.size() << " " << scores.normals.size() << " " << scores.uncertainty.size() << std::endl;
 
     opview::MeshConfiguration meshConfig(meshFile, cams, scores.points, scores.normals, scores.uncertainty);
+    // // centroid, normal
 
     opview::SpaceBounds bounds(glm::vec3(-40, 0, -40), glm::vec3(0, 70, 40)); // building
     // opview::SpaceBounds bounds(glm::vec3(-40, 0, -130), glm::vec3(40, 70, 100)); // fortress
-    // opview::SpaceBounds bounds(glm::vec3(-15, 0, -15), glm::vec3(15, 10, 0)); // car
+    // opview::SpaceBounds bounds(glm::vec3(-10, 0, -10), glm::vec3(10, 10, 0)); // car
     opview::ParticlesInformation particles(100000, 100, 30);
 
     opview::MCConfiguration mcConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
@@ -66,8 +65,7 @@ int main(int argc, char **argv) {
     size_t maxPoints = 10;
     long double thresholdUncertainty = 100;
     
-    opview::AutonomousMCMCCamGenerator model(camConfig, meshConfig, mcConfig, maxPoints, thresholdUncertainty);
-    
+    opview::AutonomousLocalPSOCamGenerator model(camConfig, meshConfig, mcConfig, maxPoints, thresholdUncertainty);
 #ifdef TIMING
     millis start = now();
 #endif
@@ -87,18 +85,18 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-
 /**
 Building:
-100k -> 119449ms
-10K -> 12095ms
-
+100k -> 13729ms
+10K -> 973ms
 
 Fortress:
-100K -> 409578ms
-10K -> 39999m
+100K -> 43987ms
+10K -> 2883ms
+
 
 Car:
-100k -> 174720ms
-10k -> 15484ms
+100K -> 19150ms
+10K -> 1152ms
 */
+

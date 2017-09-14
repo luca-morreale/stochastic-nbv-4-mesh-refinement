@@ -13,28 +13,30 @@
 #include <opview/type_definition.h>
 
 #include <aliases.hpp>
+#include <utilities.h>
 #define TIMING
 
 #define OMP_THREADS 8
 #define DEPTH 10
 #define DISCRETE_LABELS 3
-#define ARGS 2
+#define ARGS 3
 
 
 int main(int argc, char **argv) {
     
     omp_set_num_threads(OMP_THREADS);
     if (argc < ARGS + 1) {
-        std::cout << "Usage: " << argv[0] << " mgvjson.json meshfile.off" << std::endl;
+        std::cout << "Usage: " << argv[0] << " mgvjson.json meshfile.off accuracyScore.txt" << std::endl;
         return 1;
     }
 
     std::string jsonFile = argv[1];
     std::string meshFile = argv[2];
+    std::string score = argv[3];
     
     OpenMvgParser op_openmvg(jsonFile);
     op_openmvg.parse();
-    std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
+    // std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
 
     SfMData sfm_data_ = op_openmvg.getSfmData();
 
@@ -43,37 +45,24 @@ int main(int argc, char **argv) {
         cams.push_back(cam.center);
     }
 
-    std::vector<glm::vec3> points;
-    std::vector<glm::vec3> normals;
-    std::vector<double> uncertainty;
-
-    double x, y, z, unc;
-    std::ifstream cin("points.txt");
-    while(!cin.eof()) {
-        cin >> x >> y >> z >> unc;
-        points.push_back(glm::vec3(x, y, z));
-        uncertainty.push_back(unc);
-    }
-    cin.close();
-
-    cin.open("normals.txt");
-    while(!cin.eof()) {
-        cin >> x >> y >> z;
-        normals.push_back(glm::vec3(x, y, z));
-    }
+    auto scores = utilities::readScores(score);
 
     // opview::SolverGeneratorPtr solver = new opview::FlipperSolverGenerator();
     // opview::SolverGeneratorPtr solver = new opview::ICMSolverGenerator();
     // opview::SolverGeneratorPtr solver = new opview::LOCSolverGenerator();
     opview::SolverGeneratorPtr solver = new opview::BruteForceSolverGenerator();
 
-    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, {30, 30, 20, 20, 10});
+    // opview::SpaceBounds bounds(glm::vec3(-60, 0, -60), glm::vec3(60, 70, 60)); // building
+    // opview::SpaceBounds bounds(glm::vec3(-60, 0, -60), glm::vec3(60, 70, 60)); // fortress
+    opview::SpaceBounds bounds(glm::vec3(-8, 0, -13), glm::vec3(10, 10, 15)); // car
+    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, bounds, {30, 30, 20, 20, 10});
+    
     opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
     // GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty
-    opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty);
+    opview::MeshConfiguration meshConfig(meshFile, cams, scores.points, scores.normals, scores.uncertainty);
 
     size_t maxPoints = 10;
-    long double thresholdUncertainty = 100000;
+    long double thresholdUncertainty = 100;
 
     // opview::BasicGraphicalModel model(solver, cams);
     // opview::HierarchicalDiscreteGraphicalModel model(solver, DEPTH, DISCRETE_LABELS, cams);
@@ -110,7 +99,10 @@ int main(int argc, char **argv) {
 
     // centroid, normal
     // model.estimateBestCameraPosition(centroids, normals);
-    model.estimateBestCameraPosition(centroid, normal);
+    auto result = model.estimateBestCameraPosition(centroid, normal);
+    for (int i = 0; i < result.size(); i++) {
+        std::cout << result[i] << " ";
+    }
 
 #ifdef TIMING
         std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;

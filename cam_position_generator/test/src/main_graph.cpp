@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     
     OpenMvgParser op_openmvg(jsonFile);
     op_openmvg.parse();
-    std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
+    // std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
 
     SfMData sfm_data_ = op_openmvg.getSfmData();
 
@@ -73,7 +73,11 @@ int main(int argc, char **argv) {
     // opview::SolverGeneratorPtr solver = new opview::LOCSolverGenerator();
     opview::SolverGeneratorPtr solver = new opview::BruteForceSolverGenerator();
 
-    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, {30, 30, 20, 20, 10});
+    // opview::SpaceBounds bounds(glm::vec3(-60, 0, -60), glm::vec3(60, 70, 60)); // building
+    // opview::SpaceBounds bounds(glm::vec3(-60, 0, -60), glm::vec3(60, 70, 60)); // fortress
+    opview::SpaceBounds bounds(glm::vec3(-8, 0, -13), glm::vec3(10, 10, 15)); // car
+    opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, bounds, {30, 30, 20, 20, 10});
+
     opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
     // GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty
     // opview::MeshConfiguration meshConfig(meshFile, cams, points, normals, uncertainty); 
@@ -116,7 +120,10 @@ int main(int argc, char **argv) {
 
     // centroid, normal
     // model.estimateBestCameraPosition(centroids, normals);
-    model.estimateBestCameraPosition(centroid, normal);
+    auto result = model.estimateBestCameraPosition(centroid, normal);
+    for (int i = 0; i < result.size(); i++) {
+        std::cout << result[i] << " ";
+    }
 
 #ifdef TIMING
         std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;

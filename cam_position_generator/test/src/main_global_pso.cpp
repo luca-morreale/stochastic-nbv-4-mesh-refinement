@@ -16,6 +16,8 @@
 #define OMP_THREADS 8
 #define ARGS 2
 
+#define RESAMPLE 10
+
 int main(int argc, char **argv) {
     
     omp_set_num_threads(OMP_THREADS);
@@ -29,7 +31,7 @@ int main(int argc, char **argv) {
     
     OpenMvgParser op_openmvg(jsonFile);
     op_openmvg.parse();
-    std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
+    // std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
 
     SfMData sfm_data_ = op_openmvg.getSfmData();
 
@@ -45,19 +47,22 @@ int main(int argc, char **argv) {
     glm::vec3 normal(-0.14341, 0.238821, -0.960416);
     // // centroid, normal
 
-    opview::MCConfiguration mcConfig(30, 100000, 100, 30); // size_t resamplingNum, size_t particles, size_t particlesUniform
-    // maybe is better if less point in uniform? and then increase in the case of mc?
+    opview::SpaceBounds bounds(glm::vec3(-60, 0, -60), glm::vec3(60, 70, 60));
+    opview::ParticlesInformation particles(100000, 100, 30);
 
-    opview::PSOConfiguration psoConfig(mcConfig, glm::vec3(-3, -3, -3), glm::vec3(3, 3, 3));
+    opview::MCConfiguration mcConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    // maybe is better if less point in uniform? and then increase in the case of mc?
     
-    opview::PSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
-    // opview::LocalPSOCamGenerator model(camConfig, meshFile, cams, psoConfig);
+    opview::PSOCamGenerator model(camConfig, meshFile, cams, mcConfig); // global version
 
 #ifdef TIMING
     millis start = now();
 #endif
 
-    model.estimateBestCameraPosition(centroid, normal);
+    auto result = model.estimateBestCameraPosition(centroid, normal);
+    for (int i = 0; i < result.size(); i++) {
+        std::cout << result[i] << " ";
+    }
 
 #ifdef TIMING
         std::cout << std::endl << std::endl << "Total time to compute optimal pose: " << (now()-start).count() << "ms" << std::endl;

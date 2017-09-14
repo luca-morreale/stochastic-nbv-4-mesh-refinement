@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include <glm/gtx/norm.hpp>
+#include <glm/gtx/component_wise.hpp>
 
 #include <opview/GraphicalModelBuilder.hpp>
 #include <opview/type_definition.h>
@@ -48,7 +49,7 @@ namespace opview {
         virtual void initShapes();
         
         
-        LambdaFloat scale = [this](){ return 1.5 / (float)numLabels(); };
+        LambdaGLMVec3 scale = [this](){ return GLMVec3(1.0, 1.0, 1.0) / (float)numLabels(); };
         LambdaFloat offsetX = [](){ return -1.0; };
         LambdaFloat offsetY = [](){ return -1.0; };
         LambdaFloat offsetZ = [](){ return -1.0; };

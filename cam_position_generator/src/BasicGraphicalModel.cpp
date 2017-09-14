@@ -41,7 +41,7 @@ namespace opview {
         #pragma omp parallel for collapse(3)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-            LabelType val = -logVonMisesWrapper(pos, centroid, normVector);
+            LabelType val = logVonMisesWrapper(pos, centroid, normVector);
             #pragma omp critical
             vonMises(x, y, z) = val;
         }
@@ -66,7 +66,7 @@ namespace opview {
 
         if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {
             #pragma omp critical
-            function(coords) = -1.0;
+            function(coords) = -10.0;
         }
     }
 
@@ -90,7 +90,7 @@ namespace opview {
 
     double BasicGraphicalModel::logVonMisesWrapper(GLMVec3 &pos, GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        return logVonMises(pos, centroid, normVector, vonMisesConfig);
+        return -logVonMises(pos, centroid, normVector, vonMisesConfig);
     }
 
     void BasicGraphicalModel::setVonMisesConfiguration(VonMisesConfiguration vonMisesConfig)

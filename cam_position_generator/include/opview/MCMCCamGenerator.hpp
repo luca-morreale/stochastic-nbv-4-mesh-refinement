@@ -29,7 +29,7 @@ namespace opview {
 
         ~MCMCCamGenerator();
 
-        virtual void estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
+        virtual DoubleList estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
     protected:
         virtual EigVector5List insertOrientation(GLMVec3List &points);
@@ -64,9 +64,12 @@ namespace opview {
         ReportWriterPtr getLogger();
         void setLogger(ReportWriterPtr log);
 
-        LambdaFloat offsetX = [](){ return -1.0; };
-        LambdaFloat offsetY = [](){ return -1.0; };
-        LambdaFloat offsetZ = [](){ return -1.0; };
+        LambdaFloat offsetX = [this](){ return mcConfig.bounds.lower.x; };
+        LambdaFloat offsetY = [this](){ return mcConfig.bounds.lower.y; };
+        LambdaFloat offsetZ = [this](){ return mcConfig.bounds.lower.z; };
+
+        GLMVec3 lowerBounds();
+        GLMVec3 upperBounds();
 
     private:
         GaussianSampleGeneratorPtr sampler;

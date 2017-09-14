@@ -6,6 +6,9 @@
 
 #include <rapidjson/document.h>
 
+#include <pcl/point_types.h>
+#include <pcl/features/normal_3d.h>
+
 #include <meshac/alias_definition.hpp>
 #include <meshac/Colorer.hpp>
 #include <meshac/InvalidJsonFileException.hpp>

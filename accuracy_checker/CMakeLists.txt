@@ -8,6 +8,7 @@ find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED)
 
 find_library(GMP_LIBRARY gmp /usr/lib)
 
@@ -26,7 +27,11 @@ include_directories(${EIGEN3_INCLUDE_DIR}
                       ${GMPXX_INCLUDE_DIR}
                       ${OpenCV_INCLUDE_DIRS} 
                       ${CGAL_INCLUDE_DIRS}
+                      PCL_INCLUDE_DIRS}
                       )
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 include_directories(include/)
 
@@ -50,7 +55,9 @@ target_link_libraries(meshac ${OpenCV_LIBS}
                                             ${ASSIMP_LIBRARIES}
                                             ${MANIFOLD_LIB} 
                                             ${MESH_ACCURACY_LIB}
-                                            ${GMP_LIBRARY} )
+                                            ${GMP_LIBRARY}
+                                            ${PCL_LIBRARIES}
+                                            )
 
 # ------------------------ INSTALLATION ------------------------
 

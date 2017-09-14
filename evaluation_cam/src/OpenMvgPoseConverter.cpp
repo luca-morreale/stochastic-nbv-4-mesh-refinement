@@ -22,7 +22,7 @@ namespace cameval {
     void OpenMvgPoseConverter::convertPose(Pose &pose)
     {
         // 180° around Y because vertical axis is y and not z
-        pose.second = rotationPitch(M_PI) * pose.second;
+        pose.second = pose.second * rotationPitch(M_PI);
     }
 
     void OpenMvgPoseConverter::convertAnglePoses(AnglePoseList &poses)

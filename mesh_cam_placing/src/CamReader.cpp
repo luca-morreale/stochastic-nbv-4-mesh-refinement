@@ -5,21 +5,21 @@ namespace camplacing {
     CamReader::CamReader(std::string &camfile)
     {
         this->camfile = camfile;
+        parse();
     }
 
     GLMVec3List CamReader::parse()
     {
         rapidjson::Document document;
         std::ifstream cin(this->camfile);
-
         std::string str((std::istreambuf_iterator<char>(cin)), std::istreambuf_iterator<char>());
         document.Parse(str.c_str());       
 
         const rapidjson::Value& camerasJson = document["cams"];
-        size_t cams_length = camerasJson.Size();
-
+        
         this->cams.clear();
         this->rots.clear();
+        this->scores.clear();
 
         for (rapidjson::SizeType curCam = 0; curCam < camerasJson.Size(); curCam++) {
             double x = camerasJson[curCam]["vals"][0].GetDouble();
@@ -35,6 +35,8 @@ namespace camplacing {
             this->rots.push_back(createRotationMatrix(pitch, yaw));
             this->scores.push_back(score);
         }
+
+        cin.close();
         
         return this->cams;
     }

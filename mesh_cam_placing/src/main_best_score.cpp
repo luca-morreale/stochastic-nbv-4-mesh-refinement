@@ -49,12 +49,9 @@ int main(int argc, char **argv)
     GLMVec3List cams = { reader.getBestCamera() };
     GLMMat3List rots = { reader.getRotationOfBest() };
 
-    std::cout << cams[0].x << " " << cams[0].y << " " << cams[0].z << std::endl; 
-
     std::string outname = cams_file.substr(0, cams_file.find_last_of(".json")-4) + "_best_score";
 
     generateJsonFromData(cams, defaultCams, rots, defaultRots, outname, poi);
     
     return 0;
 }
-

@@ -12,7 +12,7 @@ SfMData sfm_data_;
 int main(int argc, char **argv)
 {
     if (argc < 6) {
-        std::cout << argv[0] << " camfile.txt mvg.json x y z" << std::endl;
+        std::cout << argv[0] << " camfile.json mvg.json x y z" << std::endl;
         return 1;
     }
 

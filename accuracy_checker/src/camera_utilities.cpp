@@ -44,10 +44,12 @@ namespace meshac {
 
     bool isOppositeView(GLMVec3 &meshPoint, CameraType &P)
     {
-        CameraMatrix E = getExtrinsicMatrix(P);
+        GLMVec3 camCenter = getCameraCenter(P);
+        RotationMatrix R = getRotationMatrix(P);
+        R = glm::transpose(R);
 
-        GLMVec4 p = E * GLMVec4(meshPoint, 1.0f);
-        return glm::dot(glm::normalize(p), zdir) < 0.0f;    // if > 0.0 than it sees the object.
+        GLMVec3 point = R * (meshPoint - camCenter);
+        return point.z < 0.0;
     }
 
     bool isIntersecting(GLMVec3 &meshPoint, CameraType &P, TreePtr tree)
@@ -55,9 +57,16 @@ namespace meshac {
         GLMVec3 pose = getCameraCenter(P);
         Point cam(pose[0], pose[1], pose[2]);
         Point point(meshPoint[0], meshPoint[1], meshPoint[2]);
+
+        if (CGAL::squared_distance(cam, point) < 1.0)
+            return false;
+        if (CGAL::squared_distance(cam, point) > 1000.0)
+            return true;
         
         try {
             Segment segment_query(cam, point);
+            if (segment_query.is_degenerate()) 
+                return true;
             Segment_intersection intersection;
             
             #pragma omp critical
@@ -69,6 +78,8 @@ namespace meshac {
                 return false;
             }
         } catch (const CGAL::Assertion_exception &ex) {
+            return true;
+        } catch (const CGAL::Precondition_exception &ex) {
             return true;
         }
     }
@@ -84,14 +95,14 @@ namespace meshac {
 
     bool isPointInsideImage(GLMVec2 &point2D, CameraType &P)
     {
-        return point2D.x < (float)getImageWidth(P) && point2D.x > 0.0f && point2D.y < (float)getImageHeight(P) && point2D.y > 0.0f;
+        return point2D.x < (float)getImageWidth(P) && point2D.x > 0 && 
+                point2D.y < (float)getImageHeight(P) && point2D.y > 0;
     }
 
     GLMVec2 getProjectedPoint(GLMVec3 &meshPoint, CameraMatrix &P)
     {
         GLMVec4 point3D = GLMVec4(meshPoint, 1.0f);
-        P = glm::transpose(P);
-        GLMVec4 point2D = P * point3D;
+        GLMVec4 point2D = point3D * P;
 
         // point2D = point2D / point2D.z;
 

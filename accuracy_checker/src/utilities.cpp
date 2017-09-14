@@ -153,4 +153,17 @@ namespace meshac {
         return list;
     }
 
+    EigMatrix convert(GLMMat3 &mat)
+    {
+        EigMatrix newMat = EigZeros(3);
+
+        #pragma omp parallel for collapse(2)
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                newMat(i, j) = mat[i][j];
+            }
+        }
+        return newMat;
+    }
+
 } // namespace meshac

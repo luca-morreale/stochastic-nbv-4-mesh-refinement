@@ -1,6 +1,8 @@
 #ifndef MESH_ACCURACY_FACE_ACCURACY_MODEL_H
 #define MESH_ACCURACY_FACE_ACCURACY_MODEL_H
 
+#include <CGAL/exceptions.h>
+
 #include <meshac/alias_definition.hpp>
 #include <meshac/OffParser.hpp>
 #include <meshac/type_definition.hpp>

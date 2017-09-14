@@ -5,7 +5,7 @@ namespace meshac {
     FaceAccuracyModel::FaceAccuracyModel(std::string &meshFile)
     {
         this->meshFilename = meshFile;
-        this->faces = generateTriangleList();   
+        this->faces = generateTriangleList();
 
         OffParser parser(meshFile);
         this->pointToIndex = parser.getPointToIndexMap();
@@ -51,8 +51,8 @@ namespace meshac {
 
     void FaceAccuracyModel::initTree()
     {
-        TriangleList facets = this->getFaces();
-        this->tree = new Tree(facets.begin(), facets.end());
+        TriangleList triangles = this->getFaces();
+        this->tree = new Tree(triangles.begin(), triangles.end());
     }
 
     TriangleList FaceAccuracyModel::generateTriangleList()
@@ -62,17 +62,24 @@ namespace meshac {
         TriangleList triangles;
         for (Facet_iterator it = poly.facets_begin(); it != poly.facets_end(); it++) {
             Halfedge_facet_circulator p = it->facet_begin();
+
             Vertex p0 = p->vertex();
             Vertex p1 = (++p)->vertex();
             Vertex p2 = (++p)->vertex();
 
             Triangle t = Triangle(p0->point(), p1->point(), p2->point());
-            if (t.is_degenerate()) {
-                throw std::runtime_error("A triangle is degenerate.");
+
+            if ((p0->point().x() == p1->point().x() && p0->point().y() == p1->point().y() && p0->point().z() == p1->point().z()) || 
+                (p0->point().x() == p2->point().x() && p0->point().y() == p2->point().y() && p0->point().z() == p2->point().z()) || 
+                (p2->point().x() == p1->point().x() && p2->point().y() == p1->point().y() && p2->point().z() == p1->point().z()) )
+                continue;
+
+            if (t.is_degenerate() || TreeKernel().is_degenerate_3_object()(t)) {      // degenerate so not added to tree 
+                continue;
             }
+
             triangles.push_back(t);
         }
-
         return triangles;
     }
 
@@ -82,6 +89,8 @@ namespace meshac {
         Polyhedron poly;
         meshIn >> poly;
         meshIn.close();
+
+        poly.normalize_border();
 
         return poly;
     }

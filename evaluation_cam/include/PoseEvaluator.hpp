@@ -2,8 +2,10 @@
 #define EVALUATION_CAMERA_POSITION_POSE_EVALUATOR_H_
 
 #include <regex>
+#include <sstream>
 
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <aliases.h>
 #include <BasicEvaluator.hpp>
@@ -22,6 +24,7 @@ namespace cameval {
         virtual std::string getImage(IntStringPair &entry);
         virtual std::string generatePovrayDeclaration(std::string &data);
         virtual Pose getPose(std::string &data);
+        virtual std::string getTimeStamp();
 
     private:
         std::string basicPovFile;

@@ -17,17 +17,15 @@ namespace cameval {
     {
         AnglePose p = parseEntry(data);
 
-        glm::mat4 view = glm::lookAt(p.first, p.second, GLMVec3(0, -1, 0));
-        glm::mat3 rot(view);
-
+        glm::mat3 rot = rotationMatrix(p.second);      // optimal cam put rad as output!!!
         return Pose(p.first, rot);
     }
 
     std::string PoseEvaluator::getImage(IntStringPair &entry)
     {
         // std::string file = extractFilename(entry.second);
-        std::cout << entry.second << std::endl;
-        std::string file = "tmp_povray_render";
+
+        std::string file = "zz_" + getTimeStamp();  // so that it results after all the "model_*" images!
         std::ofstream out(file + ".pov");
         out << generatePovrayDeclaration(entry.second) << std::endl;
         out.close();
@@ -38,30 +36,28 @@ namespace cameval {
         command = "povray " + file + ".pov -D default_config.ini +WT8";
         system(command.c_str());
 
-        FileHandler::cleanAll({file + ".pov"});
+        cleanFiles({file + ".pov"});
 
         return file + ".png";
     }
 
     std::string PoseEvaluator::generatePovrayDeclaration(std::string &data)
     {
-        StringList blocks = divideStringPose(data);
+        Pose pose = getPose(data);
+        GLMVec3 z(0, 0, 10);
+        GLMVec3 lookat = pose.second * z + pose.first;
 
-        std::string out;
-        out += "#declare PdV=<";
-        
-        for (int i = 0; i < 3; i++) {
-            out += blocks[i];
-            if (i < 2) out += ",";
-        }
-        out += ">;\n";
-        out += "#declare V=<";
-        for (int i = 0; i < 3; i++) {
-            out += blocks[i + 3];
-            if (i < 2) out += ",";
-        }
-        out += ">;\n";
-        return out;
+        std::stringstream out;
+        out << "#declare PdV=<" << pose.first.x << "," << pose.first.y << "," << pose.first.z << ">;\n";
+        out << "#declare V=<" << lookat.x << "," << lookat.y << "," << lookat.z << ">;\n";
+        return out.str();
+    }
+
+    std::string PoseEvaluator::getTimeStamp()
+    {
+        std::time_t seconds;
+        std::time(&seconds);
+        return boost::lexical_cast<std::string>(seconds);
     }
 
 } // namespace cameval

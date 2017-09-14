@@ -13,10 +13,12 @@ namespace opview {
     AutonomousMultipointHierarchicalGraphicalModel::~AutonomousMultipointHierarchicalGraphicalModel()
     { /*    */ }
 
-    void AutonomousMultipointHierarchicalGraphicalModel::estimateBestCameraPosition()
+    LabelList AutonomousMultipointHierarchicalGraphicalModel::estimateBestCameraPosition()
     {
         int pointIndex = getWorstPointsList()[0].second;
-        this->estimateBestCameraPosition(getPoints()[pointIndex], getNormals()[pointIndex]);
+        GLMVec3 centroid = getPoints()[pointIndex];
+        GLMVec3 normal = getNormals()[pointIndex];
+        return this->estimateBestCameraPosition(centroid, normal);
     }
 
     LabelType AutonomousMultipointHierarchicalGraphicalModel::logVonMisesWrapper(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normal)
@@ -39,17 +41,17 @@ namespace opview {
     LabelType AutonomousMultipointHierarchicalGraphicalModel::origianlLogVonMisesWrapper(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal)
     {
         GLMVec3 pose(point[0], point[1], point[2]);
-        return -OrientationHierarchicalGraphicalModel::logVonMisesWrapper(pose, centroid, normal);
+        return OrientationHierarchicalGraphicalModel::logVonMisesWrapper(pose, centroid, normal);
     }
 
     LabelType AutonomousMultipointHierarchicalGraphicalModel::origianlVisibilityDistribution(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal)
     {
-        return -OrientationHierarchicalGraphicalModel::visibilityDistribution(point, centroid, normal);
+        return OrientationHierarchicalGraphicalModel::visibilityDistribution(point, centroid, normal);
     }
 
     LabelType AutonomousMultipointHierarchicalGraphicalModel::origianlImagePlaneWeight(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal)
     {
-        return -OrientationHierarchicalGraphicalModel::imagePlaneWeight(point, centroid, normal);
+        return OrientationHierarchicalGraphicalModel::imagePlaneWeight(point, centroid, normal);
     }
 
 } // namespace opview

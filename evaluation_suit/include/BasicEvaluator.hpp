@@ -17,64 +17,57 @@ namespace cameval {
     
     class BasicEvaluator {
     public:
-        BasicEvaluator(std::string &posesFilename, std::string &groundTruthFilename, std::string &basicPoseFilename, 
-                                        std::string &baseImageFolder, std::string &intrinsicParams, std::string &outputFile);
+        BasicEvaluator(std::string &groundTruthFilename, std::string &basicPoseFilename, std::string &baseImageFolder, 
+                                                                    std::string &intrinsicParams, std::string &outputFile);
         ~BasicEvaluator();
 
-        virtual void evaluate();
-
+        virtual double evaluatePose(std::string &imageName, std::string &basicFolder);
+    
         std::string getOuputFile();
+        std::string getGroundTruthFilename();
+        PoseList getCameraPoses();
+        OpenMvgJsonHandlerPtr getMvgJsonHandler();
+        void setMvgJsonHandler(OpenMvgJsonHandlerPtr mvgJsonHandler);
+
+        void appendToCameraPoses(Pose &camPose);
 
     protected:
-        virtual std::string initOpenMvg();
-        virtual double evaluatePose(IntStringPair &entry, std::string &basicFolder);
-        virtual void setDefaultCameraPoses();
-        virtual std::string generatePairFile(size_t uniqueId);
+        /**   Functions used during an evaluation step   **/
+        virtual std::string getImage(std::string &imageName) = 0;
+        virtual Pose getPose(std::string &imageName) = 0;
+        virtual void moveImageIntoImagesFolder(std::string &filename);
         virtual size_t appendImageToJson(std::string &sfmFile, std::string &imageFile);
         virtual void setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId);
         virtual void setPositionOfCameras(std::string &sfmFile, Pose &pose, size_t imgId);
+        virtual std::string generatePairFile(size_t uniqueId);
         virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename);
         virtual double parseDistance(std::string &logFile);
-        virtual void generateBasicPairFile();
         virtual void cleanFiles(StringList files);
 
-        virtual void appendToPoses(IntStringPair &pair);
-        virtual void appendToCameraPoses(Pose &camPose);
+        /**   Set up functions used by constructor   **/
+        void setOpenMVGData(std::string &baseImageFolder, std::string &intrinsicParams);
+        void setCloudCompareLogRegex();
+        void setBasicPoseCamera();
 
-        virtual std::string getImage(IntStringPair &entry) = 0;
-        virtual Pose getPose(std::string &data) = 0;
+        /***   System call function   ***/
+        int execute(std::string command);
 
-        std::string getGroundTruthFilename();
-
-        void setPosesFile(std::string posesFilename);
-        void moveImageIntoImagesFolder(std::string &filename);
-
-        PoseList getCameraPoses();
+        void setDefaultCameraPoses();
         
 
     private:
         std::string groundTruthFilename;
-        std::string posesFilename;
         std::string baseImageFolder;
         std::string intrinsicParams;
         std::string basicPoseFilename;
         std::string outputFile;
 
-        std::string filePrefix;
-        std::string fileExtention;
-
-        PoseList cameraPoses;
-        QueueIntStringPair poses;
-        StringList posesString;
-
         std::regex distanceRegex;
 
         OpenMvgJsonHandlerPtr mvgJsonHandler;
+        PoseList cameraPoses;
         size_t defaultCamNumber;
 
-        int getIndexOfSmallestDistance(DoubleList &distances);
-        void remapListToQueue(StringList &dataList);
-        
     };
 
 } // namespace cameval

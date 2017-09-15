@@ -2,26 +2,21 @@
 
 namespace cameval {
 
-    BasicEvaluator::BasicEvaluator(std::string &posesFilename, std::string &groundTruthFilename, std::string &basicPoseFilename, 
+    BasicEvaluator::BasicEvaluator(std::string &groundTruthFilename, std::string &basicPoseFilename, 
                         std::string &baseImageFolder, std::string &intrinsicParams, std::string &outputFile)
     {
         // this->posesFilename = posesFilename;                          // file from which read poses to evaluate
         this->groundTruthFilename = groundTruthFilename;              // file containing the g-t cloud of points
         this->outputFile = outputFile;
-        OpenMvgSysCall::baseImageFolder = baseImageFolder;            // name of folder containing the images of current cloud
-        OpenMvgSysCall::intrinsicParams = intrinsicParams;            // file containing the intrinisc params in format ready for opengm
-        this->distanceRegex = std::regex("\\[(.*)\\] \\[ComputeDistances\\] Mean distance = (.*) / std deviation = (.*)");
+        
+        log("\nSet OpenMvg data");
+        setOpenMVGData(baseImageFolder, intrinsicParams);
 
-        log("\nPopulating basic camera poses");
-        PoseReader reader(basicPoseFilename);
-        this->cameraPoses = reader.getPoses();
-        log("\nBasic poses size: " + std::to_string(cameraPoses.size()));
+        log("\nSet regex for CloudCompare");
+        setCloudCompareLogRegex();
 
-        setPosesFile(posesFilename);
-
-        std::string fileExample = poses.front().second;
-        this->filePrefix = fileExample.substr(0, fileExample.find_first_of("_"));
-        this->fileExtention = fileExample.substr(fileExample.find_last_of(".") + 1, fileExample.size());
+        log("\nPopulating camera poses");
+        setBasicPoseCamera();
     }
 
     BasicEvaluator::~BasicEvaluator()
@@ -29,116 +24,102 @@ namespace cameval {
         delete mvgJsonHandler;
     }
 
-    void BasicEvaluator::appendToPoses(IntStringPair &pair)
+    void BasicEvaluator::setOpenMVGData(std::string &baseImageFolder, std::string &intrinsicParams)
     {
-        poses.push(pair);
+        OpenMvgSysCall::baseImageFolder = baseImageFolder;            // name of folder containing the images of current cloud
+        OpenMvgSysCall::intrinsicParams = intrinsicParams;            // file containing the intrinisc params in format ready for opengm
     }
 
-    void BasicEvaluator::remapListToQueue(StringList &dataList)
+    void BasicEvaluator::setCloudCompareLogRegex()
     {
-        for (int i = 0; i < dataList.size(); i++) {
-            this->poses.push(IntStringPair(i, dataList[i]));
-        }
+        distanceRegex = std::regex("\\[(.*)\\] \\[ComputeDistances\\] Mean distance = (.*) / std deviation = (.*)");
     }
 
-    void BasicEvaluator::evaluate()
+    void BasicEvaluator::setBasicPoseCamera()
     {
-        std::ofstream out(this->outputFile);
-        std::string basicFolder = initOpenMvg();
-        log("\nInitialized folders");
-
-        DoubleList distances;
-        distances.assign(poses.size(), 0.0);
-
-        while (!poses.empty()) {
-            IntStringPair entry = poses.front();
-            poses.pop();
-
-            log("\nStart analysis pose #" + std::to_string(entry.first));
-
-            double tmp = evaluatePose(entry, basicFolder);
-            distances[entry.first] = tmp;
-
-            if (tmp != DBL_MAX) {
-                out << entry.second << " " << distances[entry.first] << std::endl;
-                out.flush();
-            }
-
-            log("\nDone analysis pose #" + std::to_string(entry.first));
-        }
-
-        log("\nDone computation of all poses");
-        
-        int index = getIndexOfSmallestDistance(distances);
-
-        log("min distance: " + std::to_string(distances[index]));
-        log("pose: " + posesString[index]);
-
-        out << "min distance: " << distances[index] << std::endl;
-        out << "pose: " << posesString[index] << std::endl;
-
-        out.close();
-
-        cleanFiles({basicFolder, "matches/", "poses_sfm_data/"});
-    }
-
-    void BasicEvaluator::cleanFiles(StringList files)
-    {
-        FileHandler::cleanAll(files);     // remove all folders created!
-    }
-
-    std::string BasicEvaluator::initOpenMvg()
-    {
-        OpenMvgSysCall::initOpenMvg();
-
-        mvgJsonHandler = new OpenMvgJsonHandler("matches/sfm_data.json");
-        log("\nSet default camera poses");
-        setDefaultCameraPoses();
-        mvgJsonHandler->saveChanges();
-
-        generateBasicPairFile();
-
-        return "matches";
+        PoseReader reader(basicPoseFilename);
+        cameraPoses = reader.getPoses();
     }
     
-    double BasicEvaluator::evaluatePose(IntStringPair &entry, std::string &basicFolder)
+    double BasicEvaluator::evaluatePose(std::string &imageName, std::string &basicFolder)
     {
-        log("\nParsing filename to pose");
-        Pose pose = getPose(entry.second);
+        log("Getting pose");
+        Pose pose = getPose(imageName);
 
-        log("\nDownloading image");
-        std::string filename = getImage(entry);
+        log("Getting image");
+        std::string filename = getImage(imageName);
         if (filename.size() == 0) return DBL_MAX;
 
         std::string jsonFile = basicFolder + "/sfm_data.json";
 
-        log("\nMove file into folder");
+        log("Move new image into images folder");
         moveImageIntoImagesFolder(filename);
         
-        log("\nAppend image");
+        log("Append image to json");
         size_t imgId = appendImageToJson(jsonFile, filename);
         
-        log("\nSet position camera");
+        log("Set position camera into json");
         setPositionOfCameras(jsonFile, pose, imgId);
 
+        log("Generate pair file for matches");
         std::string pairFile = generatePairFile(imgId);
 
         OpenMvgSysCall::extractMvgFeatures(jsonFile, pairFile);
 
-        log("\nCompute Structure");
+        log("Compute Structure");
         std::string mvgFolder = OpenMvgSysCall::computeStructureFromPoses(jsonFile, imgId);
 
         std::string inputCloud = mvgFolder + "/sfm_data.ply";
         
-        log("\nCompute Distance");
+        log("Compute Distance");
         std::string logFile = computeDistance(inputCloud, groundTruthFilename); 
 
-        log("\nExtract distance from log");
+        log("Extract distance from log");
         double distance = parseDistance(logFile);     
         
+        log("Clean files");
         cleanFiles({filename, pairFile, mvgFolder, "images/"+filename, "matches/matches.f.bin"});
 
         return distance;
+    }
+
+    void BasicEvaluator::moveImageIntoImagesFolder(std::string &filename)
+    {
+        try {
+            std::string imagesFolder = "images";
+            FileHandler::moveFileInside(filename, imagesFolder);
+        } catch (const boost::filesystem::filesystem_error &ex) {
+            auto errorCode = ex.code();
+            if (FileHandler::isSpaceSystemError(errorCode)) {
+                std::cerr << "Out of Memory Exception" << std::endl;
+                return DBL_MAX;
+            }
+        }
+    }
+
+    size_t BasicEvaluator::appendImageToJson(std::string &sfmFile, std::string &imageFile)
+    {
+        std::string prefix = sfmFile.substr(0, sfmFile.find_last_of("/"));
+
+        size_t key;
+        key = mvgJsonHandler->appendImage(prefix, imageFile);
+        mvgJsonHandler->saveChanges();
+        
+        return key;
+    }
+
+    void BasicEvaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
+    {
+        GLMMat3 rotation = rotationMatrix(pose.second);
+        Pose realPose(pose.first, rotation);
+
+        setPositionOfCameras(sfmFile, realPose, imgId);
+    }
+
+    void BasicEvaluator::setPositionOfCameras(std::string &sfmFile, Pose &pose, size_t imgId)
+    {
+        mvgJsonHandler->setCamPosition(imgId, pose.first, pose.second);
+        mvgJsonHandler->saveChanges();
     }
 
     void BasicEvaluator::setDefaultCameraPoses()
@@ -150,34 +131,20 @@ namespace cameval {
         defaultCamNumber = cameraPoses.size();
     }
 
-    size_t BasicEvaluator::appendImageToJson(std::string &sfmFile, std::string &imageFile)
+    std::string BasicEvaluator::generatePairFile(size_t uniqueId)
     {
-        std::string prefix = sfmFile.substr(0, sfmFile.find_last_of("/"));
+        std::string original = "matches_pairs.txt";
+        std::string filename = "matches_pairs_" + std::to_string(uniqueId) + ".txt";
+        FileHandler::copyFile(original, filename);
 
-        size_t key;
-        #pragma omp critical
-        key = mvgJsonHandler->appendImage(prefix, imageFile);
-        #pragma omp critical
-        mvgJsonHandler->saveChanges();
+        std::ofstream out;
+        out.open(filename, std::ofstream::out | std::ofstream::app);
+        for (int i = 0; i < defaultCamNumber; i++) {
+            out << i << " " << uniqueId << std::endl;
+        }
+        out.close();
 
-        return key;
-    }
-
-    void BasicEvaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
-    {
-        GLMMat3 rotation = rotationMatrix(pose.second);
-        #pragma omp critical
-        mvgJsonHandler->setCamPosition(imgId, pose.first, rotation);
-        #pragma omp critical
-        mvgJsonHandler->saveChanges();
-    }
-
-    void BasicEvaluator::setPositionOfCameras(std::string &sfmFile, Pose &pose, size_t imgId)
-    {
-        #pragma omp critical
-        mvgJsonHandler->setCamPosition(imgId, pose.first, pose.second);
-        #pragma omp critical
-        mvgJsonHandler->saveChanges();
+        return filename;
     }
 
     std::string BasicEvaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
@@ -187,7 +154,7 @@ namespace cameval {
         // NOTE no need to remove cameras because assumed main_Structure... already output a structure without cameras and in ascii
 
         std::string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + alignedCloud + " -O " + groundTruthFilename + " -c2c_dist";
-        system(command.c_str());
+        execute(command);
 
         return logfilename;
     }
@@ -219,78 +186,15 @@ namespace cameval {
         return DBL_MAX;
     }
 
-    int BasicEvaluator::getIndexOfSmallestDistance(DoubleList &distances)
+    void BasicEvaluator::cleanFiles(StringList files)
     {
-        int index = 0;
-        for (int i = 0; i < distances.size(); i++) {
-            if (distances[i] < distances[index]) {
-                index = i;
-            }
-        }
-        return index;
+        FileHandler::cleanAll(files);     // remove all folders created!
     }
 
-    void BasicEvaluator::generateBasicPairFile()
-    {
-        std::string pairFile = "matches_pairs.txt";
-        if (!FileHandler::checkSourceExistence(pairFile)) {
-            std::ofstream out("matches_pairs.txt");
-            for (int i = 0; i < cameraPoses.size() - 1; i++) {
-                for (int j = i + 1; j < cameraPoses.size(); j++) {
-                    out << i << " " << j << std::endl;
-                }
-            }
-            out.close();
-        }
-    }
-    
-    std::string BasicEvaluator::generatePairFile(size_t uniqueId)
-    {
-        std::string original = "matches_pairs.txt";
-        std::string filename = "matches_pairs_" + std::to_string(uniqueId) + ".txt";
-        FileHandler::copyFile(original, filename);
-
-        std::ofstream out;
-        out.open(filename, std::ofstream::out | std::ofstream::app);
-        for (int i = 0; i < defaultCamNumber; i++) {
-            out << i << " " << uniqueId << std::endl;
-        }
-        out.close();
-
-        return filename;
-    }
-
-    void BasicEvaluator::moveImageIntoImagesFolder(std::string &filename)
-    {
-        try {
-            std::string imagesFolder = "images";
-            FileHandler::moveFileInside(filename, imagesFolder);
-        } catch (const boost::filesystem::filesystem_error &ex) {
-            auto errorCode = ex.code();
-            if (FileHandler::isSpaceSystemError(errorCode)) {
-                std::cerr << "Out of Memory Exception" << std::endl;
-                return DBL_MAX;
-            }
-        }
-    }
-
-    void BasicEvaluator::setPosesFile(std::string posesFilename)
-    {
-        this->posesFilename = posesFilename;
-        log("\nPopulating Poses To be Analyzed");
-        posesString = InputReader::readDatabase(posesFilename);
-        remapListToQueue(posesString);
-        log("\nPoses size: " + std::to_string(posesString.size()));
-    }
 
     std::string BasicEvaluator::getOuputFile()
     {
         return this->outputFile;
-    }
-
-    void BasicEvaluator::appendToCameraPoses(Pose &camPose)
-    {
-        cameraPoses.push_back(camPose);   
     }
 
     std::string BasicEvaluator::getGroundTruthFilename()
@@ -303,5 +207,24 @@ namespace cameval {
         return cameraPoses;
     }
 
+    void BasicEvaluator::appendToCameraPoses(Pose &camPose)
+    {
+        cameraPoses.push_back(camPose);   
+    }
+
+    OpenMvgJsonHandlerPtr BasicEvaluator::getMvgJsonHandler()
+    {
+        return mvgJsonHandler;
+    }
+
+    void BasicEvaluator::setMvgJsonHandler(OpenMvgJsonHandlerPtr mvgJsonHandler)
+    {
+        this->mvgJsonHandler = mvgJsonHandler;
+    }
+
+    int BasicEvaluator::execute(std::string command)
+    {
+        return system(command.c_str());
+    }
 
 } // namespace cameval

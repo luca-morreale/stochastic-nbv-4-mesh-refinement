@@ -8,6 +8,8 @@
 #include <vector>
 
 #include <boost/filesystem.hpp>
+#include <boost/system/error_code.hpp>
+
 
 #include <opencv2/core.hpp>
 
@@ -21,8 +23,6 @@
 #include <rapidjson/prettywriter.h>
 
 #include <glm/glm.hpp>
-
-#include <boost/system/error_code.hpp>
 
 namespace cameval {
 

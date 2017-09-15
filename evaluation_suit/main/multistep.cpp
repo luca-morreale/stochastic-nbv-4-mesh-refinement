@@ -5,29 +5,29 @@
 
 #include <utilities.hpp>
 #include <aliases.h>
-#include <SequentialEvaluator.hpp>
+#include <SystemEvaluator.hpp>
 
-#define ARGS 4
+#define ARGS 5
 
 
 int main(int argc, char **argv) {
 
     if (argc < ARGS + 1) {
-        std::cout << "Usage: " << std::string(argv[0]) << " accuracyExe optimalExe basicPovfile.pov output_report.txt" << std::endl;
+        std::cout << "Usage: " << std::string(argv[0]) << " steps accuracyExe optimalExe basicPovfile.pov output_report.txt" << std::endl;
         return 1;
     }
 
-    std::string accuracyExe = "./" + std::string(argv[1]);
-    std::string optimalCamExe = "./" + std::string(argv[2]);
-    std::string basicPovFile = argv[3];
-    std::string outputEvaluation = argv[4]; // "output/output_evaluation_emulate.txt";
+    int steps = atoi(argv[1]);
+    std::string accuracyExe = "./" + std::string(argv[2]);
+    std::string optimalCamExe = "./" + std::string(argv[3]);
+    std::string basicPovFile = argv[4];
+    std::string outputEvaluation = argv[5]; // "output/output_evaluation_emulate.txt";
 
     std::string intrinsicParams;
     std::ifstream cin("K.txt");
     cin >> intrinsicParams;
     cin.close();
 
-    std::string fakePosesFile = "fake_poses.txt";
     std::string groundTruthFilename = "pcl_gt.asc";
     std::string basicPosesFilename = "poses_cam.txt";
     std::string baseImageFolder = "images";
@@ -40,8 +40,8 @@ int main(int argc, char **argv) {
 
     std::string reconstructionExe = "./manifoldReconstructor ";
     
-    cameval::SequentialEvaluator eval(fakePosesFile, groundTruthFilename, basicPosesFilename, baseImageFolder, intrinsicParams, outputEvaluation, basicPovFile);
-    eval.multistepEvaluation(reconstructionExe, accuracyExe, optimalCamExe);
+    cameval::SystemEvaluator eval(groundTruthFilename, basicPosesFilename, baseImageFolder, intrinsicParams, outputEvaluation, basicPovFile);
+    eval.systemEvaluation(steps, reconstructionExe, accuracyExe, optimalCamExe);
 
     return 0;
 }

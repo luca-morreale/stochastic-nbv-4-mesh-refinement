@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     // databaseFilename, groundTruthFilename, basicPoseFilename, baseImageFolder, intrinsicParams, sshconfig
 
     cameval::EvaluatorDatabase eval(databaseFilename, groundTruthFilename, basicPosesFilename, baseImageFolder, intrinsicParams, outputFile, sshconfig);
-    eval.evaluate();
+    eval.evaluateDatabase();
 
     return 0;
 }

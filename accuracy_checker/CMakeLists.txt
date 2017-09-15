@@ -27,7 +27,7 @@ include_directories(${EIGEN3_INCLUDE_DIR}
                       ${GMPXX_INCLUDE_DIR}
                       ${OpenCV_INCLUDE_DIRS} 
                       ${CGAL_INCLUDE_DIRS}
-                      PCL_INCLUDE_DIRS}
+                      ${PCL_INCLUDE_DIRS}
                       )
 
 link_directories(${PCL_LIBRARY_DIRS})

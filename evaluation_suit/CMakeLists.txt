@@ -99,9 +99,9 @@ target_link_libraries(transform eval
                                 ${PCL_LIBRARIES}
                                 )
 
-add_executable(multistep main/multistep.cpp )
+add_executable(system main/system_evaluation.cpp )
 
-target_link_libraries(multistep eval
+target_link_libraries(system eval
                                 ${OpenCV_LIBS}  
                                 ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}

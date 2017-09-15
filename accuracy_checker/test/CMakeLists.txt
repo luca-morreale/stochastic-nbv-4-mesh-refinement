@@ -7,6 +7,7 @@ find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED)
 
 find_library(GMP_LIBRARY gmp /usr/lib)
 
@@ -24,8 +25,11 @@ endif()
 include_directories(  ${EIGEN3_INCLUDE_DIR} 
                       ${GMPXX_INCLUDE_DIR} 
                       ${OpenCV_INCLUDE_DIRS} 
-                      ${CGAL_INCLUDE_DIRS} 
+                      ${CGAL_INCLUDE_DIRS}
+                      ${PCL_INCLUDE_DIRS}
                       )
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 include_directories(include/)
 
@@ -38,21 +42,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 file(GLOB_RECURSE main_SOURCE )
 
-add_executable(pointColorer src/main_point.cpp src/OpenMvgParser.cpp)
-add_executable(residualColorer src/main_residual.cpp src/OpenMvgParser.cpp)
-add_executable(faceColorer src/main_face.cpp src/OpenMvgParser.cpp)
+add_executable(residualColorer src/main_residual.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(inverseColorer src/main_inverted.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(photoColorer src/main_photo.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(pointColorer src/main_point.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(ssdColorer src/main_ssd.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(nccColorer src/main_ncc.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
 
-target_link_libraries(pointColorer ${OpenCV_LIBS} 
-                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
-                                            ${GMPXX_LIBRARIES}
-                                            ${GMP_LIBRARIES}
-                                            ${LAPACK_LIBRARIES}
-                                            ${CGAL_LIBRARY}
-                                            ${Boost_LIBRARIES}
-                                            ${ASSIMP_LIBRARIES}
-                                            ${MANIFOLD_LIB} 
-                                            ${MESH_ACCURACY_LIB}
-                                            ${GMP_LIBRARY} )
+add_executable(residualReport src/fast_residual.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(inverseReport src/fast_inverted.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(photoReport src/fast_photo.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(pointReport src/fast_point.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(ssdReport src/fast_ssd.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(nccReport src/fast_ncc.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+
+
 target_link_libraries(residualColorer ${OpenCV_LIBS} 
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -63,9 +67,10 @@ target_link_libraries(residualColorer ${OpenCV_LIBS}
                                             ${ASSIMP_LIBRARIES}
                                             ${MANIFOLD_LIB} 
                                             ${MESH_ACCURACY_LIB}
-                                            ${GMP_LIBRARY} )
-
-target_link_libraries(faceColorer ${OpenCV_LIBS} 
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(inverseColorer ${OpenCV_LIBS} 
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
                                             ${GMP_LIBRARIES}
@@ -75,4 +80,137 @@ target_link_libraries(faceColorer ${OpenCV_LIBS}
                                             ${ASSIMP_LIBRARIES}
                                             ${MANIFOLD_LIB} 
                                             ${MESH_ACCURACY_LIB}
-                                            ${GMP_LIBRARY} )
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(photoColorer ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(pointColorer ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(ssdColorer ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(nccColorer ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+
+target_link_libraries(residualReport ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(inverseReport ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(photoReport ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(pointReport ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(ssdReport ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )
+target_link_libraries(nccReport ${OpenCV_LIBS} 
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${MANIFOLD_LIB} 
+                                            ${MESH_ACCURACY_LIB}
+                                            ${GMP_LIBRARY} 
+                                            ${PCL_LIBRARIES}
+                                            )

@@ -1,5 +1,5 @@
-#ifndef MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
-#define MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
+#ifndef MESH_ACCURACY_INVARIANT_ACCURACY_MODEL_H_
+#define MESH_ACCURACY_INVARIANT_ACCURACY_MODEL_H_
 
 #include <realtimeMR/SfMData.h>
 
@@ -10,12 +10,12 @@
 
 namespace meshac {
     
-    class PhotogrammetristAccuracyModel : public ResidualPointAccuracyModel {
+    class InvariantAccuracyModel : public ResidualPointAccuracyModel {
     public:
-        PhotogrammetristAccuracyModel(SfMData &data, DoublePair &pixelSize);
-        PhotogrammetristAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
+        InvariantAccuracyModel(SfMData &data, DoublePair &pixelSize);
+        InvariantAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         
-        ~PhotogrammetristAccuracyModel();
+        ~InvariantAccuracyModel();
         
         /*
          * Computes the matrix representing the uncertainty of the 3D point.
@@ -82,4 +82,4 @@ namespace meshac {
 } // namespace meshac
 
 
-#endif // MESH_ACCURACY_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
+#endif // MESH_ACCURACY_INVARIANT_ACCURACY_MODEL_H_

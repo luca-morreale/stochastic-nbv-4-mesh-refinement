@@ -4,16 +4,16 @@
 #include <realtimeMR/SfMData.h>
 
 #include <meshac/alias_definition.hpp>
-#include <meshac/PhotogrammetristAccuracyModel.hpp>
+#include <meshac/InvariantAccuracyModel.hpp>
 
 namespace meshac {
     
-    class ComputerVisionAccuracyModel : public PhotogrammetristAccuracyModel {
+    class ComputerVisionAccuracyModel : public InvariantAccuracyModel {
     public:
         ComputerVisionAccuracyModel(SfMData &data, DoublePair &pixelSize);
         ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize);
         
-        virtual ~ComputerVisionAccuracyModel() { };
+        ~ComputerVisionAccuracyModel();
 
     protected:
         /*
@@ -31,7 +31,7 @@ namespace meshac {
         virtual EigMatrix replicateVarianceForTuple(EigMatrix &singleVariance) override;
 
     private:
-        typedef PhotogrammetristAccuracyModel super;
+        typedef InvariantAccuracyModel super;
     };
 
 

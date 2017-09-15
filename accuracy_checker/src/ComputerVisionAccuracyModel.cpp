@@ -1,14 +1,16 @@
-
 #include <meshac/ComputerVisionAccuracyModel.hpp>
 
 namespace meshac {
 
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, DoublePair &pixelSize) 
-                                    : PhotogrammetristAccuracyModel(data, pixelSize) 
+                                    : InvariantAccuracyModel(data, pixelSize) 
     { /*    */ }
 
     ComputerVisionAccuracyModel::ComputerVisionAccuracyModel(SfMData &data, std::string &pathPrefix, DoublePair &pixelSize) 
-                                    : PhotogrammetristAccuracyModel(data, pathPrefix, pixelSize) 
+                                    : InvariantAccuracyModel(data, pathPrefix, pixelSize) 
+    { /*    */ }
+
+    ComputerVisionAccuracyModel::~ComputerVisionAccuracyModel() 
     { /*    */ }
 
     EigMatrix ComputerVisionAccuracyModel::getAccuracyForPointInImage(CamPointPair &cameraObsPair)

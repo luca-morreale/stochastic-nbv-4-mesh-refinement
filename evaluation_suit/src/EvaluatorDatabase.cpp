@@ -156,11 +156,13 @@ namespace cameval {
         return "";      // put back name in a map to redo
     }
 
-    Pose EvaluatorDatabase::getPose(std::string &imageName) // FIXME assume no need of mapping
+    Pose EvaluatorDatabase::getPose(std::string &imageName)
     {
-        // // return Mapper::slowMappingToPose(data);    // FIXME this might be empty, so check, if not here just parse.
-        // return this->mapper->mapFileToPose(data);
-        return Pose();
+        AnglePose parsedName = parseEntry(imageName);
+
+        GLMMat3 rotation = rotationMatrix(parsedName.second);
+
+        return Pose(parsedName.first, rotation);
     }
 
 } // namespace cameval

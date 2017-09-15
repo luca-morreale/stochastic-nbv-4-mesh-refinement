@@ -55,8 +55,8 @@ int main(int argc, char **argv) {
     accStart = now();
 #endif
 
-    colorer.generateColoredMesh(mesh_out);
-    // colorer.generateReport(report_out); 
+    // colorer.generateColoredMesh(mesh_out);
+    colorer.generateReport(report_out); 
 
     // delete model;
 

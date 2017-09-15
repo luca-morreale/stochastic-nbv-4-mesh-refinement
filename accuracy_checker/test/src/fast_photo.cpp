@@ -35,8 +35,9 @@
 
 // accuracy check imports
 #include <meshac/PointAccuracyModel.hpp>
-#include <meshac/InvariantAccuracyModel.hpp>
-#include <meshac/ComputerVisionAccuracyModel.hpp>
+#include <meshac/ResidualPointAccuracyModel.hpp>
+#include <meshac/BasicPhotogrammetristAccuracyModel.hpp>
+#include <meshac/InvertedResidualPointAccuracyModel.hpp>
 #include <meshac/Color.hpp>
 #include <meshac/DeterminantVarianceEstimator.hpp>
 #include <meshac/WorstEigenvalueVarianceEstimator.hpp>
@@ -47,6 +48,8 @@
 #include <ReportGenerator.hpp>
 
 #define OMP_THREADS 8
+#define TIMING
+#define COLOR
 
 SfMData sfm_data_;
 
@@ -98,8 +101,7 @@ int main(int argc, char **argv) {
     pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
     std::pair<double, double> pixelSize(0.0003527, 0.0003527);
     
-    auto accuracyModel = new meshac::InvariantAccuracyModel(sfm_data_, pathPrefix, pixelSize);
-    // auto accuracyModel = new meshac::ComputerVisionAccuracyModel(sfm_data_, pathPrefix, pixelSize);
+    auto accuracyModel = new meshac::BasicPhotogrammetristAccuracyModel(sfm_data_);
     auto estimator = new meshac::WorstEigenvalueVarianceEstimator(accuracyModel, sfm_data_.points_);
     // auto estimator = new meshac::DeterminantVarianceEstimator(accuracyModel, sfm_data_.points_);
     // auto estimator = new meshac::AverageVarianceEstimator(accuracyModel, sfm_data_.points_);
@@ -114,9 +116,23 @@ int main(int argc, char **argv) {
         }
     }
     
-
     ReportGenerator report(estimator, points);
+
+#ifdef TIMING
+    millis accStart = now();
+    millis accCount;    
+#endif
+
     report.generateReport(out_report);
+
+#ifdef TIMING
+    accCount = now() - accStart;
+    std::cout << std::endl << std::endl << "Total time to estimate accuracy: " << accCount.count() << "ms" << std::endl;
+#endif
+
+    std::cout << "DONE!" << std::endl;
+
+
     delete estimator;
 
     return 0;
@@ -287,3 +303,16 @@ void outlierFiltering(std::vector<bool>& inliers, const float outlierThreshold) 
     }
 
 }
+
+
+/**
+Building:
+8594ms (with load)
+
+Fortress:
+74266ms (with load)
+
+Car:
+30081ms (with load)
+
+*/

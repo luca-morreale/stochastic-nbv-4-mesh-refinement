@@ -3,7 +3,7 @@
 #include <OpenMvgParser.h>
 
 #include <meshac/FaceAccuracyModel.hpp>
-#include <meshac/NCCFaceAccuracyModel.hpp>
+#include <meshac/SSDNFaceAccuracyModel.hpp>
 #include <meshac/FacetColorer.hpp>
 
 #include <iostream>
@@ -39,11 +39,11 @@ int main(int argc, char **argv) {
 
     std::cout << log << std::endl;
 
-    meshac::FaceAccuracyModelPtr model = new meshac::NCCFaceAccuracyModel(meshFile, sfm_data_, pathPrefix);
+    meshac::FaceAccuracyModelPtr model = new meshac::SSDNFaceAccuracyModel(meshFile, sfm_data_, pathPrefix);
     
     std::cout << "done\n";
 
-    std::string colors = "res/config/ncc_facets_colors.json";
+    std::string colors = "res/config/ssd_facets_colors.json";
     std::string mesh_out = log + ".off";
     std::string report_out = log;
     meshac::FacetColorer colorer(colors, model);
@@ -55,8 +55,8 @@ int main(int argc, char **argv) {
     accStart = now();
 #endif
 
-    colorer.generateColoredMesh(mesh_out);
-    // colorer.generateReport(report_out); 
+    // colorer.generateColoredMesh(mesh_out);
+    colorer.generateReport(report_out); 
 
     // delete model;
 
@@ -70,9 +70,9 @@ int main(int argc, char **argv) {
 }
 
 /*****
-NCC:
+SSD:
     Building:
-        3109 ms
+        4172ms
     Fortress:
         Total time to estimate accuracy: 17971ms
 

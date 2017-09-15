@@ -35,8 +35,8 @@
 
 // accuracy check imports
 #include <meshac/PointAccuracyModel.hpp>
-#include <meshac/InvariantAccuracyModel.hpp>
-#include <meshac/ComputerVisionAccuracyModel.hpp>
+#include <meshac/ResidualPointAccuracyModel.hpp>
+#include <meshac/InvertedResidualPointAccuracyModel.hpp>
 #include <meshac/Color.hpp>
 #include <meshac/DeterminantVarianceEstimator.hpp>
 #include <meshac/WorstEigenvalueVarianceEstimator.hpp>
@@ -48,7 +48,6 @@
 #define OMP_THREADS 8
 #define TIMING
 #define COLOR
-
 
 SfMData sfm_data_;
 meshac::VertexColorerPtr meshColorer;
@@ -240,8 +239,9 @@ int main(int argc, char **argv) {
     }
 
     input_file = argv[1];
-    // second argv not used, but required for standard
+    // second param not used, required for standard
     out_report = argv[3];
+
     color_file = "res/config/colors.json";
     config_file = "res/config/default.json";
     std::cout << "Using default color configuration res/config/colors.json" << std::endl;
@@ -271,40 +271,37 @@ int main(int argc, char **argv) {
     std::string pathPrefix = input_file.substr(0, input_file.find_last_of("/"));
     pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
     std::pair<double, double> pixelSize(0.0003527, 0.0003527);
-    meshac::InvariantAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
-    // meshac::ComputerVisionAccuracyModel accuracyModel(sfm_data_, pathPrefix, pixelSize);
-    meshColorer = new meshac::VertexColorer(color_file, new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_));
+    // meshac::ResidualPointAccuracyModel accuracyModel(sfm_data_);
+    meshac::InvertedResidualPointAccuracyModel accuracyModel(sfm_data_);
+    auto estimator = new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_);
+    // meshColorer = new meshac::VertexColorer(color_file, estimator);
     // meshColorer = new meshac::VertexColorer(color_file, new meshac::DeterminantVarianceEstimator(&accuracyModel, sfm_data_.points_));
     // meshColorer = new meshac::VertexColorer(color_file, new meshac::AverageVarianceEstimator(&accuracyModel, sfm_data_.points_));
+
     std::ofstream report(out_report);
 
-    auto estimator = new meshac::WorstEigenvalueVarianceEstimator(&accuracyModel, sfm_data_.points_);
-
     m.setExpectedTotalIterationsNumber((maxIterations_) ? maxIterations_ + 1 : sfm_data_.numCameras_);
-
 
 #ifdef TIMING
     millis accCount, accStart;
     millis meshCount, meshStart;
     meshStart = now();
-#endif
-    
+#endif    
 
     std::cout << "computing inliers" << std::endl;
 
     std::vector<bool> inliers;
     outlierFiltering(inliers, confManif.outlierFilteringThreshold);
-
-
+    std::cout << "# points: " << std::count(inliers.begin(), inliers.end(), true) << std::endl;
 
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
         CameraType* camera = &sfm_data_.camerasList_[cameraIndex];
         camera->idCam = cameraIndex;
+//      std::cout << "camera " << camera->idCam << std::endl;
 
         incData.addCamera(camera);
     }
 
-    #pragma omp parallel for
     for (int pointIndex = 0; pointIndex < sfm_data_.points_.size(); pointIndex++) {
         if (inliers[pointIndex]) {
             PointType* point = new PointType();
@@ -312,31 +309,29 @@ int main(int argc, char **argv) {
             point->position = sfm_data_.points_[pointIndex];
 
 #ifdef COLOR
-    // #ifdef TIMING
-    //     accStart = now();    
-    // #endif
-            std::cout << pointIndex << "/" << sfm_data_.points_.size() << std::endl;
-            // this is already after the outlier filtering, thus no outlier are computed??
-            meshac::Color color = meshColorer->getColorForPoint(pointIndex);
-            std::cout << "color " << color.to_string() << std::endl;
-            point->r = color.r;
-            point->g = color.g;
-            point->b = color.b;
-            point->a = color.a;
-            // double acc = estimator->computeSingleVarianceForPoint(sfm_data_.points_[pointIndex]);
-            // report << sfm_data_.points_[pointIndex].x << " " << sfm_data_.points_[pointIndex].y << " ";
-            // report << sfm_data_.points_[pointIndex].z << " " << acc << std::endl;
+    #ifdef TIMING
+        accStart = now();    
+    #endif
+            // this is already after the outlier filtering, thus no outlier are computed??mkdi
+            // meshac::Color color = meshColorer->getColorForPoint(pointIndex);
+            // std::cout << "color " << color.to_string() << std::endl;
+            // point->r = color.r;
+            // point->g = color.g;
+            // point->b = color.b;
+            // point->a = color.a;
 
-    // #ifdef TIMING
-    //     accCount += now() - accStart;    
-    // #endif
+            double acc = estimator->computeSingleVarianceForPoint(sfm_data_.points_[pointIndex]);
+            report << sfm_data_.points_[pointIndex].x << " " << sfm_data_.points_[pointIndex].y << " ";
+            report << sfm_data_.points_[pointIndex].z << " " << acc << std::endl;
+
+    #ifdef TIMING
+        accCount += now() - accStart;    
+    #endif
 #endif
-            #pragma omp critical
             incData.addPoint(point);
         }
     }
-    // delete meshColorer;
-    // delete estimator;
+    //delete(meshColorer);
     report.close();
 
     for (int cameraIndex = 0; cameraIndex < sfm_data_.camerasList_.size(); cameraIndex++) {
@@ -411,20 +406,35 @@ int main(int argc, char **argv) {
     log.endEventAndPrint("main\t\t\t\t\t\t", true);
 
 #ifdef TIMING
-        meshCount += now() - meshStart; 
+        meshCount += now() - meshStart;
         std::cout << std::endl << std::endl << "Total time to estimate accuracy: " << accCount.count() << "ms" << std::endl;
         std::cout << std::endl << std::endl << "Total time to create mesh: " << meshCount.count() << "ms" << std::endl;
 #endif
 
-
     return 0;
 }
 
-/**
-Building:
-6656124ms
-6510077ms
+/***
+Inverted:
+-Building 
+    Total time to estimate accuracy: 5092ms
+    Total time to create mesh: 10507ms
+-Fortress
+    Total time to estimate accuracy: 9935ms
+    Total time to create mesh: 302581ms
+-Car
+    Total time to estimate accuracy: 6667ms
+    Total time to create mesh: 51333ms
 
+Residual:
+-Building
+    Total time to estimate accuracy: 5076ms
+    Total time to create mesh: 11134ms
+-Fortress
+    Total time to estimate accuracy: 10750ms
+    Total time to create mesh: 319682ms
+-Car
+    Total time to estimate accuracy: 6491ms
+    Total time to create mesh: 54912ms
 
-
-*/
+ ****/

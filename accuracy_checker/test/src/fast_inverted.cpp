@@ -35,13 +35,11 @@
 
 // accuracy check imports
 #include <meshac/PointAccuracyModel.hpp>
-#include <meshac/InvariantAccuracyModel.hpp>
-#include <meshac/ComputerVisionAccuracyModel.hpp>
-#include <meshac/Color.hpp>
+#include <meshac/InvertedResidualPointAccuracyModel.hpp>
 #include <meshac/DeterminantVarianceEstimator.hpp>
 #include <meshac/WorstEigenvalueVarianceEstimator.hpp>
 #include <meshac/AverageVarianceEstimator.hpp>
-#include <meshac/VertexColorer.hpp>
+
 
 #include <aliases.hpp>
 #include <ReportGenerator.hpp>
@@ -94,12 +92,7 @@ int main(int argc, char **argv) {
     op_openmvg.parse();
     sfm_data_ = op_openmvg.getSfmData();
 
-    std::string pathPrefix = input_file.substr(0, input_file.find_last_of("/"));
-    pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);
-    std::pair<double, double> pixelSize(0.0003527, 0.0003527);
-    
-    auto accuracyModel = new meshac::InvariantAccuracyModel(sfm_data_, pathPrefix, pixelSize);
-    // auto accuracyModel = new meshac::ComputerVisionAccuracyModel(sfm_data_, pathPrefix, pixelSize);
+    auto accuracyModel = new meshac::InvertedResidualPointAccuracyModel(sfm_data_);
     auto estimator = new meshac::WorstEigenvalueVarianceEstimator(accuracyModel, sfm_data_.points_);
     // auto estimator = new meshac::DeterminantVarianceEstimator(accuracyModel, sfm_data_.points_);
     // auto estimator = new meshac::AverageVarianceEstimator(accuracyModel, sfm_data_.points_);
@@ -114,7 +107,6 @@ int main(int argc, char **argv) {
         }
     }
     
-
     ReportGenerator report(estimator, points);
     report.generateReport(out_report);
     delete estimator;

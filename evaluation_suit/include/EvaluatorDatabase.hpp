@@ -16,17 +16,43 @@ namespace cameval {
                             std::string &baseImageFolder, std::string &intrinsicParams, std::string &outputFile, std::string &sshconfig);
         ~EvaluatorDatabase();
 
-    protected:
-        virtual std::string getImage(IntStringPair &entry);
-        virtual Pose getPose(std::string &data);
+        /***   Evaluate database ***/
+        void evaluateDatabase();
+        double evaluatePose(IntStringPair &entry, std::string &basicFolder);
 
-        MapperPtr getMapper();
+
+    protected:
+        virtual void setImagesPattern();
+
+        virtual int getIndexOfSmallestDistance(DoubleList &distances);
+
+
+        virtual std::string getImage(std::string &imageName);
+        virtual Pose getPose(std::string &imageName);
+
+
+        virtual void setPosesToEvaluate(std::string posesFilename);
+        virtual void remapListToQueue(StringList &dataList);
+        virtual void appendToPoses(IntStringPair &pair);
+    
+
+        virtual std::string initOpenMvg();
+        virtual void generateBasicPairFile();
+
 
     private:
+        std::string posesFilename;
+        StringList posesList;
+        QueueIntStringPair poses;
+
+        std::string filePrefix;
+        std::string fileExtention;
+
         SshHandlerPtr sshHandler;
-        MapperPtr mapper;
 
         const std::chrono::milliseconds thresholdWaitSsh;
+
+        typedef BasicEvaluator super;
     };
 
 } // namespace cameval

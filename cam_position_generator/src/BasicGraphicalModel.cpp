@@ -41,7 +41,8 @@ namespace opview {
         #pragma omp parallel for collapse(3)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-            LabelType val = logVonMisesWrapper(pos, centroid, normVector);
+            LabelType val = Formulation::logVonMisesWrapper(pos, centroid, normVector, vonMisesConfig);
+
             #pragma omp critical
             vonMises(x, y, z) = val;
         }
@@ -49,24 +50,14 @@ namespace opview {
 
     void BasicGraphicalModel::fillConstraintFunction(GMExplicitFunction &constraints, GLMVec3 &centroid)
     {
-        for (GLMVec3 cam : cams) {
-            #pragma omp parallel for collapse(3)
-            coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
-                size_t coords[] = {(size_t)x, (size_t)y, (size_t)z};
-                GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-                addValueToConstraintFunction(constraints, pos, cam, centroid, coords);
-            }
-        }
-    }
+        #pragma omp parallel for collapse(3)
+        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
+            size_t coords[] = {(size_t)x, (size_t)y, (size_t)z};
+            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+            LabelType val = Formulation::computeBDConstraint(pos, centroid, cams);
 
-    void BasicGraphicalModel::addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[])
-    {
-        double B = glm::distance(point, cam);
-        double D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
-
-        if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {
             #pragma omp critical
-            function(coords) = -10.0;
+            constraints(coords) = val;
         }
     }
 
@@ -86,11 +77,6 @@ namespace opview {
     VonMisesConfigurationPtr BasicGraphicalModel::vonMisesConfiguration()
     {
         return &vonMisesConfig;
-    }
-
-    double BasicGraphicalModel::logVonMisesWrapper(GLMVec3 &pos, GLMVec3 &centroid, GLMVec3 &normVector)
-    {
-        return -logVonMises(pos, centroid, normVector, vonMisesConfig);
     }
 
     void BasicGraphicalModel::setVonMisesConfiguration(VonMisesConfiguration vonMisesConfig)

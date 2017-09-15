@@ -20,6 +20,8 @@ namespace opview {
     protected:
         virtual double constraintValue(GLMVec3 &point, GLMVec3 &centroid);
 
+        typedef OrientationHierarchicalGraphicalModel super;
+
 
     };
 

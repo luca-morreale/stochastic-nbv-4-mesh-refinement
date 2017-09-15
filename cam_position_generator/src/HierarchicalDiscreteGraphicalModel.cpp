@@ -54,10 +54,7 @@ namespace opview {
         convertedOpt[0] = realOptima.x;
         convertedOpt[1] = realOptima.y;
         convertedOpt[2] = realOptima.z;
-
-        // std::cout << "Optimal solution: " << convertedOpt[0] << ' ' << convertedOpt[1] << ' ' << convertedOpt[2] << std::endl;
-        // std::cout << std::endl << std::endl;
-
+        
         return convertedOpt;
     }
 
@@ -77,20 +74,6 @@ namespace opview {
 
         GLMVec3 nextScale = nextSize / (float)numLabels(); // 3/4 of the current scale
         GLMVec3 halfNextSize = nextSize / 2.0f;
-
-        // offset = optima - halfNextSize + x * scale - y * scale
-        // float tmpOffsetX = currentOptimal[0] - halfNextSize + getXScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale 
-        //                                                     - getYScalingFactor(currentOptimal[0], halfNextSize, nextScale) * nextScale;
-        // float tmpOffsetY = currentOptimal[1] - halfNextSize + getXScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale 
-        //                                                     - getYScalingFactor(currentOptimal[1], halfNextSize, nextScale) * nextScale;
-        // float tmpOffsetZ = currentOptimal[2] - halfNextSize + getXScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale 
-        //                                                     - getYScalingFactor(currentOptimal[2], halfNextSize, nextScale) * nextScale;
-
-        // offsetX = [tmpOffsetX](){ return tmpOffsetX; };
-        // offsetY = [tmpOffsetY](){ return tmpOffsetY; };
-        // // std::max to force z to stay in the positive space
-        // offsetZ = [tmpOffsetZ](){ return tmpOffsetZ; };
-
                                                             
         float tmpOffsetX = currentOptimal[0] - halfNextSize.x;
         float tmpOffsetY = currentOptimal[1] - halfNextSize.y;
@@ -99,11 +82,6 @@ namespace opview {
         offsetX = [tmpOffsetX, this](){ return std::max(tmpOffsetX, lowerBounds().x); };
         offsetY = [tmpOffsetY, this](){ return std::max(tmpOffsetY, lowerBounds().y); };
         offsetZ = [tmpOffsetZ, this](){ return std::max(tmpOffsetZ, lowerBounds().z); };
-
-        // offsetX = [currentOptimal, halfNextSize](){ return currentOptimal[0] - halfNextSize; };
-        // offsetY = [currentOptimal, halfNextSize](){ return currentOptimal[1] - halfNextSize; };
-        // // std::max to force z to stay in the positive space
-        // offsetZ = [currentOptimal, halfNextSize](){ return currentOptimal[2] - halfNextSize; };
 
         scale = [nextScale](){ return nextScale; };
     }

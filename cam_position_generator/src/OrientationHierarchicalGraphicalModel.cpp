@@ -112,9 +112,6 @@ namespace opview {
         convertedOpt[3] = orientOptima.x;
         convertedOpt[4] = orientOptima.y;
 
-        // std::cout << "Optimal solution: " << convertedOpt[0] << ", " << convertedOpt[1] << ", " << convertedOpt[2] << ", ";
-        // std::cout << convertedOpt[3] << ", " << convertedOpt[4] << std::endl << std::endl;
-
         log->append(convertedOpt, algorithm->value());
 
         return convertedOpt;
@@ -139,9 +136,9 @@ namespace opview {
         #pragma omp parallel sections 
         {
             #pragma omp section
-            fillExplicitOrientationFunction(visibility, boost::bind(&OrientationHierarchicalGraphicalModel::visibilityDistribution, this, _1, _2, _3), centroid, normVector);
+            fillExplicitOrientationFunction(visibility, boost::bind(&Formulation::visibilityDistribution, _1, _2, _3, _4, _5), centroid, normVector);
             #pragma omp section
-            fillExplicitOrientationFunction(projectionWeight, boost::bind(&OrientationHierarchicalGraphicalModel::imagePlaneWeight, this, _1, _2, _3), centroid, normVector);
+            fillExplicitOrientationFunction(projectionWeight, boost::bind(&Formulation::imageProjectionDistribution, _1, _2, _3, _4, _5), centroid, normVector);
             #pragma omp section
             fillObjectiveFunction(vonMises, centroid, normVector);
             #pragma omp section
@@ -167,10 +164,12 @@ namespace opview {
 
     void OrientationHierarchicalGraphicalModel::fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector)
     {
+        VonMisesConfigurationPtr config = vonMisesConfiguration();
+
         #pragma omp parallel for collapse(3)
         coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
             GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
-            LabelType val = logVonMisesWrapper(pos, centroid, normVector);
+            LabelType val = Formulation::logVonMisesWrapper(pos, centroid, normVector, *config);
             orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
                 #pragma omp critical
                 vonMises(x, y, z, ptc, yaw) = val;
@@ -178,26 +177,21 @@ namespace opview {
         }
     }
 
-    // quite heavy as function, parallelism?
-    void OrientationHierarchicalGraphicalModel::addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[])
+    void OrientationHierarchicalGraphicalModel::fillConstraintFunction(GMExplicitFunction &constraints, GLMVec3 &centroid)
     {
-        double B, D;
-        #pragma omp parallel sections 
-        {
-            #pragma omp section
-            B = glm::distance(point, cam);
-            #pragma omp section
-            D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
-        }
+        GLMVec3List cams = getCams();
 
-        LabelType val = 0.0;
-        if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {
-            val = -10.0;
-        }
+        #pragma omp parallel for collapse(3)
+        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
+            size_t coords[] = {(size_t)x, (size_t)y, (size_t)z};
+            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+            LabelType val = Formulation::computeBDConstraint(pos, centroid, cams);
 
-        orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
-            #pragma omp critical
-            function(coords[0], coords[1], coords[2], ptc, yaw) = val;
+            // #pragma omp parallel for collapse(2) // is it thread safe?
+            orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+                #pragma omp critical
+                constraints(coords[0], coords[1], coords[2], ptc, yaw) = val;
+            }
         }
     }
 
@@ -208,42 +202,10 @@ namespace opview {
 
         EigVector5 pose = getPose(scaledPos, scaledOri);
         
-        LabelType val = evals(pose, centroid, normVector);
+        LabelType val = evals(pose, centroid, normVector, camConfig, tree);
         
         #pragma omp critical
         modelFunctions(coord[0], coord[1], coord[2], coord[3], coord[4]) = val;
-    }
-
-    LabelType OrientationHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        if (isPointInsideImage(pose, centroid, camConfig) && isMeaningfulPose(pose, centroid, tree, camConfig)) {
-            return 0.0;
-        }
-        return -10.0;
-    }
-
-    LabelType OrientationHierarchicalGraphicalModel::estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {        
-        GLMVec3 point = GLMVec3(pose[0], pose[1], pose[2]);
-        return logVonMisesWrapper(point, centroid, normalVector);     // log gives a negative number but we want a positive one to maximize
-    }
-
-    LabelType OrientationHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        if (!isPointInsideImage(pose, centroid, camConfig)) {  // fast rejection, fast to compute.
-            return -10.0;
-        }
-        if (!isMeaningfulPose(pose, centroid, tree, camConfig)) {
-            return -10.0;
-        }
-
-        GLMVec2 point = getProjectedPoint(pose, centroid, camConfig);
-        double centerx = (double)camConfig.size_x / 2.0;
-        double centery = (double)camConfig.size_y / 2.0;
-        double sigma_x = (double)camConfig.size_x / 3.0;
-        double sigma_y = (double)camConfig.size_y / 3.0;
-
-        return logBivariateGaussian(point.x, point.y, centerx, centery, sigma_x, sigma_y);  // positive because gaussian have highest value in the center
     }
 
     void OrientationHierarchicalGraphicalModel::reduceScale(LabelList &currentOptimal, int depth)
@@ -309,6 +271,16 @@ namespace opview {
     {
         delete this->log;
         this->log  = log;
+    }
+
+    CameraGeneralConfigPtr OrientationHierarchicalGraphicalModel::getCamConfig()
+    {
+        return &camConfig;
+    }
+
+    TreePtr OrientationHierarchicalGraphicalModel::getTree()
+    {
+        return this->tree;
     }
 
 } // namespace opview

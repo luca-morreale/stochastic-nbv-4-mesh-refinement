@@ -5,8 +5,17 @@ namespace opview {
     AutonomousMultipointHierarchicalGraphicalModel::AutonomousMultipointHierarchicalGraphicalModel(SolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config,
                                                                 CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
                                                                 size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
-                    : MultipointHierarchicalGraphicalModel(solver, config, camConfig, meshConfig, maxPoints, maxUncertainty, goalAngle, dispersion)
+                    : MultipointHierarchicalGraphicalModel(solver, config, camConfig, meshConfig.filename, meshConfig.cams, goalAngle, dispersion)
     {
+        this->points = meshConfig.points;
+        this->normals = meshConfig.normals;
+        this->uncertainty = meshConfig.uncertainty;
+
+        this->maxPoints = maxPoints;
+
+        // precomputeSumUncertainty();
+        setupWorstPoints();
+        
         getLogger()->resetFile("auto_multi.json");
     }
     
@@ -15,43 +24,98 @@ namespace opview {
 
     LabelList AutonomousMultipointHierarchicalGraphicalModel::estimateBestCameraPosition()
     {
-        int pointIndex = getWorstPointsList()[0].second;
-        GLMVec3 centroid = getPoints()[pointIndex];
-        GLMVec3 normal = getNormals()[pointIndex];
-        return this->estimateBestCameraPosition(centroid, normal);
+        GLMVec3ListPair worstCentroids = getWorstPointsList();
+        return this->estimateBestCameraPosition(worstCentroids.first, worstCentroids.second);
     }
 
-    LabelType AutonomousMultipointHierarchicalGraphicalModel::logVonMisesWrapper(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normal)
+    // double AutonomousMultipointHierarchicalGraphicalModel::computeWeightForPoint(int pointIndex)
+    // {
+    //     return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
+    // }
+
+    void AutonomousMultipointHierarchicalGraphicalModel::updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double uncertainty)
     {
-        EigVector5 pose;
-        pose << point.x, point.y, point.z, 0.0, 0.0;
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMultipointHierarchicalGraphicalModel::origianlLogVonMisesWrapper, this, _1, _2, _3));
+        this->points[pointIndex] = point;
+        updateMeshInfo(pointIndex, normal, uncertainty);
     }
 
-    LabelType AutonomousMultipointHierarchicalGraphicalModel::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    void AutonomousMultipointHierarchicalGraphicalModel::updateMeshInfo(int pointIndex, GLMVec3 normal, double uncertainty)
     {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMultipointHierarchicalGraphicalModel::origianlVisibilityDistribution, this, _1, _2, _3));
+        this->normals[pointIndex] = normal;
+        updateMeshInfo(pointIndex, uncertainty);
     }
 
-    LabelType AutonomousMultipointHierarchicalGraphicalModel::imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
+    void AutonomousMultipointHierarchicalGraphicalModel::updateMeshInfo(int pointIndex, double uncertainty)
     {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMultipointHierarchicalGraphicalModel::origianlImagePlaneWeight, this, _1, _2, _3));
+        SUM_UNCERTAINTY += this->uncertainty[pointIndex] - uncertainty;
+        this->uncertainty[pointIndex] = uncertainty;
+        updateWorstPoints(pointIndex, uncertainty);
     }
 
-    LabelType AutonomousMultipointHierarchicalGraphicalModel::origianlLogVonMisesWrapper(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal)
+    void AutonomousMultipointHierarchicalGraphicalModel::addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty)
     {
-        GLMVec3 pose(point[0], point[1], point[2]);
-        return OrientationHierarchicalGraphicalModel::logVonMisesWrapper(pose, centroid, normal);
+        this->points.push_back(point);
+        this->normals.push_back(normal);
+        this->uncertainty.push_back(uncertainty);
+        SUM_UNCERTAINTY += uncertainty;
     }
 
-    LabelType AutonomousMultipointHierarchicalGraphicalModel::origianlVisibilityDistribution(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal)
+    // void AutonomousMultipointHierarchicalGraphicalModel::precomputeSumUncertainty()
+    // {
+    //     SUM_UNCERTAINTY = 0.0;
+    //     for (int p = 0; p < this->uncertainty.size(); p++) {
+    //         SUM_UNCERTAINTY += uncertainty[p];
+    //     }
+    // }
+
+    void AutonomousMultipointHierarchicalGraphicalModel::setupWorstPoints()
     {
-        return OrientationHierarchicalGraphicalModel::visibilityDistribution(point, centroid, normal);
+        worstPointsList.clear();
+        for (int p = 0; p < points.size(); p++) {
+            worstPointsList.push_back(std::make_pair(uncertainty[p], p));
+        }
+        retainWorst();
     }
 
-    LabelType AutonomousMultipointHierarchicalGraphicalModel::origianlImagePlaneWeight(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal)
+    void AutonomousMultipointHierarchicalGraphicalModel::updateWorstPoints(int index, long double uncertainty)
     {
-        return OrientationHierarchicalGraphicalModel::imagePlaneWeight(point, centroid, normal);
+        worstPointsList.push_back(std::make_pair(uncertainty, index));
+        retainWorst();
     }
+
+    void AutonomousMultipointHierarchicalGraphicalModel::retainWorst()
+    {
+        std::sort(worstPointsList.rbegin(), worstPointsList.rend());
+        int eraseFrom = std::min(this->maxPoints, worstPointsList.size());
+        worstPointsList.erase(worstPointsList.begin() + eraseFrom, worstPointsList.end());
+    }
+
+    GLMVec3ListPair AutonomousMultipointHierarchicalGraphicalModel::getWorstPointsList()
+    {
+        GLMVec3List worstPoints;
+        GLMVec3List worstNormals;
+
+        for (int i = 0; i < worstPointsList.size(); i++) {
+            int index = worstPointsList[i].second;
+            worstPoints.push_back(this->points[index]);
+            worstNormals.push_back(this->normals[index]);
+        }
+
+        return std::make_pair(worstPoints, worstNormals);
+    }
+
+    GLMVec3List AutonomousMultipointHierarchicalGraphicalModel::getPoints()
+    {
+        return points;
+    }
+    GLMVec3List AutonomousMultipointHierarchicalGraphicalModel::getNormals()
+    {
+        return normals;
+    }
+    DoubleList AutonomousMultipointHierarchicalGraphicalModel::getUncertainties()
+    {
+        return uncertainty;
+    }
+    
 
 } // namespace opview

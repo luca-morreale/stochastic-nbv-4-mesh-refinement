@@ -9,6 +9,9 @@
 
 namespace opview {
 
+    #define BD_AERIAL 0.2f
+    #define BD_TERRESTRIAL_PROSPECTIVE 0.25f
+    #define BD_TERRESTRIAL_ARCHITECTURAL 0.33f 
     #define BD_TERRESTRIAL_ARCHITECTURAL 0.33f 
     
     class Formulation {
@@ -25,11 +28,15 @@ namespace opview {
                                     TreePtr tree, GLMVec3List &cams);
 
         static double logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normVector, VonMisesConfiguration &vonMisesConfig);
+        static double logVonMisesWrapper(GLMVec3 &pose, GLMVec3 &centroid, GLMVec3 &normVector, VonMisesConfiguration &vonMisesConfig);
         static double visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector, CameraGeneralConfiguration &camConfig, TreePtr tree);
         static double imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector, CameraGeneralConfiguration &camConfig, TreePtr tree);
         static double computeBDConstraint(EigVector5 &pose, GLMVec3 &centroid, GLMVec3List &cams);
+        static double computeBDConstraint(GLMVec3 &pose, GLMVec3 &centroid, GLMVec3List &cams);
         static double computeBDConstraint(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &cam);
+        static double computeBDConstraint(GLMVec3 &pose, GLMVec3 &centroid, GLMVec3 &cam);
 
+        // TODO add setters and getters for members
 
     private:
         VonMisesConfiguration vonMisesConfig;
@@ -39,6 +46,8 @@ namespace opview {
 
     
     };
+
+    typedef Formulation* FormulationPtr;
 
 
 } // namespace opview

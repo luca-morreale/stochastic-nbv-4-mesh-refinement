@@ -62,6 +62,11 @@ namespace opview {
         return -logVonMises(point, centroid, normVector, vonMisesConfig);
     }
 
+    double Formulation::logVonMisesWrapper(GLMVec3 &pose, GLMVec3 &centroid, GLMVec3 &normVector, VonMisesConfiguration &vonMisesConfig)
+    {
+        return -logVonMises(pose, centroid, normVector, vonMisesConfig);
+    }
+
     double Formulation::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector, CameraGeneralConfiguration &camConfig, TreePtr tree)
     {
         if (isPointInsideImage(pose, centroid, camConfig) && isMeaningfulPose(pose, centroid, tree, camConfig)){
@@ -90,6 +95,18 @@ namespace opview {
 
     double Formulation::computeBDConstraint(EigVector5 &pose, GLMVec3 &centroid, GLMVec3List &cams)
     {
+        GLMVec3 point(pose[0], pose[1], pose[2]);
+        double constraint = 0.0;
+
+        #pragma omp parallel for reduction(+:constraint)
+        for (int c = 0; c < cams.size(); c++) {
+            constraint += computeBDConstraint(point, centroid, cams[c]);
+        }
+        return constraint;
+    }
+
+    double Formulation::computeBDConstraint(GLMVec3 &pose, GLMVec3 &centroid, GLMVec3List &cams)
+    {
         double constraint = 0.0;
 
         #pragma omp parallel for reduction(+:constraint)
@@ -110,6 +127,23 @@ namespace opview {
             B = glm::distance(point, cam);
             #pragma omp section
             D = std::min(glm::distance(cam, centroid), glm::distance(point, centroid));
+        }
+        
+        if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {
+            return -10.0;
+        }
+        return 1.0;
+    }
+
+    double Formulation::computeBDConstraint(GLMVec3 &pose, GLMVec3 &centroid, GLMVec3 &cam)
+    {
+        double D, B;
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            B = glm::distance(pose, cam);
+            #pragma omp section
+            D = std::min(glm::distance(cam, centroid), glm::distance(pose, centroid));
         }
         
         if (B / D < BD_TERRESTRIAL_ARCHITECTURAL) {

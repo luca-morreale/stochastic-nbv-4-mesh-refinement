@@ -34,18 +34,18 @@ namespace opview {
         std::string getMeshFilename();
         void setMeshFilename(std::string filename);
 
+        CameraGeneralConfigPtr getCamConfig();
+        TreePtr getTree();
+
 
     protected:
+    
         virtual LabelList extractResults(AdderInferencePtr algorithm) override;
 
         virtual void fillModel(GraphicalModelAdder &model, GLMVec3 &centroid, GLMVec3 &normVector) override;
 
         virtual void fillExplicitOrientationFunction(GMExplicitFunction &modelFunction, BoostObjFunction evals, GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void computeDistributionForFunction(GMExplicitFunction &modelFunction, BoostObjFunction &evals, size_t coord[], GLMVec3 &centroid, GLMVec3 &normVector);
-
-        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-        virtual LabelType estimateObjDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-        virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
 
         virtual void reduceScale(LabelList &currentOptimal, int depth);
         virtual void resetPosition() override;
@@ -59,8 +59,8 @@ namespace opview {
 
         virtual VarIndexList getOptimaForDiscreteSpace(LabelList &currentOptima) override;
         virtual void fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector) override;
-        virtual void addValueToConstraintFunction(GMExplicitFunction &function, GLMVec3 &point, GLMVec3 &cam, GLMVec3 &centroid, size_t coords[]) override;
-
+        virtual void fillConstraintFunction(GMExplicitFunction &constraints, GLMVec3 &centroid) override;
+    
         ReportWriterPtr getLogger();
         void setLogger(ReportWriterPtr log);
 
@@ -68,6 +68,7 @@ namespace opview {
         SizeTList coordinateShape;
 
     private:
+
         float deltaAngle;
         
         std::string meshFilename;

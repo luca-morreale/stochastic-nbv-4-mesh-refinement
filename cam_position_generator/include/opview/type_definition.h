@@ -3,69 +3,12 @@
 
 #include <map>
 
-#include <opengm/functions/sparsemarray.hxx>
-#include <opengm/graphicalmodel/graphicalmodel.hxx>
-#include <opengm/graphicalmodel/space/simplediscretespace.hxx>
-#include <opengm/inference/alphabetaswap.hxx>
-#include <opengm/inference/alphaexpansion.hxx>
-#include <opengm/inference/auxiliary/minstcutkolmogorov.hxx>
-#include <opengm/inference/graphcut.hxx>
-#include <opengm/inference/icm.hxx>
-#include <opengm/inference/lazyflipper.hxx>
-#include <opengm/inference/loc.hxx>
-#include <opengm/operations/adder.hxx>
-#include <opengm/operations/multiplier.hxx>
-
 #include <opview/alias_definition.h>
 #include <opview/DimensionDisagreementLists.hpp>
 
 namespace opview {
     
-    typedef double LabelType;
-    typedef size_t VariableIndexType;
-
-    typedef std::vector<LabelType> LabelList;
-    typedef std::vector<size_t> VarIndexList;
-
-
-    typedef opengm::DiscreteSpace<> SimpleSpace;
-    typedef opengm::ExplicitFunction<LabelType, size_t, VariableIndexType> GMExplicitFunction;
-    typedef opengm::SparseFunction<LabelType, VariableIndexType, LabelType> GMSparseFunction;
-    typedef OPENGM_TYPELIST_2(GMExplicitFunction, GMSparseFunction) FunctionTypeList;
-    typedef opengm::GraphicalModel<LabelType, opengm::Adder, FunctionTypeList, SimpleSpace> GraphicalModelAdder;
-    typedef opengm::GraphicalModel<LabelType, opengm::Multiplier, FunctionTypeList, SimpleSpace> GraphicalModelMultiplier;
-
-    typedef std::vector<GMSparseFunction> GMSparseFunctionList;
-    typedef std::vector<GMExplicitFunction> GMExplicitFunctionList;
     
-    typedef GraphicalModelAdder::FunctionIdentifier GMAdderFID;
-    typedef GraphicalModelMultiplier::FunctionIdentifier GMMultFID;
-
-    typedef SimpleSpace * SimpleSpacePtr;
-    typedef GraphicalModelAdder * GraphicalModelAdderPtr;
-    typedef GraphicalModelMultiplier * GraphicalModelMultiplierPtr;
-
-    typedef opengm::Inference<GraphicalModelAdder, opengm::Maximizer> AdderInference;
-    typedef opengm::Inference<GraphicalModelMultiplier, opengm::Maximizer> MultiplierInference;
-    typedef opengm::external::MinSTCutKolmogorov<size_t, double> MinStCutType;
-    typedef opengm::GraphCut<GraphicalModelAdder, opengm::Maximizer, MinStCutType> MinGraphCut;
-    typedef opengm::AlphaExpansion<GraphicalModelAdder, MinGraphCut> MinAlphaExpansion;
-    typedef opengm::AlphaBetaSwap<GraphicalModelAdder, MinGraphCut> MinAlphaBetaSwap;
-    typedef opengm::ICM<GraphicalModelAdder, opengm::Maximizer> ICM;
-    typedef opengm::LazyFlipper<GraphicalModelAdder, opengm::Maximizer> LazyFlipper;
-    typedef LazyFlipper::Parameter LazyFlipperParameter;
-    typedef opengm::LOC<GraphicalModelAdder, opengm::Maximizer> LOC;
-    typedef opengm::Bruteforce<GraphicalModelAdder, opengm::Maximizer> Bruteforce;
-
-
-    typedef AdderInference* AdderInferencePtr;
-    typedef MultiplierInference* MultiplierInferencePtr;
-    typedef MinAlphaExpansion* MinAlphaExpansionPtr;
-    typedef MinAlphaBetaSwap* MinAlphaBetaSwapPtr;
-    typedef ICM* ICMPtr;
-    typedef LazyFlipper* LazyFlipperPtr;
-    typedef LOC* LOCPtr;
-    typedef Bruteforce* BruteforcePtr;
 
     typedef struct VonMisesConfiguration {
         double goalAngle;
@@ -207,6 +150,8 @@ namespace opview {
     } MeshConfiguration;
     typedef MeshConfiguration* MeshConfigurationPtr;
 
+
+    typedef boost::function<double(EigVector5 &, GLMVec3 &, GLMVec3 &, CameraGeneralConfiguration &, TreePtr)> BoostObjFunction;
 }
 
 #endif // CAM_POSITION_GENERATOR_TYPE_DEFINITION_H

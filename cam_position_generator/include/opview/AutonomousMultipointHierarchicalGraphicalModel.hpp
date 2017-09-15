@@ -15,18 +15,34 @@ namespace opview {
 
         virtual LabelList estimateBestCameraPosition();
 
+        virtual void updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double accuracy);
+        virtual void updateMeshInfo(int pointIndex, GLMVec3 normal, double accuracy);
+        virtual void updateMeshInfo(int pointIndex, double accuracy);
+        virtual void addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty);
+
     protected:
         // bring up overloaded function from parent
         using MultipointHierarchicalGraphicalModel::estimateBestCameraPosition;
 
-        virtual LabelType logVonMisesWrapper(GLMVec3 &point, GLMVec3 &centroid, GLMVec3 &normal) override;
-        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
-        virtual LabelType imagePlaneWeight(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector) override;
+        virtual void setupWorstPoints();
+        virtual void updateWorstPoints(int index, long double uncertainty);
+        GLMVec3ListPair getWorstPointsList();
+
+        virtual GLMVec3List getPoints();
+        virtual GLMVec3List getNormals();
+        virtual DoubleList getUncertainties();
 
     private:
-        LabelType origianlLogVonMisesWrapper(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal);
-        LabelType origianlVisibilityDistribution(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal);
-        LabelType origianlImagePlaneWeight(EigVector5 &point, GLMVec3 &centroid, GLMVec3 &normal);
+        GLMVec3List points;
+        GLMVec3List normals;
+        DoubleList uncertainty;
+
+        DoubleIntList worstPointsList;
+        long double SUM_UNCERTAINTY;
+        size_t maxPoints;
+
+        void precomputeSumUncertainty();
+        void retainWorst();
 
         typedef MultipointHierarchicalGraphicalModel super;
     };

@@ -28,6 +28,19 @@
 #include <vector>
 #include <queue>
 
+#include <opengm/functions/sparsemarray.hxx>
+#include <opengm/graphicalmodel/graphicalmodel.hxx>
+#include <opengm/graphicalmodel/space/simplediscretespace.hxx>
+#include <opengm/inference/alphabetaswap.hxx>
+#include <opengm/inference/alphaexpansion.hxx>
+#include <opengm/inference/auxiliary/minstcutkolmogorov.hxx>
+#include <opengm/inference/graphcut.hxx>
+#include <opengm/inference/icm.hxx>
+#include <opengm/inference/lazyflipper.hxx>
+#include <opengm/inference/loc.hxx>
+#include <opengm/operations/adder.hxx>
+#include <opengm/operations/multiplier.hxx>
+
 #include <realtimeMR/types_reconstructor.hpp>
 
 namespace opview {
@@ -57,6 +70,8 @@ namespace opview {
     typedef glm::vec4 GLMVec4;
     typedef std::vector<GLMVec3> GLMVec3List;
 
+    typedef std::pair<GLMVec3List, GLMVec3List> GLMVec3ListPair;
+
     /* Shortcuts for Eigen types */
     typedef Eigen::Matrix<float, 5, 1> EigVector5;
     typedef std::vector<EigVector5> EigVector5List;
@@ -73,14 +88,6 @@ namespace opview {
 
     typedef std::vector<gsl_vector *> GSLVectorList;
     typedef std::vector<gsl_matrix *> GSLMatrixList;
-
-    typedef boost::function<double(EigVector5 &, GLMVec3 &, GLMVec3 &)> BoostObjFunction;
-    typedef std::vector<BoostObjFunction> BoostObjFunctionList;
-
-    typedef std::function<float()> LambdaFloat;
-    typedef std::function<GLMVec3()> LambdaGLMVec3;
-    typedef std::function<GLMVec3List(OrderedPose&)> LambdaGLMPointsList;
-    typedef std::function<EigVector5List(OrderedPose&)> LambdaEigPointsList;
 
 
     /* Shortcuts for CGAL types */
@@ -108,6 +115,58 @@ namespace opview {
     typedef Tree::Primitive_id Primitive_id;
 
     typedef Tree* TreePtr;
+
+    typedef std::function<float()> LambdaFloat;
+    typedef std::function<GLMVec3()> LambdaGLMVec3;
+    typedef std::function<GLMVec3List(OrderedPose&)> LambdaGLMPointsList;
+    typedef std::function<EigVector5List(OrderedPose&)> LambdaEigPointsList;
+    
+
+    /* OpenGM aliases */
+    typedef double LabelType;
+    typedef size_t VariableIndexType;
+
+    typedef std::vector<LabelType> LabelList;
+    typedef std::vector<size_t> VarIndexList;
+
+
+    typedef opengm::DiscreteSpace<> SimpleSpace;
+    typedef opengm::ExplicitFunction<LabelType, size_t, VariableIndexType> GMExplicitFunction;
+    typedef opengm::SparseFunction<LabelType, VariableIndexType, LabelType> GMSparseFunction;
+    typedef OPENGM_TYPELIST_2(GMExplicitFunction, GMSparseFunction) FunctionTypeList;
+    typedef opengm::GraphicalModel<LabelType, opengm::Adder, FunctionTypeList, SimpleSpace> GraphicalModelAdder;
+    typedef opengm::GraphicalModel<LabelType, opengm::Multiplier, FunctionTypeList, SimpleSpace> GraphicalModelMultiplier;
+
+    typedef std::vector<GMSparseFunction> GMSparseFunctionList;
+    typedef std::vector<GMExplicitFunction> GMExplicitFunctionList;
+    
+    typedef GraphicalModelAdder::FunctionIdentifier GMAdderFID;
+    typedef GraphicalModelMultiplier::FunctionIdentifier GMMultFID;
+
+    typedef SimpleSpace * SimpleSpacePtr;
+    typedef GraphicalModelAdder * GraphicalModelAdderPtr;
+    typedef GraphicalModelMultiplier * GraphicalModelMultiplierPtr;
+
+    typedef opengm::Inference<GraphicalModelAdder, opengm::Maximizer> AdderInference;
+    typedef opengm::Inference<GraphicalModelMultiplier, opengm::Maximizer> MultiplierInference;
+    typedef opengm::external::MinSTCutKolmogorov<size_t, double> MinStCutType;
+    typedef opengm::GraphCut<GraphicalModelAdder, opengm::Maximizer, MinStCutType> MinGraphCut;
+    typedef opengm::AlphaExpansion<GraphicalModelAdder, MinGraphCut> MinAlphaExpansion;
+    typedef opengm::AlphaBetaSwap<GraphicalModelAdder, MinGraphCut> MinAlphaBetaSwap;
+    typedef opengm::ICM<GraphicalModelAdder, opengm::Maximizer> ICM;
+    typedef opengm::LazyFlipper<GraphicalModelAdder, opengm::Maximizer> LazyFlipper;
+    typedef LazyFlipper::Parameter LazyFlipperParameter;
+    typedef opengm::LOC<GraphicalModelAdder, opengm::Maximizer> LOC;
+    typedef opengm::Bruteforce<GraphicalModelAdder, opengm::Maximizer> Bruteforce;
+
+    typedef AdderInference* AdderInferencePtr;
+    typedef MultiplierInference* MultiplierInferencePtr;
+    typedef MinAlphaExpansion* MinAlphaExpansionPtr;
+    typedef MinAlphaBetaSwap* MinAlphaBetaSwapPtr;
+    typedef ICM* ICMPtr;
+    typedef LazyFlipper* LazyFlipperPtr;
+    typedef LOC* LOCPtr;
+    typedef Bruteforce* BruteforcePtr;
 }
 
 #endif // CAM_POSITION_GENERATOR_ALIAS_DEFINITION_H

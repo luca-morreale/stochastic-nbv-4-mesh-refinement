@@ -1,4 +1,3 @@
-
 #include <meshac/ThresholdColor.hpp>
 
 namespace meshac {

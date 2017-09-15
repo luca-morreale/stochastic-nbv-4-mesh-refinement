@@ -1,4 +1,3 @@
-
 #include <meshac/Color.hpp>
 
 namespace meshac {

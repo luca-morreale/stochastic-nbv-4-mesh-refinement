@@ -1,4 +1,3 @@
-
 #include <meshac/utilities.hpp>
 
 namespace meshac {

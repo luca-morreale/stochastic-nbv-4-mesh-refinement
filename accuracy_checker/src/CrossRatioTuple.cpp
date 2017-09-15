@@ -1,4 +1,3 @@
-
 #include <meshac/CrossRatioTuple.hpp>
 
 

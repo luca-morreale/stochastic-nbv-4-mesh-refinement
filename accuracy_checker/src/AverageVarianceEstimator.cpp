@@ -1,4 +1,3 @@
-
 #include <meshac/AverageVarianceEstimator.hpp>
 
 namespace meshac {

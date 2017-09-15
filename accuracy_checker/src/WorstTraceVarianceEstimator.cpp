@@ -1,4 +1,3 @@
-
 #include <meshac/WorstTraceVarianceEstimator.hpp>
 
 namespace meshac {

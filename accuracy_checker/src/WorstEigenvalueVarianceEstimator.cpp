@@ -1,4 +1,3 @@
-
 #include <meshac/WorstEigenvalueVarianceEstimator.hpp>
 
 namespace meshac {

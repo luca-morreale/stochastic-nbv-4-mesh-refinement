@@ -1,4 +1,3 @@
-
 #include <meshac/DeterminantVarianceEstimator.hpp>
 
 namespace meshac {

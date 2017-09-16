@@ -1,65 +1,57 @@
 #ifndef CAM_POSITION_GENERATOR_AUTONOMOUS_PSO_CAM_GENERATOR_H
 #define CAM_POSITION_GENERATOR_AUTONOMOUS_PSO_CAM_GENERATOR_H
 
-#include <opview/type_definition.h>
-#include <opview/alias_definition.h>
+#include <opview/AutonomousStochasticMethod.hpp>
 #include <opview/PSOCamGenerator.hpp>
-#include <opview/utilities.hpp>
 
 namespace opview {
 
-    class AutonomousPSOCamGenerator : public PSOCamGenerator {
+    class AutonomousPSOCamGenerator : public AutonomousStochasticMethod {
     public:
         AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                            MCConfiguration &config, size_t maxPoints, long double maxUncertainty, 
+                                            StochasticConfiguration &config, size_t maxPointsa, 
                                             double goalAngle=45, double dispersion=5);
 
         ~AutonomousPSOCamGenerator();
-
-        virtual void updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double accuracy);
-        virtual void updateMeshInfo(int pointIndex, GLMVec3 normal, double accuracy);
-        virtual void updateMeshInfo(int pointIndex, double accuracy);
-        virtual void addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty);
-
+        
         virtual DoubleList estimateBestCameraPosition();
         
     protected:
-        virtual GLMVec3List getPoints();
-        virtual GLMVec3List getNormals();
-        virtual DoubleList getUncertainties();
 
-        virtual void setupWorstPoints();
-        virtual void updateWorstPoints(int index, long double uncertainty);
-        virtual void retainWorst();
-        virtual DoubleIntList getWorstPointsList();
+        virtual void evaluateSwarm(GLMVec3List &centroids, GLMVec3List &normVectors);
+        virtual void updateSwarmValues(DoubleList &values);
 
-        virtual double estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function);
-        virtual double computeWeightForPoint(int pointIndex);
+        virtual void updateParticles(GLMVec3List &centroids, GLMVec3List &normVectors);
+        virtual void updatePositionParticle(int p);
+        virtual void updateVelocityParticle(int p);
+        void fixSpaceVelocity(int p);
+        void fixSpacePosition(int p);
 
-        virtual LabelType logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal);
-        virtual LabelType visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-        virtual LabelType imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
+        void convertSamplesToParticles(OrderedPose &samples);
 
-        using MCMCCamGenerator::estimateBestCameraPosition;
+        virtual EigVector5List extractSwarmPositions();
 
+        
+
+        double uniform();
+        EigVector5 randVector();
+
+        void logParticles(int round);
+
+        ParticleList particles;
+        EigVector5 inertiaWeight;
+        EigVector5 c1;
+        EigVector5 c2;
+    
     private:
-        GLMVec3List points;
-        GLMVec3List normals;
-        DoubleList uncertainty;
-        DoubleIntList worstPointsList;
-        long double SUM_UNCERTAINTY;
+        const gsl_rng *randGen;
 
-        size_t maxPoints;
-        long double maxUncertainty;
+        int bestParticleIndex;
 
-        void precomputeSumUncertainty();
+        const long SEED = time(NULL);
 
-        LabelType parentCatllToLogVonMises(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal);
-        LabelType parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-        LabelType parentCallToPlaneDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector);
-
-        typedef MCMCCamGenerator super;
-
+        void deleteParticles();
+        
     };
 
 } // namespace opview

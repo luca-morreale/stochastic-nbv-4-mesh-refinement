@@ -3,164 +3,194 @@
 
 namespace opview {
 
-    AutonomousPSOCamGenerator::AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                            MCConfiguration &config, size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
-                                                            : PSOCamGenerator(camConfig, meshConfig.filename, meshConfig.cams, config, goalAngle, dispersion)
+    AutonomousPSOCamGenerator::AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, 
+                        MeshConfiguration &meshConfig, StochasticConfiguration &config, size_t maxPoints, double goalAngle, double dispersion)
+                        : AutonomousStochasticMethod(camConfig, meshConfig, config, maxPoints, goalAngle, dispersion)
     {
-        this->points = meshConfig.points;
-        this->normals = meshConfig.normals;
-        this->uncertainty = meshConfig.uncertainty;
-        this->maxPoints = maxPoints;
-        this->maxUncertainty = maxUncertainty;
+        getLogger()->resetFile("auto_pso.json");
 
-        precomputeSumUncertainty();
-        setupWorstPoints();
+        this->randGen = gsl_rng_alloc(gsl_rng_mt19937);
+        gsl_rng_set(randGen, SEED);
 
-        this->getLogger()->resetFile("auto_pso.json");
+        inertiaWeight << 0.9, 0.9, 0.9, 0.9, 0.9;   // above 1.4 looks globally, below 0.8 look locally
+        c1 << 0.70, 0.70, 0.60, 0.70, 0.70;
+        c2 << 0.70, 0.70, 0.60, 0.70, 0.70;
     }
     
     AutonomousPSOCamGenerator::~AutonomousPSOCamGenerator()
-    { /*    */ }
-
-    void AutonomousPSOCamGenerator::precomputeSumUncertainty()
     {
-        SUM_UNCERTAINTY = 0.0;
-        for (int p = 0; p < uncertainty.size(); p++) {
-            SUM_UNCERTAINTY += uncertainty[p];
-        }
+        deleteParticles();
+        particles.clear();
+        gsl_rng_free(randGen);
     }
 
-    double AutonomousPSOCamGenerator::computeWeightForPoint(int pointIndex)
-    {
-        return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
-    }
+    // void AutonomousPSOCamGenerator::precomputeSumUncertainty()
+    // {
+    //     SUM_UNCERTAINTY = 0.0;
+    //     for (int p = 0; p < uncertainty.size(); p++) {
+    //         SUM_UNCERTAINTY += uncertainty[p];
+    //     }
+    // }
+
+    // double AutonomousPSOCamGenerator::computeWeightForPoint(int pointIndex)
+    // {
+    //     return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
+    // }
 
     DoubleList AutonomousPSOCamGenerator::estimateBestCameraPosition()
     {
-        size_t worstPointIndex = worstPointsList[0].second;
+        GLMVec3ListPair worst = getWorstPointsList();
+        GLMVec3List centroids = worst.first;
+        GLMVec3List normals = worst.second;
+        OrderedPose currentOptima = uniformSamplingStep(centroids, normals, 0);
 
-        GLMVec3 worstCentroid = this->points[worstPointIndex];
-        GLMVec3 normal = this->normals[worstPointIndex];
-        // std::cout << worstCentroid.x << " " << worstCentroid.y << " " << worstCentroid.z << std::endl;
-        return this->estimateBestCameraPosition(worstCentroid, normal);
-    }
-
-    LabelType AutonomousPSOCamGenerator::logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
-    {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousPSOCamGenerator::parentCatllToLogVonMises, this, _1, _2, _3));
-    }
-
-    LabelType AutonomousPSOCamGenerator::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousPSOCamGenerator::parentCallToVisibilityEstimation, this, _1, _2, _3));
-    }
-
-    LabelType AutonomousPSOCamGenerator::imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousPSOCamGenerator::parentCallToPlaneDistribution, this, _1, _2, _3));
-    }
-
-    double AutonomousPSOCamGenerator::estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function)
-    {
-        LabelType val = 0.0;
-        #pragma omp parallel for
-        for (int i = 0; i < worstPointsList.size(); i++) {
-            DoubleIntPair el = worstPointsList[i];
-            double normalizedWeight = computeWeightForPoint(el.second);     // more the uncertainty is high more important it is seen
-            LabelType local_val = function(pose, points[el.second], normals[el.second]);
-            
-            #pragma omp critical
-            val += local_val * normalizedWeight;
-        }
+        convertSamplesToParticles(currentOptima);
         
-        return val;
-    }
-
-    LabelType AutonomousPSOCamGenerator::parentCatllToLogVonMises(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
-    {
-        return super::logVonMisesWrapper(pose, centroid, normal);
-    }
-
-    LabelType AutonomousPSOCamGenerator::parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return super::visibilityDistribution(pose, centroid, normalVector);
-    }
-
-    LabelType AutonomousPSOCamGenerator::parentCallToPlaneDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return super::imageProjectionDistribution(pose, centroid, normalVector);
-    }
-
-    void AutonomousPSOCamGenerator::updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double uncertainty)
-    {
-        this->points[pointIndex] = point;
-        updateMeshInfo(pointIndex, normal, uncertainty);
-        updateWorstPoints(pointIndex, uncertainty);
-    }
-
-    void AutonomousPSOCamGenerator::updateMeshInfo(int pointIndex, GLMVec3 normal, double uncertainty)
-    {
-        this->normals[pointIndex] = normal;
-        updateMeshInfo(pointIndex, uncertainty);
-        updateWorstPoints(pointIndex, uncertainty);
-    }
-
-    void AutonomousPSOCamGenerator::updateMeshInfo(int pointIndex, double uncertainty)
-    {
-        SUM_UNCERTAINTY += uncertainty - this->uncertainty[pointIndex];
-        this->uncertainty[pointIndex] = uncertainty;
-        updateWorstPoints(pointIndex, uncertainty);
-    }
-
-    void AutonomousPSOCamGenerator::addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty)
-    {
-        this->points.push_back(point);
-        this->normals.push_back(normal);
-        this->uncertainty.push_back(uncertainty);
-        SUM_UNCERTAINTY += uncertainty;
-        updateWorstPoints(this->points.size()-1, uncertainty);
-    }
-
-    void AutonomousPSOCamGenerator::setupWorstPoints()
-    {
-        worstPointsList.clear();
-        for (int p = 0; p < points.size(); p++) {
-            worstPointsList.push_back(std::make_pair(uncertainty[p], p));
+        for (int d = 0; d < getResamplingSteps(); d++) {
+            updateParticles(centroids, normals);
+            logParticles(d);
+            c1 = c1 * 0.75f;
+            c2 = c2 * 0.75f;
         }
-        retainWorst();
+
+        EigVector5 best = this->particles[bestParticleIndex]->position;
+        return convertVectorToList(best);
     }
 
-    void AutonomousPSOCamGenerator::updateWorstPoints(int index, long double uncertainty)
+    void AutonomousPSOCamGenerator::convertSamplesToParticles(OrderedPose &samples)
     {
-        worstPointsList.push_back(std::make_pair(uncertainty, index));
-        retainWorst();
+        this->bestParticleIndex = 0;    // due to priority queue the best particle is always the first one
+
+        while(!samples.empty()){
+            auto sample = samples.top();
+            particles.push_back(new Particle(sample.second, sample.first));
+            samples.pop();
+        }
     }
 
-    void AutonomousPSOCamGenerator::retainWorst()
+    void AutonomousPSOCamGenerator::updateParticles(GLMVec3List &centroids, GLMVec3List &normVectors)
     {
-        std::sort(worstPointsList.rbegin(), worstPointsList.rend());
-        int eraseFrom = std::min(this->maxPoints, worstPointsList.size());
-        worstPointsList.erase(worstPointsList.begin() + eraseFrom, worstPointsList.end());
+        #pragma omp parallel for
+        for (int p = 0; p < particles.size(); p++) {
+            updateVelocityParticle(p);
+            updatePositionParticle(p);
+        }
+        evaluateSwarm(centroids, normVectors);
     }
 
-    DoubleIntList AutonomousPSOCamGenerator::getWorstPointsList()
+    void AutonomousPSOCamGenerator::updateVelocityParticle(int p)
     {
-        return worstPointsList;
-    }  
+        EigVector5 randBest = this->randVector();
+        EigVector5 randPrevious = this->randVector();
 
-    GLMVec3List AutonomousPSOCamGenerator::getPoints()
-    {
-        return points;
+        EigVector5 diffPreviousBest = particles[p]->bestPosition - particles[p]->position;
+        EigVector5 diffGlobalBest = particles[bestParticleIndex]->position - particles[p]->position;
+
+        particles[p]->velocity = inertiaWeight.cwiseProduct(particles[p]->velocity);
+        particles[p]->velocity += randPrevious.cwiseProduct(c1.cwiseProduct(diffPreviousBest));
+        particles[p]->velocity += randBest.cwiseProduct(c2.cwiseProduct(diffGlobalBest));      // should be 0 if p is the best particle
+
+        this->fixSpaceVelocity(p);
     }
 
-    GLMVec3List AutonomousPSOCamGenerator::getNormals()
+    void AutonomousPSOCamGenerator::fixSpaceVelocity(int p)
     {
-        return normals;
+        for (int i = 0; i < 3; i++) {
+            if (fabs(particles[p]->velocity[i]) > (upperBounds()[i] - lowerBounds()[i])) {
+                particles[p]->velocity[i] = this->uniform() * (upperBounds()[i] - lowerBounds()[i]);
+            }
+        }
     }
-    
-    DoubleList AutonomousPSOCamGenerator::getUncertainties()
+
+    void AutonomousPSOCamGenerator::updatePositionParticle(int p)
     {
-        return uncertainty;
+        particles[p]->updatePosition();
+        this->fixSpacePosition(p);
+    }
+
+    void AutonomousPSOCamGenerator::fixSpacePosition(int p)
+    {
+        for (int i = 0; i < 3; i++) {
+            if (particles[p]->position[i] < lowerBounds()[i]) {
+                particles[p]->position[i] = lowerBounds()[i];
+                particles[p]->velocity[i] = 0.0;
+            } else if (particles[p]->position[i] > upperBounds()[i]) {
+                particles[p]->position[i] = upperBounds()[i];
+                particles[p]->velocity[i] = 0.0;
+            }
+        }
+    }
+
+    EigVector5List AutonomousPSOCamGenerator::extractSwarmPositions()
+    {
+        EigVector5List orientedPoints(particles.size());
+
+        #pragma omp parallel for
+        for (int p = 0; p < particles.size(); p++) {
+            orientedPoints[p] = particles[p]->position;
+        }
+        return orientedPoints;
+    }
+
+    void AutonomousPSOCamGenerator::evaluateSwarm(GLMVec3List &centroids, GLMVec3List &normVectors)
+    {
+        EigVector5List orientedPoints = extractSwarmPositions();
+        
+        DoubleList values(orientedPoints.size());
+
+        #pragma omp parallel for
+        for (int i = 0; i < orientedPoints.size(); i++) {
+            values[i] = getFormulation()->computeEnergy(orientedPoints[i], centroids, normVectors);
+        }
+
+        updateSwarmValues(values);        
+    }
+
+    void AutonomousPSOCamGenerator::updateSwarmValues(DoubleList &values)
+    {
+        #pragma omp parallel for
+        for (int p = 0; p < particles.size(); p++) {
+            particles[p]->updateValue(values[p]);
+
+            #pragma omp critical
+            if (values[p] > particles[bestParticleIndex]->value) {
+                this->bestParticleIndex = p;
+            }
+        }
+
+        for (int p = 0; p < particles.size(); p++) {
+            if (values[p] > particles[bestParticleIndex]->value) {
+                this->bestParticleIndex = p;
+            }
+        }
+    }
+
+    double AutonomousPSOCamGenerator::uniform()
+    {
+        return gsl_rng_uniform(randGen);
+    }
+
+    EigVector5 AutonomousPSOCamGenerator::randVector()
+    {
+        EigVector5 random;
+        random << uniform(), uniform(), uniform(), uniform(), uniform();
+        return random;
+    }
+
+    void AutonomousPSOCamGenerator::logParticles(int round)
+    {
+        ((SwarmReportWriterPtr) getLogger())->append(particles, round);
+
+        EigVector5 tmp = this->particles[bestParticleIndex]->position;
+        tmp[3] = rad2deg(tmp[3]);
+        tmp[4] = rad2deg(tmp[4]);
+    }
+
+    void AutonomousPSOCamGenerator::deleteParticles()
+    {
+        for (int i = 0; i < particles.size(); i++) {
+            delete particles[i];
+        }
     }
 
 } // namespace opview

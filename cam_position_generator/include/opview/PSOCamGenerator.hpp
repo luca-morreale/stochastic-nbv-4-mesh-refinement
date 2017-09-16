@@ -1,30 +1,23 @@
 #ifndef CAM_POSITION_GENERATOR_PSO_CAM_GENERATOR_H
 #define CAM_POSITION_GENERATOR_PSO_CAM_GENERATOR_H
 
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_linalg.h>
 
-#include <opview/alias_definition.h>
+#include <opview/StochasticMethod.hpp>
 #include <opview/SwarmReportWriter.hpp>
-#include <opview/MCMCCamGenerator.hpp>
 #include <opview/Particle.hpp>
 
 namespace opview {
 
-    class PSOCamGenerator : public MCMCCamGenerator {
+    class PSOCamGenerator : public StochasticMethod {
     public:
         PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            MCConfiguration &config, double goalAngle=45, double dispersion=5);
+                                            StochasticConfiguration &stoConfig, double goalAngle=45, double dispersion=5);
 
         ~PSOCamGenerator();
 
         virtual DoubleList estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector);
 
     protected:
-
         virtual void convertSamplesToParticles(OrderedPose &currentOptima);
         virtual void updateParticles(GLMVec3 &centroid, GLMVec3 &normVector);
         virtual void updateVelocityParticle(int p);
@@ -37,24 +30,23 @@ namespace opview {
 
         virtual double uniform();
         virtual EigVector5 randVector();
-
+        
+    
         ParticleList particles;
         EigVector5 inertiaWeight;
         EigVector5 c1;
         EigVector5 c2;
-        
+
     private:
         const gsl_rng *randGen;
 
         int bestParticleIndex;
-
 
         const long SEED = time(NULL);
 
         void logParticles(int round);
         void deleteParticles();
         EigVector5List extractSwarmPositions();
-
 
     };
 

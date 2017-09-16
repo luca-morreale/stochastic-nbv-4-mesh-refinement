@@ -2,13 +2,14 @@
 
 namespace opview {
 
-    PSOCamGenerator::PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            MCConfiguration &config, double goalAngle, double dispersion)
-                                            : MCMCCamGenerator(camConfig, meshFile, cams, config, goalAngle, dispersion)
+    PSOCamGenerator::PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, 
+                    GLMVec3List &cams, StochasticConfiguration &stoConfig, double goalAngle, double dispersion)
+                    : StochasticMethod(camConfig, meshFile, cams, stoConfig, goalAngle, dispersion)
     {
-        randGen = gsl_rng_alloc(gsl_rng_mt19937);
+        this->setLogger(new SwarmReportWriter("pso_log.txt"));
+
+        this->randGen = gsl_rng_alloc(gsl_rng_mt19937);
         gsl_rng_set(randGen, SEED);
-        setLogger(new SwarmReportWriter("pso_log.txt"));
 
         inertiaWeight << 0.9, 0.9, 0.9, 0.9, 0.9;   // above 1.4 looks globally, below 0.8 look locally
         c1 << 0.70, 0.70, 0.60, 0.70, 0.70;
@@ -24,10 +25,10 @@ namespace opview {
 
     DoubleList PSOCamGenerator::estimateBestCameraPosition(GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        OrderedPose currentOptima = uniformMCStep(centroid, normVector, 0);
+        OrderedPose currentOptima = uniformSamplingStep(centroid, normVector, 0);
         convertSamplesToParticles(currentOptima);
         
-        for (int d = 0; d < getMCConfiguration().resamplingNum; d++) {
+        for (int d = 0; d < getResamplingParticles(); d++) {
             updateParticles(centroid, normVector);
             logParticles(d);
             c1 = c1 * 0.75f;
@@ -115,27 +116,15 @@ namespace opview {
 
     void PSOCamGenerator::evaluateSwarm(GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        DoubleList visibility(particles.size(), 0.0);
-        DoubleList vonMises(particles.size(), 0.0);
-        DoubleList projection(particles.size(), 0.0);
-        DoubleList constraints(particles.size(), 0.0);
-        DoubleList values(particles.size(), 0.0);
-
         EigVector5List orientedPoints = extractSwarmPositions();
         
-        #pragma omp parallel sections 
-        {
-            #pragma omp section
-            computeObjectiveFunction(vonMises, orientedPoints, centroid, normVector);
-            #pragma omp section
-            computeVisibilityFunction(visibility, orientedPoints, centroid, normVector);
-            #pragma omp section
-            computeProjectionFunction(projection, orientedPoints, centroid, normVector);
-            #pragma omp section
-            computeConstraintFunction(constraints, orientedPoints, centroid, normVector);
+        DoubleList values(orientedPoints.size());
+
+        #pragma omp parallel for
+        for (int i = 0; i < orientedPoints.size(); i++) {
+            values[i] = getFormulation()->computeEnergy(orientedPoints[i], centroid, normVector);
         }
 
-        sumUpAll(values, visibility, vonMises, projection, constraints);
         updateSwarmValues(values);        
     }
 
@@ -172,7 +161,7 @@ namespace opview {
 
     void PSOCamGenerator::logParticles(int round)
     {
-        ((SwarmReportWriterPtr)this->getLogger())->append(particles, round);
+        ((SwarmReportWriterPtr) getLogger())->append(particles, round);
 
         EigVector5 tmp = this->particles[bestParticleIndex]->position;
         tmp[3] = rad2deg(tmp[3]);

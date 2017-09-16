@@ -89,20 +89,20 @@ namespace opview {
     typedef ParticlesInformation* ParticlesInformationPtr;
 
     
-    typedef struct MCConfiguration {
+    typedef struct StochasticConfiguration {
         ParticlesInformation particles;
         size_t resamplingNum;
         SpaceBounds bounds;
 
     public:
-        MCConfiguration(size_t resamplingNum, ParticlesInformation &particles, SpaceBounds &bounds) 
+        StochasticConfiguration(size_t resamplingNum, ParticlesInformation &particles, SpaceBounds &bounds) 
                         : resamplingNum(resamplingNum), particles(particles), bounds(bounds)
         { /*    */ }
-        MCConfiguration() : resamplingNum(10)
+        StochasticConfiguration() : resamplingNum(10)
         { /*    */ }
         
-    } MCConfiguration;
-    typedef MCConfiguration* MCConfigurationPtr;
+    } StochasticConfiguration;
+    typedef StochasticConfiguration* StochasticConfigurationPtr;
 
 
 

@@ -2,162 +2,73 @@
 
 namespace opview {
 
-    AutonomousMCMCCamGenerator::AutonomousMCMCCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                            MCConfiguration &mcConfig, size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
-                                                            : MCMCCamGenerator(camConfig, meshConfig.filename, meshConfig.cams, mcConfig, goalAngle, dispersion)
+    AutonomousMCMCCamGenerator::AutonomousMCMCCamGenerator(CameraGeneralConfiguration &camConfig, 
+                            MeshConfiguration &meshConfig, StochasticConfiguration &stoConfig, size_t maxPoints, 
+                            double goalAngle, double dispersion)
+                            : AutonomousStochasticMethod(camConfig, meshConfig, stoConfig, maxPoints, goalAngle, dispersion)
     {
-        this->points = meshConfig.points;
-        this->normals = meshConfig.normals;
-        this->uncertainty = meshConfig.uncertainty;
-        this->maxPoints = maxPoints;
-        this->maxUncertainty = maxUncertainty;
-
-        precomputeSumUncertainty();
-        setupWorstPoints();
-
+        this->sampler = new GaussianSampleGenerator();
         this->getLogger()->resetFile("auto_mcmc.json");
     }
     
     AutonomousMCMCCamGenerator::~AutonomousMCMCCamGenerator()
-    { /*    */ }
-
-    void AutonomousMCMCCamGenerator::precomputeSumUncertainty()
     {
-        SUM_UNCERTAINTY = 0.0;
-        for (int p = 0; p < uncertainty.size(); p++) {
-            SUM_UNCERTAINTY += uncertainty[p];
-        }
-    }
-
-    double AutonomousMCMCCamGenerator::computeWeightForPoint(int pointIndex)
-    {
-        return (double)uncertainty[pointIndex] / (double)SUM_UNCERTAINTY;
+        delete sampler;
     }
 
     DoubleList AutonomousMCMCCamGenerator::estimateBestCameraPosition()
     {
-        size_t worstPointIndex = worstPointsList[0].second;
-        GLMVec3 worstCentroid = this->points[worstPointIndex];
-        GLMVec3 normal = this->normals[worstPointIndex];
-        return this->estimateBestCameraPosition(worstCentroid, normal);
-    }
+        GLMVec3ListPair worst = getWorstPointsList();
+        GLMVec3List centroids = worst.first;
+        GLMVec3List normals = worst.second;
 
-    LabelType AutonomousMCMCCamGenerator::logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
-    {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMCMCCamGenerator::parentCatllToLogVonMises, this, _1, _2, _3));
-    }
+        OrderedPose currentOptima = uniformSamplingStep(centroids, normals, 0);
 
-    LabelType AutonomousMCMCCamGenerator::visibilityDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMCMCCamGenerator::parentCallToVisibilityEstimation, this, _1, _2, _3));
-    }
-
-    LabelType AutonomousMCMCCamGenerator::imageProjectionDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return estimateForWorstPointSeen(pose, boost::bind(&AutonomousMCMCCamGenerator::parentCallToPlaneDistribution, this, _1, _2, _3));
-    }
-
-    double AutonomousMCMCCamGenerator::estimateForWorstPointSeen(EigVector5 &pose, BoostObjFunction function)
-    {
-        LabelType val = 0.0;
-        #pragma omp parallel for
-        for (int i = 0; i < worstPointsList.size(); i++) {
-            DoubleIntPair el = worstPointsList[i];
-            double normalizedWeight = computeWeightForPoint(el.second);     // more the uncertainty is high more important it is seen
-            LabelType local_val = function(pose, points[el.second], normals[el.second]);
-            
-            #pragma omp critical
-            val += local_val * normalizedWeight;
+        for (int d = 0; d < getResamplingSteps(); d++) {
+            currentOptima = resamplingStep(centroids, normals, currentOptima, d+1);
         }
-        
-        return val;
+
+        ValuePose best = currentOptima.top();
+        return convertVectorToList(best.second);
     }
 
-    LabelType AutonomousMCMCCamGenerator::parentCatllToLogVonMises(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normal)
+    OrderedPose AutonomousMCMCCamGenerator::resamplingStep(GLMVec3List &centroids, GLMVec3List &normals, OrderedPose &currentOptima, int round)
     {
-        return super::logVonMisesWrapper(pose, centroid, normal);
+        EigVector5List orientedPoints = resamplingPointsGetter(currentOptima);
+        OrderedPose poses = computeEnergyForPoses(centroids, normals, orientedPoints);
+
+        return this->extractBestResults(poses, round);
     }
 
-    LabelType AutonomousMCMCCamGenerator::parentCallToVisibilityEstimation(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return super::visibilityDistribution(pose, centroid, normalVector);
-    }
-
-    LabelType AutonomousMCMCCamGenerator::parentCallToPlaneDistribution(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normalVector)
-    {
-        return super::imageProjectionDistribution(pose, centroid, normalVector);
-    }
-
-    void AutonomousMCMCCamGenerator::updateMeshInfo(int pointIndex, GLMVec3 point, GLMVec3 normal, double uncertainty)
-    {
-        this->points[pointIndex] = point;
-        updateMeshInfo(pointIndex, normal, uncertainty);
-        updateWorstPoints(pointIndex, uncertainty);
-    }
-
-    void AutonomousMCMCCamGenerator::updateMeshInfo(int pointIndex, GLMVec3 normal, double uncertainty)
-    {
-        this->normals[pointIndex] = normal;
-        updateMeshInfo(pointIndex, uncertainty);
-        updateWorstPoints(pointIndex, uncertainty);
-    }
-
-    void AutonomousMCMCCamGenerator::updateMeshInfo(int pointIndex, double uncertainty)
-    {
-        SUM_UNCERTAINTY += uncertainty - this->uncertainty[pointIndex];
-        this->uncertainty[pointIndex] = uncertainty;
-        updateWorstPoints(pointIndex, uncertainty);
-    }
-
-    void AutonomousMCMCCamGenerator::addPoint(GLMVec3 point, GLMVec3 normal, double uncertainty)
-    {
-        this->points.push_back(point);
-        this->normals.push_back(normal);
-        this->uncertainty.push_back(uncertainty);
-        SUM_UNCERTAINTY += uncertainty;
-        updateWorstPoints(this->points.size()-1, uncertainty);
-    }
-
-    void AutonomousMCMCCamGenerator::setupWorstPoints()
-    {
-        worstPointsList.clear();
-        for (int p = 0; p < points.size(); p++) {
-            worstPointsList.push_back(std::make_pair(uncertainty[p], p));
-        }
-        retainWorst();
-    }
-
-    void AutonomousMCMCCamGenerator::updateWorstPoints(int index, long double uncertainty)
-    {
-        worstPointsList.push_back(std::make_pair(uncertainty, index));
-        retainWorst();
-    }
-
-    void AutonomousMCMCCamGenerator::retainWorst()
-    {
-        std::sort(worstPointsList.rbegin(), worstPointsList.rend());
-        int eraseFrom = std::min(this->maxPoints, worstPointsList.size());
-        worstPointsList.erase(worstPointsList.begin() + eraseFrom, worstPointsList.end());
-    }
-
-    DoubleIntList AutonomousMCMCCamGenerator::getWorstPointsList()
-    {
-        return worstPointsList;
-    }  
-
-    GLMVec3List AutonomousMCMCCamGenerator::getPoints()
-    {
-        return points;
-    }
-
-    GLMVec3List AutonomousMCMCCamGenerator::getNormals()
-    {
-        return normals;
+    EigVector5List AutonomousMCMCCamGenerator::resamplingPointsGetter(OrderedPose &currentOptima)
+    {  
+        EigVector5List centers = getCentersFromOptima(currentOptima); 
+        DoubleList weights = getWeightsFromOptima(currentOptima); 
+        EigVector5List newCenters = sampler->getWeightedSamples(centers, weights, getResamplingParticles() * (1.0 - getOffspring()));
+        return concatLists(newCenters, centers);
     }
     
-    DoubleList AutonomousMCMCCamGenerator::getUncertainties()
+    EigVector5List AutonomousMCMCCamGenerator::getCentersFromOptima(OrderedPose currentOptima) // not by refernce otherwise changes also the original
     {
-        return uncertainty;
+        EigVector5List poses;
+        while(!currentOptima.empty()) {
+            poses.push_back(currentOptima.top().second);
+            currentOptima.pop();
+        }
+
+        return poses;
+    }
+
+    DoubleList AutonomousMCMCCamGenerator::getWeightsFromOptima(OrderedPose currentOptima) // not by refernce otherwise changes also the original
+    {
+        DoubleList weights;
+        while(!currentOptima.empty()) {
+            double solution = currentOptima.top().first;
+            weights.push_back(solution);
+            currentOptima.pop();
+        }
+
+        return weights;
     }
 
 } // namespace opview

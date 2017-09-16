@@ -50,10 +50,10 @@ int main(int argc, char **argv) {
     opview::SpaceBounds bounds(glm::vec3(-60, 0, -60), glm::vec3(60, 70, 60));
     opview::ParticlesInformation particles(100000, 100, 30);
 
-    opview::MCConfiguration mcConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    opview::StochasticConfiguration stoConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
     
-    opview::MCMCCamGenerator model(camConfig, meshFile, cams, mcConfig);
+    opview::MCMCCamGenerator model(camConfig, meshFile, cams, stoConfig);
 
 #ifdef TIMING
     millis start = now();

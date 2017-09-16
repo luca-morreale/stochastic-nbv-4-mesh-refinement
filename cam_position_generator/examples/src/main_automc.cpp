@@ -6,7 +6,6 @@
 #include <OpenMvgParser.h>
 
 #include <opview/type_definition.h>
-#include <opview/MCMCCamGenerator.hpp>
 #include <opview/AutonomousMCMCCamGenerator.hpp>
 #include <opview/utilities.hpp>
 
@@ -60,13 +59,13 @@ int main(int argc, char **argv) {
     // opview::SpaceBounds bounds(glm::vec3(-15, 0, -15), glm::vec3(15, 10, 0)); // car
     opview::ParticlesInformation particles(100000, 100, 30);
 
-    opview::MCConfiguration mcConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
+    opview::StochasticConfiguration stoConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?
 
     size_t maxPoints = 10;
     long double thresholdUncertainty = 100;
     
-    opview::AutonomousMCMCCamGenerator model(camConfig, meshConfig, mcConfig, maxPoints, thresholdUncertainty);
+    opview::AutonomousMCMCCamGenerator model(camConfig, meshConfig, stoConfig, maxPoints);
     
 #ifdef TIMING
     millis start = now();

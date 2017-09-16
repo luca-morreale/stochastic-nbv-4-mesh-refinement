@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     
     opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965);
     // GLMVec3List &points, GLMVec3List &normals, DoubleList &uncertainty
-    opview::MeshConfiguration meshConfig(meshFile, cams, scores.points, scores.normals, scores.uncertainty);
+    // opview::MeshConfiguration meshConfig(meshFile, cams, scores.points, scores.normals, scores.uncertainty);
 
     size_t maxPoints = 10;
     long double thresholdUncertainty = 100;
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     // opview::HierarchicalDiscreteGraphicalModel model(solver, DEPTH, DISCRETE_LABELS, cams);
     // opview::OrientationHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458, -0.462458, 0.462458
     // opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams); // 0.712458 -0.462458 0.712458
-    opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, thresholdUncertainty);
+    opview::MultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshFile, cams);
 
     // v1 = -0.443026, -0.075465, 2.31818
     // n1 = -0.0383628, 0.272127, -0.961496

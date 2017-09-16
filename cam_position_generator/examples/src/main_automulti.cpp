@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     long double thresholdUncertainty = 1; // useless
 
     std::cout << "start" << std::endl;
-    opview::AutonomousMultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints, thresholdUncertainty);
+    opview::AutonomousMultipointHierarchicalGraphicalModel model(solver, config, camConfig, meshConfig, maxPoints);
     std::cout << "model\n";
 
 #ifdef TIMING

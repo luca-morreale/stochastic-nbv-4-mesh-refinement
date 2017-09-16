@@ -36,7 +36,7 @@ SpaceBounds bounds(glm::vec3(-60, 0, -60), glm::vec3(60, 70, 60)); // building
 // opview::SpaceBounds bounds(glm::vec3(-15, 0, -15), glm::vec3(15, 10, 0)); // car
 ParticlesInformation particles(100000, 100, 30);
 
-MCConfiguration mcConfig(RESAMPLE, particles, bounds);
+StochasticConfiguration stoConfig(RESAMPLE, particles, bounds);
 
 VonMisesConfiguration vonMisesConfig = {deg2rad(45), 5};
 

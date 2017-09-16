@@ -4,7 +4,7 @@ namespace opview {
 
 
     AutonomousLocalPSOCamGenerator::AutonomousLocalPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                MCConfiguration &config, double goalAngle, double dispersion)
+                                                StochasticConfiguration &config, double goalAngle, double dispersion)
                                                 : AutonomousPSOCamGenerator(camConfig, meshConfig, config, goalAngle, dispersion)
     { /*    */ }
 

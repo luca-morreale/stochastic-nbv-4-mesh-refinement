@@ -14,7 +14,7 @@ namespace opview {
     class AutonomousLocalPSOCamGenerator : public AutonomousPSOCamGenerator {
     public:
         AutonomousLocalPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                            MCConfiguration &config, double goalAngle=45, double dispersion=5);
+                                            StochasticConfiguration &config, double goalAngle=45, double dispersion=5);
 
         ~AutonomousLocalPSOCamGenerator();
 

@@ -4,7 +4,7 @@ namespace opview {
 
     AutonomousMultipointHierarchicalGraphicalModel::AutonomousMultipointHierarchicalGraphicalModel(SolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config,
                                                                 CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                                size_t maxPoints, long double maxUncertainty, double goalAngle, double dispersion)
+                                                                size_t maxPoints, double goalAngle, double dispersion)
                     : MultipointHierarchicalGraphicalModel(solver, config, camConfig, meshConfig.filename, meshConfig.cams, goalAngle, dispersion)
     {
         this->points = meshConfig.points;
@@ -47,7 +47,7 @@ namespace opview {
 
     void AutonomousMultipointHierarchicalGraphicalModel::updateMeshInfo(int pointIndex, double uncertainty)
     {
-        SUM_UNCERTAINTY += this->uncertainty[pointIndex] - uncertainty;
+        // SUM_UNCERTAINTY += this->uncertainty[pointIndex] - uncertainty;
         this->uncertainty[pointIndex] = uncertainty;
         updateWorstPoints(pointIndex, uncertainty);
     }
@@ -57,7 +57,7 @@ namespace opview {
         this->points.push_back(point);
         this->normals.push_back(normal);
         this->uncertainty.push_back(uncertainty);
-        SUM_UNCERTAINTY += uncertainty;
+        // SUM_UNCERTAINTY += uncertainty;
     }
 
     // void AutonomousMultipointHierarchicalGraphicalModel::precomputeSumUncertainty()

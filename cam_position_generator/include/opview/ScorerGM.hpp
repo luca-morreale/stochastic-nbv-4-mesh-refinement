@@ -17,8 +17,7 @@ namespace opview {
 
         virtual double score(EigVector5 &camPos, GLMVec3 &centroid, GLMVec3 &normal);
     
-    protected:
-        virtual double constraintValue(GLMVec3 &point, GLMVec3 &centroid);
+    private:
 
         typedef OrientationHierarchicalGraphicalModel super;
 

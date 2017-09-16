@@ -41,8 +41,6 @@ namespace opview {
         virtual GLMVec3 scalePoint(GLMVec3 point);
         virtual GLMVec3 unscalePoint(GLMVec3 point);
 
-        virtual double logVonMisesWrapper(GLMVec3 &pos, GLMVec3 &centroid, GLMVec3 &normVector);
-        
         virtual void initShapes();
         
         

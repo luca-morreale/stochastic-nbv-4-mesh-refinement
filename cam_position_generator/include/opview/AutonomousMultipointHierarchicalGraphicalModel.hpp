@@ -10,7 +10,7 @@ namespace opview {
     public:
         AutonomousMultipointHierarchicalGraphicalModel(SolverGeneratorPtr solver, OrientationHierarchicalConfiguration &config,
                                                         CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                                        size_t maxPoints, long double maxUncertainty, double goalAngle=55, double dispersion=5);
+                                                        size_t maxPoints, double goalAngle=55, double dispersion=5);
         ~AutonomousMultipointHierarchicalGraphicalModel();
 
         virtual LabelList estimateBestCameraPosition();
@@ -38,10 +38,10 @@ namespace opview {
         DoubleList uncertainty;
 
         DoubleIntList worstPointsList;
-        long double SUM_UNCERTAINTY;
+        // long double SUM_UNCERTAINTY;
         size_t maxPoints;
 
-        void precomputeSumUncertainty();
+        // void precomputeSumUncertainty();
         void retainWorst();
 
         typedef MultipointHierarchicalGraphicalModel super;

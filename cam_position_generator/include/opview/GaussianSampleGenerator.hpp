@@ -24,6 +24,7 @@ namespace opview {
         GaussianSampleGenerator();
         ~GaussianSampleGenerator();
 
+        static GLMVec3List extractUniformSamples(DoublePairList limits, size_t qt=10);
         virtual GLMVec3List getUniformSamples(DoublePairList limits, size_t qt=10);
 
         virtual GLMVec3List getWeightedSamples(GLMVec3List &centers, DoubleList &weights, size_t qt=100);

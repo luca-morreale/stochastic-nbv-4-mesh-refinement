@@ -16,7 +16,7 @@ namespace opview {
         gsl_rng_free(randGen);
     }
 
-    GLMVec3List GaussianSampleGenerator::getUniformSamples(DoublePairList limits, size_t qt)
+    GLMVec3List GaussianSampleGenerator::extractUniformSamples(DoublePairList limits, size_t qt)
     {
         GLMVec3List pointList;
         double stepx = std::fabs(limits[0].second - limits[0].first) / qt;
@@ -31,6 +31,11 @@ namespace opview {
         }
 
         return pointList;
+    }
+
+    GLMVec3List GaussianSampleGenerator::getUniformSamples(DoublePairList limits, size_t qt)
+    {
+        return GaussianSampleGenerator::extractUniformSamples(limits, qt);
     }
 
     GLMVec3List GaussianSampleGenerator::getWeightedSamples(GLMVec3List &centers, DoubleList &weights, size_t qt)

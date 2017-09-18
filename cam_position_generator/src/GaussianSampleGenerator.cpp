@@ -50,6 +50,58 @@ namespace opview {
         return points;
     }
 
+    EigVector5List GaussianSampleGenerator::getRandomSamples(EigVector5 &center, EigVector5 &vars, int qt)
+    {
+        EigVector5List points;
+        for (int i = 0; i < qt; i++) {
+            EigVector5 point = getRandomSample(center, vars);
+            points.push_back(point);
+        }
+        return points;
+    }
+
+    EigVector5 GaussianSampleGenerator::getRandomSample(EigVector5 &center, EigVector5 &variances)
+    {
+        gsl_vector *mus     = gsl_vector_alloc(5);
+        gsl_matrix *var     = gsl_matrix_alloc(5, 5);
+        gsl_vector *results = gsl_vector_alloc(5);
+        
+        setupCoordinatesVarianceMatrix(var, variances);
+        setupMusVector(mus, center);
+        
+        randomMultivariateSample(mus, var, results, 5);
+
+        EigVector5 point;
+        point << gsl_vector_get(results, 0), gsl_vector_get(results, 1), gsl_vector_get(results, 2), 
+                        gsl_vector_get(results, 3), gsl_vector_get(results, 4);
+        
+        GSLVectorList vecs = {mus, results};
+        GSLMatrixList mats = {var};
+        GaussianSampleGenerator::freeDataStructure(vecs, mats);
+
+        return point;
+    }
+
+    void GaussianSampleGenerator::setupCoordinatesVarianceMatrix(gsl_matrix *var, EigVector5 variances)
+    {
+        //set up variance matrix
+        for (size_t i = 0; i < 5; i++) {
+            for (size_t j = 0; j < 5; j++) {
+                gsl_matrix_set(var, i, j, 0);
+            }
+        }
+
+        for (size_t i = 0; i < 5; i++) {
+            gsl_matrix_set(var, i, i, variances[i]);
+        }
+    }
+
+
+
+
+
+
+
     GLMVec3List GaussianSampleGenerator::getSamples(GLMVec3 &center, int qt)
     {
         GLMVec3List points;
@@ -75,7 +127,7 @@ namespace opview {
 
         GSLVectorList vecs = {mus, results};
         GSLMatrixList mats = {var};
-        freeDataStructure(vecs, mats);
+        GaussianSampleGenerator::freeDataStructure(vecs, mats);
 
         return point;
     }
@@ -104,9 +156,9 @@ namespace opview {
 
     EigVector5 GaussianSampleGenerator::getSample(EigVector5 &center)
     {
-        gsl_vector *mus     = gsl_vector_alloc(ORIENTATION_SIZE);
-        gsl_matrix *var     = gsl_matrix_alloc(ORIENTATION_SIZE, ORIENTATION_SIZE);
-        gsl_vector *results = gsl_vector_alloc(ORIENTATION_SIZE);
+        gsl_vector *mus     = gsl_vector_alloc(5);
+        gsl_matrix *var     = gsl_matrix_alloc(5, 5);
+        gsl_vector *results = gsl_vector_alloc(5);
         
         setupOrientationVarianceMatrix(var, ORIENTATION_SIZE);
         setupMusVector(mus, center);
@@ -119,7 +171,7 @@ namespace opview {
 
         GSLVectorList vecs = {mus, results};
         GSLMatrixList mats = {var};
-        freeDataStructure(vecs, mats);
+        GaussianSampleGenerator::freeDataStructure(vecs, mats);
 
         return point;
     }
@@ -148,7 +200,7 @@ namespace opview {
         gsl_matrix_free(L);
     }
 
-    // FIXME change sigma depending on something? No but maybe set a different one
+    // TODO change sigma depending on something? No but maybe set a different one
     void GaussianSampleGenerator::setupCoordinatesVarianceMatrix(gsl_matrix *var, size_t size)
     {
         //set up variance matrix
@@ -179,6 +231,7 @@ namespace opview {
             gsl_vector_set(mus, i, center[i]);
         }
     }
+
     void GaussianSampleGenerator::setupMusVector(gsl_vector *mus, EigVector5 &center)
     {
         //set up the mean vector
@@ -203,7 +256,7 @@ namespace opview {
         // if there is a negative value translate all up and then compute the weights
         double minWeight = *std::min_element(std::begin(weights), std::end(weights));
 
-        IntList sampleQt;
+        IntList sampleQt(weights.size());
         double sum = 0.0;
 
         for (int i = 0; i < weights.size(); i++) {
@@ -211,8 +264,9 @@ namespace opview {
             sum += weights[i];
         }
 
+        #pragma omp parallel for
         for (int i = 0; i < weights.size(); i++) {
-            sampleQt.push_back(ceil(qt * weights[i] / sum));
+            sampleQt[i] = floor((double)qt * weights[i] / sum);
         }
 
         return sampleQt;

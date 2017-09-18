@@ -34,6 +34,9 @@ namespace opview {
         virtual EigVector5List getWeightedSamples(EigVector5List &centers, DoubleList &weights, size_t qt=1000);
         virtual EigVector5List getSamples(EigVector5 &center, int qt=100);
         virtual EigVector5 getSample(EigVector5 &center);
+
+        virtual EigVector5List getRandomSamples(EigVector5 &center, EigVector5 &variances, int qt);
+        virtual EigVector5 getRandomSample(EigVector5 &center, EigVector5 &variances);
         
 
     protected:
@@ -42,7 +45,9 @@ namespace opview {
         virtual void setupOrientationVarianceMatrix(gsl_matrix *var, size_t size);
         virtual void setupMusVector(gsl_vector *mus, GLMVec3 &center);
         virtual void setupMusVector(gsl_vector *mus, EigVector5 &center);
-        virtual void freeDataStructure(GSLVectorList &vecs, GSLMatrixList &mats);
+        static void freeDataStructure(GSLVectorList &vecs, GSLMatrixList &mats);
+        
+        virtual void setupCoordinatesVarianceMatrix(gsl_matrix *var, EigVector5 variances);
 
     private:
         const gsl_rng *randGen;

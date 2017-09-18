@@ -4,10 +4,10 @@
 namespace opview {
 
     AutonomousPSOCamGenerator::AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, 
-                        MeshConfiguration &meshConfig, StochasticConfiguration &config, size_t maxPoints, double goalAngle, double dispersion)
-                        : AutonomousStochasticMethod(camConfig, meshConfig, config, maxPoints, goalAngle, dispersion)
+                        MeshConfiguration &meshConfig, StochasticConfiguration &config, size_t maxPoints, double offspring, double goalAngle, double dispersion)
+                        : AutonomousStochasticMethod(camConfig, meshConfig, config, maxPoints, offspring, goalAngle, dispersion)
     {
-        getLogger()->resetFile("auto_pso.json");
+        setLogger(new SwarmReportWriter("auto_pso.json"));
 
         this->randGen = gsl_rng_alloc(gsl_rng_mt19937);
         gsl_rng_set(randGen, SEED);
@@ -142,7 +142,7 @@ namespace opview {
         for (int i = 0; i < orientedPoints.size(); i++) {
             values[i] = getFormulation()->computeEnergy(orientedPoints[i], centroids, normVectors);
         }
-
+        
         updateSwarmValues(values);        
     }
 
@@ -151,13 +151,8 @@ namespace opview {
         #pragma omp parallel for
         for (int p = 0; p < particles.size(); p++) {
             particles[p]->updateValue(values[p]);
-
-            #pragma omp critical
-            if (values[p] > particles[bestParticleIndex]->value) {
-                this->bestParticleIndex = p;
-            }
         }
-
+        
         for (int p = 0; p < particles.size(); p++) {
             if (values[p] > particles[bestParticleIndex]->value) {
                 this->bestParticleIndex = p;
@@ -175,6 +170,11 @@ namespace opview {
         EigVector5 random;
         random << uniform(), uniform(), uniform(), uniform(), uniform();
         return random;
+    }
+
+    EigVector5 AutonomousPSOCamGenerator::getBestParticlePosition()
+    {
+        return particles[bestParticleIndex]->position;
     }
 
     void AutonomousPSOCamGenerator::logParticles(int round)

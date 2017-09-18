@@ -9,7 +9,7 @@ namespace opview {
     class AutonomousPSOCamGenerator : public AutonomousStochasticMethod {
     public:
         AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                            StochasticConfiguration &config, size_t maxPointsa, 
+                                            StochasticConfiguration &config, size_t maxPointsa, double offspring=0.0,
                                             double goalAngle=45, double dispersion=5);
 
         ~AutonomousPSOCamGenerator();
@@ -31,7 +31,7 @@ namespace opview {
 
         virtual EigVector5List extractSwarmPositions();
 
-        
+        EigVector5 getBestParticlePosition();
 
         double uniform();
         EigVector5 randVector();

@@ -10,7 +10,7 @@ namespace opview {
     class MCMCCamGenerator : public StochasticMethod {
     public:
         MCMCCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                    StochasticConfiguration &stoConfig, double goalAngle=45, double dispersion=5);
+                                    StochasticConfiguration &stoConfig, double offspring=0.9, double goalAngle=45, double dispersion=5);
 
         ~MCMCCamGenerator();
 

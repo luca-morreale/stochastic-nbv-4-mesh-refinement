@@ -3,8 +3,8 @@
 namespace opview {
 
     PSOCamGenerator::PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, 
-                    GLMVec3List &cams, StochasticConfiguration &stoConfig, double goalAngle, double dispersion)
-                    : StochasticMethod(camConfig, meshFile, cams, stoConfig, goalAngle, dispersion)
+                    GLMVec3List &cams, StochasticConfiguration &stoConfig, double offspring, double goalAngle, double dispersion)
+                    : StochasticMethod(camConfig, meshFile, cams, stoConfig, offspring, goalAngle, dispersion)
     {
         this->setLogger(new SwarmReportWriter("pso_log.txt"));
 

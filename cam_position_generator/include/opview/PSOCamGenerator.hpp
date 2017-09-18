@@ -11,7 +11,7 @@ namespace opview {
     class PSOCamGenerator : public StochasticMethod {
     public:
         PSOCamGenerator(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            StochasticConfiguration &stoConfig, double goalAngle=45, double dispersion=5);
+                                            StochasticConfiguration &stoConfig, double offspring=0.0, double goalAngle=45, double dispersion=5);
 
         ~PSOCamGenerator();
 

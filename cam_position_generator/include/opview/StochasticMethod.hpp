@@ -17,7 +17,7 @@ namespace opview {
     class StochasticMethod {
     public:
         StochasticMethod(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                    StochasticConfiguration &stoConfig, double goalAngle=45, double dispersion=5);
+                                    StochasticConfiguration &stoConfig, double offspring=0.9, double goalAngle=45, double dispersion=5);
 
         ~StochasticMethod();
 
@@ -56,8 +56,7 @@ namespace opview {
 
         float offsetX();
         float offsetY();
-        float offsetZ();
-        
+        float offsetZ();        
         
     private:
         CameraGeneralConfiguration camConfig;

@@ -3,8 +3,8 @@
 namespace opview {
 
     AutonomousStochasticMethod::AutonomousStochasticMethod(CameraGeneralConfiguration &camConfig, 
-                MeshConfiguration &meshConfig, StochasticConfiguration &stoConfig, size_t maxPoints, double goalAngle, double dispersion)
-                : StochasticMethod(camConfig, meshConfig.filename, meshConfig.cams, stoConfig, goalAngle, dispersion)
+                MeshConfiguration &meshConfig, StochasticConfiguration &stoConfig, size_t maxPoints, double offspring, double goalAngle, double dispersion)
+                : StochasticMethod(camConfig, meshConfig.filename, meshConfig.cams, stoConfig, offspring, goalAngle, dispersion)
     {
         this->points = meshConfig.points;
         this->normals = meshConfig.normals;
@@ -40,7 +40,7 @@ namespace opview {
         for (int i = 0; i < orientedPoints.size(); i++) {
             values[i] = getFormulation()->computeEnergy(orientedPoints[i], centroids, normals);
         }
-
+        
         return orderPoses(orientedPoints, values);
     }
 

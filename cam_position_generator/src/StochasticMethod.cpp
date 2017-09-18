@@ -4,12 +4,13 @@
 namespace opview {
     
     StochasticMethod::StochasticMethod(CameraGeneralConfiguration &camConfig, std::string &meshFile, GLMVec3List &cams, 
-                                            StochasticConfiguration &stoConfig, double goalAngle, double dispersion)
+                                            StochasticConfiguration &stoConfig, double offspring, double goalAngle, double dispersion)
     {
         this->stoConfig = stoConfig;
         this->camConfig = camConfig;
         this->meshFile = meshFile;
         this->cams = cams;
+        this->OFFSPRING = offspring;
         this->vonMisesConfig = {deg2rad(goalAngle), dispersion};
         this->log = new ExhaustiveReportWriter("stochastic.json");
 
@@ -23,8 +24,6 @@ namespace opview {
         delete formulation;
         delete tree;
     }
-
-
 
     OrderedPose StochasticMethod::uniformSamplingStep(GLMVec3 &centroid, GLMVec3 &normVector, int round)
     {
@@ -40,7 +39,6 @@ namespace opview {
                         std::make_pair(stoConfig.bounds.lower.y, stoConfig.bounds.upper.y), 
                         std::make_pair(stoConfig.bounds.lower.z, stoConfig.bounds.upper.z)}, 
                         stoConfig.particles.uniform);
-
         return insertOrientation(points);
     }
 
@@ -87,7 +85,7 @@ namespace opview {
 
     OrderedPose StochasticMethod::extractBestResults(OrderedPose &poses, int round)
     {
-        OrderedPose optima = copy(poses, (size_t)(OFFSPRING*stoConfig.particles.num));
+        OrderedPose optima = copy(poses, (size_t)(OFFSPRING*(double)stoConfig.particles.num));
         
         OrderedPose convertedAnglesOptima = convertAngles(optima);
 

@@ -3,9 +3,9 @@
 namespace opview {
 
     AutonomousMCMCCamGenerator::AutonomousMCMCCamGenerator(CameraGeneralConfiguration &camConfig, 
-                            MeshConfiguration &meshConfig, StochasticConfiguration &stoConfig, size_t maxPoints, 
+                            MeshConfiguration &meshConfig, StochasticConfiguration &stoConfig, size_t maxPoints, double offspring,
                             double goalAngle, double dispersion)
-                            : AutonomousStochasticMethod(camConfig, meshConfig, stoConfig, maxPoints, goalAngle, dispersion)
+                            : AutonomousStochasticMethod(camConfig, meshConfig, stoConfig, maxPoints, offspring, goalAngle, dispersion)
     {
         this->sampler = new GaussianSampleGenerator();
         this->getLogger()->resetFile("auto_mcmc.json");
@@ -44,14 +44,14 @@ namespace opview {
     {  
         EigVector5List centers = getCentersFromOptima(currentOptima); 
         DoubleList weights = getWeightsFromOptima(currentOptima); 
-        EigVector5List newCenters = sampler->getWeightedSamples(centers, weights, getResamplingParticles() * (1.0 - getOffspring()));
+        EigVector5List newCenters = sampler->getWeightedSamples(centers, weights, getResamplingParticles() - centers.size());
         return concatLists(newCenters, centers);
     }
     
     EigVector5List AutonomousMCMCCamGenerator::getCentersFromOptima(OrderedPose currentOptima) // not by refernce otherwise changes also the original
     {
         EigVector5List poses;
-        while(!currentOptima.empty()) {
+        while(!currentOptima.empty() && poses.size() <= (size_t)((double)getResamplingParticles() * (1.0 - getOffspring()))) {
             poses.push_back(currentOptima.top().second);
             currentOptima.pop();
         }
@@ -62,7 +62,7 @@ namespace opview {
     DoubleList AutonomousMCMCCamGenerator::getWeightsFromOptima(OrderedPose currentOptima) // not by refernce otherwise changes also the original
     {
         DoubleList weights;
-        while(!currentOptima.empty()) {
+        while(!currentOptima.empty() && weights.size() <= (size_t)((double)getResamplingParticles() * (1.0 - getOffspring()))) {
             double solution = currentOptima.top().first;
             weights.push_back(solution);
             currentOptima.pop();

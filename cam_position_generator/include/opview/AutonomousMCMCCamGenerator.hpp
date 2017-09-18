@@ -9,7 +9,7 @@ namespace opview {
     class AutonomousMCMCCamGenerator : public AutonomousStochasticMethod {
     public:
         AutonomousMCMCCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                StochasticConfiguration &stoConfig, size_t maxPoints, double goalAngle=45, double dispersion=5);
+                                StochasticConfiguration &stoConfig, size_t maxPoints, double offspring=0.9, double goalAngle=45, double dispersion=5);
 
         ~AutonomousMCMCCamGenerator();
 

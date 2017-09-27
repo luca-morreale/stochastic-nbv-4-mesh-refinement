@@ -28,7 +28,9 @@ namespace opview {
     OrderedPose AutonomousStochasticMethod::uniformSamplingStep(GLMVec3List &centroids, GLMVec3List &normals, int round)
     {
         EigVector5List orientedPoints = uniformPointsGetter();
+        
         OrderedPose poses = computeEnergyForPoses(centroids, normals, orientedPoints);
+        
         return this->extractBestResults(poses, round);
     }
 

@@ -13,7 +13,7 @@ namespace cameval {
         static std::string initOpenMvg();
         static std::string imageListing();
         static void extractMvgFeatures(std::string &jsonFile, std::string &pairFile);
-        static std::string computeStructureFromPoses(std::string &jsonFile, size_t uniqueId, bool pairs=true);
+        static std::string computeStructureFromPoses(std::string &jsonFile, size_t uniqueId, bool pairs=false);
 
         static std::string baseImageFolder;
         static std::string intrinsicParams;

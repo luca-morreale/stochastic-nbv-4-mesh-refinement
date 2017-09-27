@@ -54,7 +54,7 @@ namespace cameval {
         float outliersthreshold = 0.25;
 
         log("OpenMvg: Compute structure from known poses");
-        command = "openMVG_main_ComputeStructureFromKnownPoses -i matches/sfm_data.json -o "+outputjson+" -m matches/ -b";
+        command = "openMVG_main_ComputeStructureFromKnownPoses -i matches/sfm_data.json -m matches/ -o " + outputjson + " -b";
         if (pairs) {
             command += " -f matches/matches.f.bin ";
         }

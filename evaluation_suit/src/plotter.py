@@ -14,10 +14,11 @@ for file in onlyfiles:
     with open(file) as stream:
         content = stream.readlines()
     # you may also want to remove whitespace characters like `\n` at the end of each line
+    ascissa = [float(x.strip().split(" ")[0]) for x in content] 
     content = [float(x.strip().split(" ")[1]) for x in content] 
 
     # create the general figure     
-    plt.plot(range(1,11), content)
+    plt.plot(ascissa, content)
     plt.ylabel("% Coverage")
     plt.xlabel("Distance Threshold")
     savefig(file + ".pdf")

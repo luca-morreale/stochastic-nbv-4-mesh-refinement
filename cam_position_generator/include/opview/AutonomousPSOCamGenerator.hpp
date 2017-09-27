@@ -9,7 +9,7 @@ namespace opview {
     class AutonomousPSOCamGenerator : public AutonomousStochasticMethod {
     public:
         AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, MeshConfiguration &meshConfig, 
-                                            StochasticConfiguration &config, size_t maxPointsa, double offspring=0.0,
+                                            StochasticConfiguration &config, size_t maxPoints, double offspring=1.0,
                                             double goalAngle=45, double dispersion=5);
 
         ~AutonomousPSOCamGenerator();

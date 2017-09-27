@@ -5,10 +5,10 @@ namespace opview {
 
     AutonomousPSOCamGenerator::AutonomousPSOCamGenerator(CameraGeneralConfiguration &camConfig, 
                         MeshConfiguration &meshConfig, StochasticConfiguration &config, size_t maxPoints, double offspring, double goalAngle, double dispersion)
-                        : AutonomousStochasticMethod(camConfig, meshConfig, config, maxPoints, offspring, goalAngle, dispersion)
+                        : AutonomousStochasticMethod(camConfig, meshConfig, config, maxPoints, 1.0, goalAngle, dispersion)
     {
         setLogger(new SwarmReportWriter("auto_pso.json"));
-
+        
         this->randGen = gsl_rng_alloc(gsl_rng_mt19937);
         gsl_rng_set(randGen, SEED);
 
@@ -41,11 +41,12 @@ namespace opview {
     {
         GLMVec3ListPair worst = getWorstPointsList();
         GLMVec3List centroids = worst.first;
+        
         GLMVec3List normals = worst.second;
         OrderedPose currentOptima = uniformSamplingStep(centroids, normals, 0);
-
-        convertSamplesToParticles(currentOptima);
         
+        convertSamplesToParticles(currentOptima);
+
         for (int d = 0; d < getResamplingSteps(); d++) {
             updateParticles(centroids, normals);
             logParticles(d);

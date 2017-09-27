@@ -17,11 +17,14 @@ namespace cameval {
     class PointKDTree {
     public:
         PointKDTree(std::string &pointCloud);
+        PointKDTree(GLMVec3List &points);
         ~PointKDTree();
 
         GLMVec3 searchClosestPoint(GLMVec3 &pose);
 
         GLMVec3List load(std::string &file);
+
+        size_t cloudSize();
 
     private:
         std::string pointCloud;
@@ -33,6 +36,7 @@ namespace cameval {
         void fillPoint(GLMVec3 &pose, PCLSimplePoint &point);
         GLMVec3 getVectorFromPoint(PCLSimplePoint &point);
         void fillVector(GLMVec3 &pose, PCLSimplePoint &point);
+        void generateTree(GLMVec3List &database);
 
     };
 

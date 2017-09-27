@@ -10,15 +10,32 @@ namespace cameval {
         this->generateTree();
     }
 
+    PointKDTree::PointKDTree(GLMVec3List &points)
+    {
+        tree = PCLSimpleKDTree().makeShared();
+        cloud = PCLSimplePointCloud().makeShared();
+        this->generateTree(points);
+    }
+
     PointKDTree::~PointKDTree()
     {
         cloud.reset();
         tree.reset();
     }
 
+    size_t PointKDTree::cloudSize()
+    {
+        return cloud->width;
+    }
+
     void PointKDTree::generateTree()
     {
         GLMVec3List database = load(pointCloud);
+        this->generateTree(database);
+    }
+
+    void PointKDTree::generateTree(GLMVec3List &database)
+    {
         cloud->width = database.size();
         cloud->height = 1;
         cloud->points.resize(cloud->width * cloud->height);

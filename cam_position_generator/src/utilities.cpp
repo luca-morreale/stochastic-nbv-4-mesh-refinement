@@ -45,7 +45,7 @@ namespace opview {
     {
         OrderedPose dest;
         int c = 0;
-        while(!poses.empty() && c < (max)) {
+        while(!poses.empty() && c < max) {
             dest.push(poses.top());
             poses.pop();
             c++;

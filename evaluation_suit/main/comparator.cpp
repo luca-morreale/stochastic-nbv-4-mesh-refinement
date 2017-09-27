@@ -46,13 +46,13 @@ int main(int argc, char **argv) {
 
     for (int i = start; i < stop; i++) {
         string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + basic_dir + std::to_string(i) + "/sfm_data.ply"
-                        " -O " + gt + " -c2c_dist -MAX_DIST 10";
+                        " -O " + gt + " -c2c_dist";
         system(command.c_str());
 
         double dst1 = parseDistance(logfilename);
 
         command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + gt + 
-                        " -O " + basic_dir + std::to_string(i) + "/sfm_data.ply" + " -c2c_dist -MAX_DIST 10";
+                        " -O " + basic_dir + std::to_string(i) + "/sfm_data.ply" + " -c2c_dist";
         system(command.c_str());
 
         double dst2 = parseDistance(logfilename);

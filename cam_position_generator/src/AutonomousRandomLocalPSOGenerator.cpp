@@ -47,8 +47,8 @@ namespace opview {
         GLMVec3 upper = upperBounds();
 
         EigVector5 variances, center;
-        center << upper.x - lower.x / 2.0f, upper.y - lower.y / 2.0f, 
-                upper.z - lower.z / 2.0f, 0.0f, 0.0f;
+        center << (upper.x + lower.x) / 2.0f, (upper.y + lower.y) / 2.0f, 
+                (upper.z + lower.z) / 2.0f, 0.0f, 0.0f;
         variances << (upper.x - lower.x) / 6.0f, (upper.y - lower.y) / 6.0f, 
                 (upper.z - lower.z) / 6.0f, M_PI / 3.0f, M_PI / 3.0f;
 

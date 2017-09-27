@@ -11,7 +11,7 @@ namespace cameval {
 
     class PlyRefiner {
     public:
-        PlyRefiner(std::string &jsonfile, GLMVec3 &color, float outlierThreshold);
+        PlyRefiner(std::string &jsonfile, GLMVec3 &color, float outlierThreshold=0.25);
         ~PlyRefiner();
 
         void load(std::string &file);

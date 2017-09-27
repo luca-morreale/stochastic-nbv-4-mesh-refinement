@@ -8,6 +8,7 @@ namespace cameval {
         // this->posesFilename = posesFilename;                          // file from which read poses to evaluate
         this->groundTruthFilename = groundTruthFilename;              // file containing the g-t cloud of points
         this->outputFile = outputFile;
+        this->basicPoseFilename = basicPoseFilename;
         
         log("\nSet OpenMvg data");
         setOpenMVGData(baseImageFolder, intrinsicParams);

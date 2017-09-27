@@ -47,12 +47,15 @@ namespace cameval {
             log("Accuracy step");
             execute(accuracyExe + " " + mvgJson + " " + offFile + " points.txt");
             
-            log("Pptimal Cam step");
+            log("Optimal Cam step");
             std::string optimalPosefile = "optimalPose.txt";
             execute(optimalCamExe + " " + mvgJson + " " + offFile + " points.txt " + optimalPosefile);
             
             log("Transformation to output pose to look at");
             std::string poseFile = transformToLookat(optimalPosefile);
+            
+            cleanFeatures();
+            cleanMatches();
             
             log("Read new pose");
             StringList posesString = InputReader::readDatabase(poseFile);
@@ -67,6 +70,9 @@ namespace cameval {
             log("Add camera to poses");
             Pose newPose = getPose(posesString[0]);
             appendToCameraPoses(newPose);
+
+            cleanFeatures();
+            cleanMatches();
         }
         globalOut.close();
     }
@@ -82,6 +88,11 @@ namespace cameval {
         getMvgJsonHandler()->saveChanges();
         
         return "matches";
+    }
+
+    std::string SystemEvaluator::generatePairFile(size_t uniqueId)
+    {
+        return "";
     }
 
     std::string SystemEvaluator::transformToLookat(std::string &fixedPosefile)  // READ just one pose!
@@ -157,6 +168,17 @@ namespace cameval {
         std::time_t seconds;
         std::time(&seconds);
         return boost::lexical_cast<std::string>(seconds);
+    }
+
+    void SystemEvaluator::cleanFeatures()
+    {
+        super::cleanFiles({"matches/zz_*"});     // remove all folders created!
+        execute("rm matches/zz_*");
+    }
+
+    void SystemEvaluator::cleanMatches()
+    {
+        super::cleanFiles({"matches/geometric_matches", "matches/matches.putative.bin", "matches/putative_matches", "matches/matches.f.bin"});     // remove all folders created!
     }
 
 } // namespace cameval

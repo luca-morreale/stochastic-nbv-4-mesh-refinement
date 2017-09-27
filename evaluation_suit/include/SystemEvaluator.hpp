@@ -31,15 +31,19 @@ namespace cameval {
         virtual std::string generatePovrayDeclaration(std::string &data);
 
         virtual std::string initOpenMvg();
+        std::string generatePairFile(size_t uniqueId);
         
         std::string getTimeStamp();
 
         virtual std::string transformToLookat(std::string &fixedPosefile);  // READ just one pose!
 
-
+        virtual void cleanFeatures();
+        virtual void cleanMatches();
 
     private:
         std::string basicPovFile;
+
+        typedef BasicEvaluator super;
         
     };
 

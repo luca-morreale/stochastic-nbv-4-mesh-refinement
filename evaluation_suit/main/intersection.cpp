@@ -74,18 +74,26 @@ int main(int argc, char **argv) {
         intersecter.write(el.second + "_original.ply", el.second + "_cloud.ply");
 
         std::string logfilename = el.second + "_vs_gt.txt";
-        std::string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + el.second + "_cloud.ply" + " -O " + gt + " -c2c_dist -MAX_DIST 10";
+        std::string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + el.second + "_cloud.ply" + " -O " + gt + " -c2c_dist ";
         system(command.c_str());
-
         double dst1 = parseDistance(logfilename);
 
-        command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + el.second + "_original.ply" + " -O " + gt + " -c2c_dist -MAX_DIST 10";
+        command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + el.second + "_original.ply" + " -O " + gt + " -c2c_dist ";
         system(command.c_str());
-
         double dst2 = parseDistance(logfilename);
+
+        command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + gt + " -O " + el.second + "_cloud.ply" + " -c2c_dist ";
+        system(command.c_str());
+        double dst3 = parseDistance(logfilename);
+
+        command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + gt + " -O " + el.second + "_original.ply" + " -c2c_dist ";
+        system(command.c_str());
+        double dst4 = parseDistance(logfilename);
 
 
         command = "echo \"original new \n\"" + std::to_string(dst2) + " " + std::to_string(dst1) + " > " + logfilename;  // first original then new cloud
+        system(command.c_str());
+        command = "echo \"gt vs original new \n\"" + std::to_string(dst3) + " " + std::to_string(dst4) + " >> " + logfilename;  // first original then new cloud
         system(command.c_str());
     }
 

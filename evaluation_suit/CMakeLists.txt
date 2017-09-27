@@ -172,6 +172,19 @@ target_link_libraries(coverage eval
                                 ${PCL_LIBRARIES}
                                 )
 
+add_executable(refiner main/refine_cloud.cpp )
+
+target_link_libraries(refiner eval
+                                ${OpenCV_LIBS}  
+                                ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
 
 # ------------------------ INSTALLATION ------------------------
 

@@ -186,6 +186,46 @@ target_link_libraries(refiner eval
                                 ${PCL_LIBRARIES}
                                 )
 
+add_executable(middlebury_evaluator main/middlebury_evaluator.cpp )
+
+target_link_libraries(middlebury_evaluator eval
+                                ${OpenCV_LIBS}  
+                                ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
+add_executable(middlebury_pc main/middlebury_generate_pc.cpp )
+
+target_link_libraries(middlebury_pc eval
+                                ${OpenCV_LIBS}  
+                                ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
+add_executable(debug_middlebury main/debug_middlebury.cpp )
+
+target_link_libraries(debug_middlebury eval
+                                ${OpenCV_LIBS}  
+                                ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
+
 # ------------------------ INSTALLATION ------------------------
 
 

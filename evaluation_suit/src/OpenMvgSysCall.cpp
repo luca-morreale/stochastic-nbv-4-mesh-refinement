@@ -30,34 +30,50 @@ namespace cameval {
     void OpenMvgSysCall::extractMvgFeatures(std::string &jsonFile, std::string &pairFile) 
     {
         log("OpenMvg: Compute Features");
-        std::string command = "openMVG_main_ComputeFeatures -i " + jsonFile + " -o matches/ -m AKAZE_FLOAT";
+        std::string command = "openMVG_main_ComputeFeatures -i " + jsonFile + " -o matches/ -m AKAZE_FLOAT -n 4";
         system(command.c_str());
 
         log("OpenMvg: Compute Matches");
         if (pairFile.empty()) {
-            command = "openMVG_main_ComputeMatches -i " + jsonFile + " -o matches/ ";
+            command = "openMVG_main_ComputeMatches -i " + jsonFile + " -o matches/ -f 1 -n BRUTEFORCEL2";
         } else {
             command = "openMVG_main_ComputeMatches -i " + jsonFile + " -o matches/ -l " + pairFile;
         }
+
         system(command.c_str());
     }
 
     std::string OpenMvgSysCall::computeStructureFromPoses(std::string &jsonFile, size_t uniqueId, bool pairs) 
     {
         std::string outFolder = "poses_sfm_data_" + std::to_string(uniqueId);
+        std::string outputjson = outFolder + "/sfm_data.json"; 
+
         std::string command = "mkdir " + outFolder;
         system(command.c_str());
 
-        std::string outputjson = outFolder + "/sfm_data.json";
-        std::string outputply = outFolder + "/sfm_data.ply";
-        GLMVec3 color(255, 255, 255);
-        float outliersthreshold = 0.25;
-
         log("OpenMvg: Compute structure from known poses");
-        command = "openMVG_main_ComputeStructureFromKnownPoses -i matches/sfm_data.json -m matches/ -o " + outputjson + " -b";
+        command = "openMVG_main_ComputeStructureFromKnownPoses -i " + jsonFile + " -m matches/ -o " + outputjson + " ";
         if (pairs) {
             command += " -f matches/matches.f.bin ";
         }
+        std::cerr << command << std::endl;
+        system(command.c_str());
+
+        return outFolder;
+    }
+
+    std::string OpenMvgSysCall::computeIncrementalStructure(size_t uniqueId, bool pairs) 
+    {
+        std::string outFolder = "out_incremental_" + std::to_string(uniqueId);
+        std::string command = "mkdir " + outFolder;
+        system(command.c_str());
+
+        log("OpenMvg: Compute structure from known poses");
+        command = "openMVG_main_IncrementalSfM -i matches/sfm_data.json -m matches/ -o " + outFolder;
+        if (pairs) {
+            command += " -f matches/matches.f.bin ";
+        }
+        std::cerr << command << std::endl;
         system(command.c_str());
 
         return outFolder;

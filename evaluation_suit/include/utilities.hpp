@@ -13,6 +13,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <aliases.h>
+#include <type_definition.h>
 
 namespace cameval {
 
@@ -45,6 +46,11 @@ namespace cameval {
     GLMMat3 rotationRoll(float roll);
     GLMMat3 rotationPitch(float pitch);
     GLMMat3 rotationYaw(float yaw);
+
+    Camera getCamera(StringList blocks);
+    GLMMat4 getRotation(StringList blocks);
+    GLMMat4 getIntrinsic(StringList blocks);
+    GLMVec4 getTranslation(StringList blocks);
 
     template<typename K, typename V>
     std::vector<K> keys(std::map<K, V> &map)

@@ -35,6 +35,8 @@ namespace cameval {
     typedef std::vector<double> DoubleList;
     typedef std::vector<bool> BoolList;
     typedef std::array<float, 6> Float6Array;
+    typedef std::vector<std::string> StringList;
+    typedef std::vector<StringList> ArrayStringList;
 
     typedef std::vector<IntList> IntArrayList;
 
@@ -61,6 +63,7 @@ namespace cameval {
 
     typedef glm::vec2 GLMVec2;
     typedef glm::vec3 GLMVec3;
+    typedef glm::vec4 GLMVec4;
     typedef glm::mat3 GLMMat3;
     typedef glm::mat4 GLMMat4;
     

@@ -182,4 +182,49 @@ namespace cameval {
                         0.0f, 0.0f, 1.0f);
     }
 
+    Camera getCamera(StringList blocks)
+    {
+        GLMMat4 R = getRotation(blocks);
+        GLMMat4 K = getIntrinsic(blocks);
+        GLMVec4 t = getTranslation(blocks);
+
+        return Camera(R, K, t);
+    }
+
+    GLMMat4 getRotation(StringList blocks)
+    {
+        GLMMat4 R;
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                R[i][j] = strtod(blocks[10 + i * 3 + j].c_str(), NULL);     // check indices
+            }
+        }
+
+        return R;
+    }
+
+    GLMMat4 getIntrinsic(StringList blocks)
+    {
+        GLMMat4 K;
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                K[i][j] = strtod(blocks[1 + i * 3 + j].c_str(), NULL);     // check indices
+            }
+        }
+
+        return K;
+    }
+
+    GLMVec4 getTranslation(StringList blocks)
+    {
+        GLMVec4 t;
+        t.x = strtod(blocks[19].c_str(), NULL);
+        t.y = strtod(blocks[20].c_str(), NULL);
+        t.z = strtod(blocks[21].c_str(), NULL);
+        return t;
+    }
+
+
 } // namespace cameval

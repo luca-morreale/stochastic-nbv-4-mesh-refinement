@@ -25,6 +25,8 @@ namespace opview {
 
     };
 
+    typedef AutonomousRandomLocalPSOGenerator* AutonomousRandomLocalPSOGeneratorPtr;
+
 } // namespace opview
 
 #endif // CAM_POSITION_GENERATOR_AUTONOMOUS_RANDOM_LOCAL_PSO_CAM_GENERATOR_H

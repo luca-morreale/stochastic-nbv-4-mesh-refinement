@@ -36,7 +36,7 @@ namespace cameval {
             OpenMvgSysCall::extractMvgFeatures(mvgJson, matches);
 
             log("\nCompute Structure");
-            std::string mvgFolder = OpenMvgSysCall::computeStructureFromPoses(mvgJson, stepNumber, false);
+            std::string mvgFolder = computeStructure(mvgJson, stepNumber+100);
             
             mvgJson = mvgFolder + "/sfm_data.json";
             std::string offFile = "output/from_gen_config/manifold_final.off";
@@ -54,27 +54,27 @@ namespace cameval {
             log("Transformation to output pose to look at");
             std::string poseFile = transformToLookat(optimalPosefile);
             
-            cleanFeatures();
-            cleanMatches();
-            
             log("Read new pose");
-            StringList posesString = InputReader::readDatabase(poseFile);
+            std::string posesString = readPose(poseFile);
             
 
             log("Evaluation new pose");            
-            double distance = evaluatePose(posesString[0], basicFolder);
+            double distance = evaluatePose(posesString, basicFolder);
             distances[stepNumber] = distance;
             globalOut << stepNumber << " " << distance << std::endl;
             globalOut.flush();
 
             log("Add camera to poses");
-            Pose newPose = getPose(posesString[0]);
+            Pose newPose = getPose(posesString);
             appendToCameraPoses(newPose);
 
-            cleanFeatures();
-            cleanMatches();
         }
         globalOut.close();
+    }
+
+    std::string SystemEvaluator::readPose(std::string &poseFile)
+    {
+        return InputReader::readDatabase(poseFile)[0];
     }
 
     std::string SystemEvaluator::initOpenMvg()

@@ -35,6 +35,8 @@ namespace cameval {
         
         std::string getTimeStamp();
 
+        virtual std::string readPose(std::string &poseFile);
+
         virtual std::string transformToLookat(std::string &fixedPosefile);  // READ just one pose!
 
         virtual void cleanFeatures();

@@ -47,12 +47,15 @@ namespace opview {
 
     typedef std::map<double, int> DoubleIntMap;
     typedef std::map<int, double> IntDoubleMap;
+    typedef std::map<std::string, double> StringDoubleMap;
     typedef std::vector<double> DoubleList;
     typedef std::vector<DoubleIntMap> DoubleIntMapList;
     typedef std::vector<float> FloatList;
     typedef std::vector<int> IntList;
     typedef std::vector<IntDoubleMap> IntDoubleMapList;
     typedef std::vector<size_t> SizeTList;
+    typedef std::vector<std::string> StringList;
+    typedef std::vector<StringList> ArrayStringList;
 
     typedef std::pair<double, double> DoublePair;
     typedef std::pair<double, int> DoubleIntPair;

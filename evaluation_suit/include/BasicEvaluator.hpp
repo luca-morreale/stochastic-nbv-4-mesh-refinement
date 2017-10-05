@@ -43,6 +43,7 @@ namespace cameval {
         virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename);
         virtual double parseDistance(std::string &logFile);
         virtual void cleanFiles(StringList files);
+        virtual std::string computeStructure(std::string &jsonFile, int imgId);
 
         /**   Set up functions used by constructor   **/
         void setOpenMVGData(std::string &baseImageFolder, std::string &intrinsicParams);
@@ -53,6 +54,8 @@ namespace cameval {
         int execute(std::string command);
 
         void setDefaultCameraPoses();
+
+        std::string getImageFolder();
         
 
     private:

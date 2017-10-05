@@ -5,8 +5,7 @@ namespace cameval {
     BasicEvaluator::BasicEvaluator(std::string &groundTruthFilename, std::string &basicPoseFilename, 
                         std::string &baseImageFolder, std::string &intrinsicParams, std::string &outputFile)
     {
-        // this->posesFilename = posesFilename;                          // file from which read poses to evaluate
-        this->groundTruthFilename = groundTruthFilename;              // file containing the g-t cloud of points
+        this->groundTruthFilename = groundTruthFilename;              // file containing the g-t point cloud
         this->outputFile = outputFile;
         this->basicPoseFilename = basicPoseFilename;
         
@@ -68,7 +67,7 @@ namespace cameval {
         OpenMvgSysCall::extractMvgFeatures(jsonFile, pairFile);
 
         log("Compute Structure");
-        std::string mvgFolder = OpenMvgSysCall::computeStructureFromPoses(jsonFile, imgId);
+        std::string mvgFolder = computeStructure(jsonFile, imgId);
 
         std::string inputCloud = mvgFolder + "/sfm_data.ply";
         
@@ -82,6 +81,11 @@ namespace cameval {
         cleanFiles({filename, pairFile, mvgFolder, "images/"+filename, "matches/matches.f.bin"});
 
         return distance;
+    }
+
+    std::string BasicEvaluator::computeStructure(std::string &jsonFile, int imgId)
+    {
+        return OpenMvgSysCall::computeStructureFromPoses(jsonFile, imgId);
     }
 
     void BasicEvaluator::moveImageIntoImagesFolder(std::string &filename)
@@ -102,8 +106,7 @@ namespace cameval {
     {
         std::string prefix = sfmFile.substr(0, sfmFile.find_last_of("/"));
 
-        size_t key;
-        key = mvgJsonHandler->appendImage(prefix, imageFile);
+        size_t key = mvgJsonHandler->appendImage(prefix, imageFile);
         mvgJsonHandler->saveChanges();
         
         return key;
@@ -226,6 +229,11 @@ namespace cameval {
     int BasicEvaluator::execute(std::string command)
     {
         return system(command.c_str());
+    }
+
+    std::string BasicEvaluator::getImageFolder()
+    {
+        return baseImageFolder;
     }
 
 } // namespace cameval

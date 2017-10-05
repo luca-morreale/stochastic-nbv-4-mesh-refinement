@@ -35,6 +35,16 @@ namespace opview {
     double modAngle(double x);
     double constrainAngle(double x);
 
+    template<typename K, typename V>
+    std::vector<V> values(std::map<K,V> map)
+    {
+        std::vector<V> values;
+        for(auto el : map) {
+            values.push_back(el.second);
+        }
+        return values;
+    }
+
 
     template<typename K, typename V>
     std::map<V, K> invertMap(std::map<K, V> &mapping)

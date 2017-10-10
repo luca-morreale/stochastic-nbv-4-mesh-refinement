@@ -71,6 +71,7 @@ add_executable(city_mc src/city_mc.cpp src/OpenMvgParser.cpp src/utilities.cpp )
 add_executable(city_gpso src/city_gpso.cpp src/OpenMvgParser.cpp src/utilities.cpp )
 add_executable(city_lpso src/city_lpso.cpp src/OpenMvgParser.cpp src/utilities.cpp )
 
+add_executable(middlebury_scorer src/middlebury_scorer.cpp src/OpenMvgParser.cpp src/utilities.cpp )
 
 target_link_libraries(gm  ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
@@ -383,6 +384,23 @@ target_link_libraries(city_gpso ${OpenCV_LIBS}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
 target_link_libraries(city_lpso ${OpenCV_LIBS}
+                                            ${OPENCV_BUILD_3RDPARTY_LIBS}
+                                            ${GMPXX_LIBRARIES}
+                                            ${GMP_LIBRARIES}
+                                            ${GMP_LIBRARY}
+                                            ${LAPACK_LIBRARIES}
+                                            ${CGAL_LIBRARY}
+                                            ${Boost_LIBRARIES}
+                                            ${ASSIMP_LIBRARIES}
+                                            ${OPTIMAL_VIEW_LIB}
+                                            ${AD3_LIB}
+                                            ${MANIFOLD_LIB} 
+                                            ${MAXFLOW_LIB}
+                                            ${GSL_LIBRARIES}
+                                            ${GSLCBLAS_LIBRARIES}
+                                            )
+
+target_link_libraries(middlebury_scorer ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
                                             ${GMP_LIBRARIES}

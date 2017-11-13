@@ -6,7 +6,7 @@ namespace cameval {
 
     MiddleburyDatasetEvaluator::MiddleburyDatasetEvaluator(std::string &groundTruthFilename, std::string &poseFilename, 
             std::string &baseImageFolder, std::string &basicPoses, std::string &inputImagesFolder, std::string &reportFile)
-            : SystemEvaluator(groundTruthFilename, fake_pose, baseImageFolder,  tmp, reportFile, tmp)
+            : SystemEvaluator(groundTruthFilename, fake_pose, baseImageFolder, tmp, reportFile, tmp)
     {
         this->poseFilename = poseFilename;
         this->inputImagesFolder = inputImagesFolder;
@@ -77,16 +77,32 @@ namespace cameval {
 
     std::string MiddleburyDatasetEvaluator::computeStructure(std::string &jsonFile, int imgId)
     {
-        // std::string folder = OpenMvgSysCall::computeIncrementalStructure(imgId);
-        // folder += "/sfm_data.bin";
+        //std::string folder = OpenMvgSysCall::computeIncrementalStructure(imgId);
+        //// folder += "/sfm_data.bin";
+        //std::string command = "openMVG_main_ConvertSfM_DataFormat -i " + folder + "/sfm_data.bin -o " + folder + "/sfm_data.json";
+        //execute(command);
+        //command = "openMVG_main_ConvertSfM_DataFormat -i " + folder + "/sfm_data.bin -o " + folder + "/sfm_data.ply";
+        //execute(command);
+        //std::cerr << folder << std::endl << std::endl;
+        //return folder;
         // return OpenMvgSysCall::computeStructureFromPoses(folder, imgId);
         return OpenMvgSysCall::computeStructureFromPoses(jsonFile, imgId);
     }
 
-    // void MiddleburyDatasetEvaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
-    // { }
-    // void MiddleburyDatasetEvaluator::setDefaultCameraPoses()
-    // { }
+    //void MiddleburyDatasetEvaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
+    //{ }
+    //void MiddleburyDatasetEvaluator::setDefaultCameraPoses()
+    //{ }
+
+    std::string MiddleburyDatasetEvaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
+    {
+        std::string logfilename = alignedCloud.substr(0, alignedCloud.find_last_of("/")) + "/log_distance.txt";
+
+        std::string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + alignedCloud + " -O " + groundTruthFilename + " -c2m_dist";
+        execute(command);
+
+        return logfilename;
+    }
 
     std::string MiddleburyDatasetEvaluator::transformToLookat(std::string &fixedPosefile)
     {

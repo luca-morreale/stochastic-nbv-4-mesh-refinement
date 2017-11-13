@@ -52,7 +52,7 @@ namespace cameval {
         system(command.c_str());
 
         log("OpenMvg: Compute structure from known poses");
-        command = "openMVG_main_ComputeStructureFromKnownPoses -i " + jsonFile + " -m matches/ -o " + outputjson + " ";
+        command = "openMVG_main_ComputeStructureFromKnownPoses -i " + jsonFile + " -m matches/ -o " + outputjson + " -b";
         if (pairs) {
             command += " -f matches/matches.f.bin ";
         }

@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     std::string inputImageFolder = argv[4];
     std::string outputEvaluation = argv[5]; // "output/output_evaluation_emulate.txt";
 
-    std::string groundTruthFilename = "pcl_gt.asc";
+    std::string groundTruthFilename = "gt.ply";
     std::string basicPosesFilename = "poses_cam.txt";
     std::string baseImageFolder = "images";
 

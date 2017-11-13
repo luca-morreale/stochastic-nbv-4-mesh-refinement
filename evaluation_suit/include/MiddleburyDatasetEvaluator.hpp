@@ -32,8 +32,10 @@ namespace cameval {
 
         virtual std::string computeStructure(std::string &jsonFile, int imgId);
 
-        // virtual void setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId);
-        // virtual void setDefaultCameraPoses();
+        virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename);
+
+        //virtual void setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId);
+        //virtual void setDefaultCameraPoses();
 
     private:
         std::string inputImagesFolder;

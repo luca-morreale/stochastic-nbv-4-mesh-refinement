@@ -125,12 +125,13 @@ namespace cameval {
 
     Pose MiddleburyDatasetEvaluator::getPose(std::string &data)
     {
-        for (int i = 0; i < views.size(); i++) {
-            if (views[i].compare(data) == 0) {
+        for (int i = 0; i < datasetViews.size(); i++) {
+            if (datasetViews[i].compare(data) == 0) {
                 // GLMMat3 mat(cameras[i].R);
-                return Pose(GLMVec3(cameras[i].t.x, cameras[i].t.y, cameras[i].t.z), GLMMat3(cameras[i].R));
+                return Pose(GLMVec3(datasetCameras[i].t.x, datasetCameras[i].t.y, datasetCameras[i].t.z), GLMMat3(datasetCameras[i].R));
             }
         }
+        std::cerr << "View not found: " << data << std::endl;
     }
 
     std::string MiddleburyDatasetEvaluator::getImage(std::string &poseString)

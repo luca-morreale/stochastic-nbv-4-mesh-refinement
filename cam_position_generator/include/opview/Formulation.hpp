@@ -38,6 +38,11 @@ namespace opview {
 
         // TODO add setters and getters for members
 
+        static double VonMisesWeight;
+        static double VisibilityWeight;
+        static double ProjectionWeight;
+        static double ConstraintWeight;
+
     private:
         VonMisesConfiguration vonMisesConfig;
         CameraGeneralConfiguration camConfig;

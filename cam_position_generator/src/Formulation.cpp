@@ -1,6 +1,13 @@
 #include <opview/Formulation.hpp>
 
 namespace opview {
+    
+    double Formulation::VonMisesWeight = 1.0;
+    double Formulation::VisibilityWeight = 1.0;
+    double Formulation::ProjectionWeight = 1.0;
+    double Formulation::ConstraintWeight = 1.0;
+
+
     Formulation::Formulation(VonMisesConfiguration vonMisesConfig, CameraGeneralConfiguration camConfig, TreePtr tree, GLMVec3List &cams)
     {
         this->vonMisesConfig = vonMisesConfig;
@@ -53,7 +60,8 @@ namespace opview {
             constraints = computeBDConstraint(pose, centroid, cams);
         }
 
-        return vonMises + visibility + projection + constraints;
+        return Formulation::VonMisesWeight * vonMises + Formulation::VisibilityWeight  * visibility + 
+                Formulation::ProjectionWeight * projection + Formulation::ConstraintWeight * constraints;
     }
 
     double Formulation::logVonMisesWrapper(EigVector5 &pose, GLMVec3 &centroid, GLMVec3 &normVector, VonMisesConfiguration &vonMisesConfig)

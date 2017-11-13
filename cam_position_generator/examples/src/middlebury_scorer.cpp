@@ -8,6 +8,7 @@
 #include <opview/type_definition.h>
 #include <opview/MiddleburyDatasetScorer.hpp>
 #include <opview/utilities.hpp>
+#include <opview/Formulation.hpp>
 
 #include <aliases.hpp>
 #include <utilities.h>
@@ -18,6 +19,7 @@
 #define ARGS 4
 
 void removeViews(std::string &poses, opview::MiddleburyDatasetScorer &model);
+void setFormulationParams(std::string &paramsFile);
 
 int main(int argc, char **argv) {
     
@@ -33,6 +35,8 @@ int main(int argc, char **argv) {
     std::string meshFile = argv[2];
     std::string score = argv[3];
     std::string output = argv[4];
+
+    std::string formulation_params = "scorer_params.txt";
     
     OpenMvgParser op_openmvg(jsonFile);
     op_openmvg.parse();
@@ -55,6 +59,8 @@ int main(int argc, char **argv) {
     opview::MiddleburyDatasetScorer model(cameraPoses, meshConfig, maxPoints);
     removeViews(output, model);
     std::cout << "done removal" << std::endl;
+
+    setFormulationParams(formulation_params);
 
 #ifdef TIMING
     millis start = now();
@@ -89,4 +95,20 @@ void removeViews(std::string &poses, opview::MiddleburyDatasetScorer &model)
         // }
     }
     cin.close();
+}
+
+void setFormulationParams(std::string &paramsFile)
+{
+    std::ifstream cin(paramsFile);
+    if (cin.is_open()) {
+        std::string weight;
+        cin >> weight;
+        opview::Formulation::VonMisesWeight = std::strtod(weight.c_str(), NULL);
+        cin >> weight;
+        opview::Formulation::VisibilityWeight = std::strtod(weight.c_str(), NULL);
+        cin >> weight;
+        opview::Formulation::ProjectionWeight = std::strtod(weight.c_str(), NULL);
+        cin >> weight;
+        opview::Formulation::ConstraintWeight = std::strtod(weight.c_str(), NULL);
+    }
 }

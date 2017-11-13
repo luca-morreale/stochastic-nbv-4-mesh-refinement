@@ -225,6 +225,32 @@ target_link_libraries(debug_middlebury eval
                                 ${LIBSSH_LIBRARY}
                                 ${PCL_LIBRARIES}
                                 )
+add_executable(middlebury_tuner main/middlebury_tuner.cpp )
+
+target_link_libraries(middlebury_tuner eval
+                                ${OpenCV_LIBS}  
+                                ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
+
+add_executable(coverage_photoscan main/coverage_photoscan.cpp )
+target_link_libraries(coverage_photoscan eval
+                                ${OpenCV_LIBS}  
+                                ${GMPXX_LIBRARIES}
+                                ${GMP_LIBRARIES}
+                                ${GMP_LIBRARY}
+                                ${CGAL_LIBRARY}
+                                ${Boost_FILESYSTEM_LIBRARY}
+                                ${Boost_SYSTEM_LIBRARY}
+                                ${LIBSSH_LIBRARY}
+                                ${PCL_LIBRARIES}
+                                )
 
 # ------------------------ INSTALLATION ------------------------
 

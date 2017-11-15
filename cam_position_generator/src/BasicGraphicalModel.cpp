@@ -61,6 +61,7 @@ namespace opview {
         }
     }
 
+    // from discrete to continuous space
     GLMVec3 BasicGraphicalModel::scalePoint(GLMVec3 point)
     {
         GLMVec3 scaledPoint = point * scale();
@@ -68,6 +69,7 @@ namespace opview {
         return scaledPoint + offset;
     }
 
+    // from continuous space to discrete
     GLMVec3 BasicGraphicalModel::unscalePoint(GLMVec3 point)
     {
         GLMVec3 offset = GLMVec3(offsetX(), offsetY(), offsetZ());

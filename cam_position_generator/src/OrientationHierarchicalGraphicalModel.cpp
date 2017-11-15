@@ -93,6 +93,9 @@ namespace opview {
 
             this->reduceScale(currentOptima, d+1);
         }
+        
+        currentOptima[3] = deg2rad(currentOptima[3]);
+        currentOptima[4] = deg2rad(currentOptima[4]);
         return currentOptima;
     }
 
@@ -229,12 +232,12 @@ namespace opview {
 
     GLMVec2 OrientationHierarchicalGraphicalModel::scaleOrientation(GLMVec2 orientation)
     {
-        return orientation * 360.0f / (float)orientationLabels();
+        return orientation * getDeltaAngle();
     }
 
     GLMVec2 OrientationHierarchicalGraphicalModel::unscaleOrientation(GLMVec2 orientation)
     {
-        return orientation * (float)orientationLabels() / 360.0f;
+        return orientation / getDeltaAngle();
     }
 
     size_t OrientationHierarchicalGraphicalModel::numVariables()

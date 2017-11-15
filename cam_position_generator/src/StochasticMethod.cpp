@@ -88,8 +88,7 @@ namespace opview {
         OrderedPose optima = copy(poses, (size_t)(OFFSPRING*(double)stoConfig.particles.num));
         
         OrderedPose convertedAnglesOptima = convertAngles(optima);
-
-        this->log->append(convertAngles(optima), round);
+        this->log->append(convertedAnglesOptima, round);
 
         return optima;
     }

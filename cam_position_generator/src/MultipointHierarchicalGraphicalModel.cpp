@@ -40,8 +40,6 @@ namespace opview {
             this->reduceScale(currentOptima, d+1);
         }
         
-        currentOptima[3] = deg2rad(currentOptima[3]);
-        currentOptima[4] = deg2rad(currentOptima[4]);
         return currentOptima;
     }
 

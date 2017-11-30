@@ -3,12 +3,12 @@
 
 namespace opview {
 
-    GLMVec3 convertPoinToGLMVec(PointD3 &point)
+    GLMVec3 convertPoinToGLMVec(Point &point)
     {
         return GLMVec3(point.hx(), point.hy(), point.hz());
     }
 
-    Vector convertPoinToCGALVec(PointD3 &point)
+    Vector convertPoinToCGALVec(Point &point)
     {
         return Vector(point.hx(), point.hy(), point.hz());
     }
@@ -92,7 +92,7 @@ namespace opview {
 
     double logVonMises(double angle, VonMisesConfiguration &vonMisesConfig)
     {
-        return std::cos(angle - vonMisesConfig.goalAngle) * vonMisesConfig.dispersion - std::log(2.0 * M_PI) - logBessel0(vonMisesConfig.dispersion); 
+        return std::cos(angle - vonMisesConfig.goalAngle) * vonMisesConfig.dispersion - std::log(2.0 * M_PI) - logBessel0(vonMisesConfig.dispersion) + 10.0; 
     }
 
     double logBessel0(double k)   // log of I0(x) as approximately x − 1/2 log(2 *pi * x)     https://math.stackexchange.com/questions/376758/exponential-approximation-of-the-modified-bessel-function-of-first-kind-equatio 

@@ -31,17 +31,9 @@
 #include <opengm/functions/sparsemarray.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/graphicalmodel/space/simplediscretespace.hxx>
-#include <opengm/inference/alphabetaswap.hxx>
-#include <opengm/inference/alphaexpansion.hxx>
-#include <opengm/inference/auxiliary/minstcutkolmogorov.hxx>
-#include <opengm/inference/graphcut.hxx>
-#include <opengm/inference/icm.hxx>
-#include <opengm/inference/lazyflipper.hxx>
-#include <opengm/inference/loc.hxx>
+#include <opengm/inference/bruteforce.hxx>
 #include <opengm/operations/adder.hxx>
 #include <opengm/operations/multiplier.hxx>
-
-#include <realtimeMR/types_reconstructor.hpp>
 
 namespace opview {
 
@@ -152,23 +144,10 @@ namespace opview {
 
     typedef opengm::Inference<GraphicalModelAdder, opengm::Maximizer> AdderInference;
     typedef opengm::Inference<GraphicalModelMultiplier, opengm::Maximizer> MultiplierInference;
-    typedef opengm::external::MinSTCutKolmogorov<size_t, double> MinStCutType;
-    typedef opengm::GraphCut<GraphicalModelAdder, opengm::Maximizer, MinStCutType> MinGraphCut;
-    typedef opengm::AlphaExpansion<GraphicalModelAdder, MinGraphCut> MinAlphaExpansion;
-    typedef opengm::AlphaBetaSwap<GraphicalModelAdder, MinGraphCut> MinAlphaBetaSwap;
-    typedef opengm::ICM<GraphicalModelAdder, opengm::Maximizer> ICM;
-    typedef opengm::LazyFlipper<GraphicalModelAdder, opengm::Maximizer> LazyFlipper;
-    typedef LazyFlipper::Parameter LazyFlipperParameter;
-    typedef opengm::LOC<GraphicalModelAdder, opengm::Maximizer> LOC;
     typedef opengm::Bruteforce<GraphicalModelAdder, opengm::Maximizer> Bruteforce;
 
     typedef AdderInference* AdderInferencePtr;
     typedef MultiplierInference* MultiplierInferencePtr;
-    typedef MinAlphaExpansion* MinAlphaExpansionPtr;
-    typedef MinAlphaBetaSwap* MinAlphaBetaSwapPtr;
-    typedef ICM* ICMPtr;
-    typedef LazyFlipper* LazyFlipperPtr;
-    typedef LOC* LOCPtr;
     typedef Bruteforce* BruteforcePtr;
 }
 

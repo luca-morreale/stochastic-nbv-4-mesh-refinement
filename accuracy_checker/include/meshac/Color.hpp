@@ -14,6 +14,7 @@ namespace meshac {
         byte b = 0;
         float a = 0;
 
+        Color();
         Color(byte r, byte g, byte b, float a);
 
         std::string to_string();

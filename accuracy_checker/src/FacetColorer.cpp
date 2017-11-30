@@ -25,17 +25,17 @@ namespace meshac {
             addPointToOff(stream, points[i]);
         }
 
+        std::vector<Color> colors(facets.size());
         #pragma omp parallel for
         for (int i = 0; i < facets.size(); i++) {
-            #pragma omp critical
-            std::cout << i << "/" << facets.size() << std::endl;
             Color color = getColorForFacet(i);
-            
-            #pragma omp critical
-            {
-                addFaceToOff(stream, facets[i].vs[0], facets[i].vs[1], facets[i].vs[2], color);
-            }
+            colors[i] = color;            
         }
+        
+        for (int i = 0; i < facets.size(); i++) {
+            addFaceToOff(stream, facets[i].vs[0], facets[i].vs[1], facets[i].vs[2], colors[i]);
+        }
+
         std::ofstream out(output);
         out << stream.str();
         out.close();
@@ -45,18 +45,19 @@ namespace meshac {
     {
         std::stringstream stream;
         std::ofstream out(output);
-        // TriangleList facets = uncertantyEstimator->getFaces();
+
         PointList points = uncertantyEstimator->getPoints();
         FaceIndexList facets = uncertantyEstimator->getFacetsIndex();
         
+        DoubleList accs(facets.size());
         #pragma omp parallel for
         for (int f = 0; f < facets.size(); f++) {
-            #pragma omp critical
-            std::cout << f << "/" << facets.size() << std::endl;
             double accuracy = computeAccuracyForFacet(f);
-            
-            #pragma omp critical
-            addEntryToReport(stream, points[facets[f].vs[0]], points[facets[f].vs[1]], points[facets[f].vs[2]], accuracy);
+            accs[f] = accuracy;
+        }
+
+        for (int f = 0; f < facets.size(); f++) {
+            addEntryToReport(stream, points[facets[f].vs[0]], points[facets[f].vs[1]], points[facets[f].vs[2]], accs[f]);
         }
 
         out << stream.str();

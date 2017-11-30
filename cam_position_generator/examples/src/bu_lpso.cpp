@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     // opview::SpaceBounds bounds(glm::vec3(-10, 0, -10), glm::vec3(10, 10, 0)); // car
 
     // opview::ParticlesInformation particles(100000, 100, 30);
-    opview::ParticlesInformation particles(10000, 10, 45);
+    opview::ParticlesInformation particles(10000, 10, 30);
 
     opview::StochasticConfiguration stoConfig(RESAMPLE, particles, bounds); // size_t resamplingNum, size_t particles, size_t particlesUniform
     // maybe is better if less point in uniform? and then increase in the case of mc?

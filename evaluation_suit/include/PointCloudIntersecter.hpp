@@ -7,7 +7,7 @@
 #include <aliases.h>
 #include <OpenMvgParser.hpp>
 
-#include <realtimeMR/types_reconstructor.hpp>
+#include <manifoldReconstructor/types_reconstructor.hpp>
 
 namespace cameval {
 

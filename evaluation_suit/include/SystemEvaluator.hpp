@@ -27,6 +27,8 @@ namespace cameval {
         virtual std::string getImage(std::string &poseString);
         virtual void cleanFiles(StringList files) override;
 
+        virtual std::string computeDistance(std::string &alignedCloud, std::string &groundTruthFilename) override;
+
         virtual void generatePovrayFile(std::string &file, std::string &poseString);
         virtual std::string generatePovrayDeclaration(std::string &data);
 

@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
     for (auto el : mapIntersectionOutput) {
         
         std::cout << i << "/" << mapIntersectionOutput.size() << " " << el.first << std::endl;
-        OpenMvgParser parser(el.first);
+        cameval::OpenMvgParser parser(el.first);
         parser.parse();
         vector<glm::vec3> points = parser.getSfmData().points_;
         cameval::PointKDTree tree(points);

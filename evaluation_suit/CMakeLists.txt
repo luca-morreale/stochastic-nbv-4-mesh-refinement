@@ -50,7 +50,7 @@ add_library(eval SHARED ${eval_SOURCE})
 target_link_libraries(eval ${OpenCV_LIBS}  ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}
                                 ${GMP_LIBRARY}
-				${CGAL_LIBRARY}
+				                ${CGAL_LIBRARY}
                                 ${Boost_FILESYSTEM_LIBRARY}
                                 ${Boost_SYSTEM_LIBRARY}
                                 ${LIBSSH_LIBRARY}
@@ -202,19 +202,6 @@ target_link_libraries(middlebury_evaluator eval
 add_executable(middlebury_pc main/middlebury_generate_pc.cpp )
 
 target_link_libraries(middlebury_pc eval
-                                ${OpenCV_LIBS}  
-                                ${GMPXX_LIBRARIES}
-                                ${GMP_LIBRARIES}
-                                ${GMP_LIBRARY}
-                                ${CGAL_LIBRARY}
-                                ${Boost_FILESYSTEM_LIBRARY}
-                                ${Boost_SYSTEM_LIBRARY}
-                                ${LIBSSH_LIBRARY}
-                                ${PCL_LIBRARIES}
-                                )
-add_executable(debug_middlebury main/debug_middlebury.cpp )
-
-target_link_libraries(debug_middlebury eval
                                 ${OpenCV_LIBS}  
                                 ${GMPXX_LIBRARIES}
                                 ${GMP_LIBRARIES}

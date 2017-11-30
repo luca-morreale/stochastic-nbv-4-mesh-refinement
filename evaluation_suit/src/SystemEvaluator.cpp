@@ -22,24 +22,24 @@ namespace cameval {
         distances.assign(steps, 0.0);
         std::string matches = "";
 
+        log("Init OpenMvg");
+        std::string basicFolder = initOpenMvg();
+        std::string mvgJson = basicFolder + "/sfm_data.json";
+
+        OpenMvgSysCall::extractMvgFeatures(mvgJson, matches);
+
+        log("\nCompute Structure");
+        std::string mvgFolder = computeStructure(mvgJson, 0);
+        
+        mvgJson = mvgFolder + "/sfm_data.json";
+        std::string offFile = "output/from_gen_config/manifold_final.off";
+
         std::ofstream globalOut(getOuputFile());
 
         log("\n\nStart system evaluation, to perform" + std::to_string(steps) + " steps");
         for (int stepNumber = 0; stepNumber < steps; stepNumber++) {
 
-            log("Start step #" + std::to_string(stepNumber));
-
-            log("Init OpenMvg");
-            std::string basicFolder = initOpenMvg();
-            std::string mvgJson = basicFolder + "/sfm_data.json";
-
-            OpenMvgSysCall::extractMvgFeatures(mvgJson, matches);
-
-            log("\nCompute Structure");
-            std::string mvgFolder = computeStructure(mvgJson, stepNumber+100);
-            
-            mvgJson = mvgFolder + "/sfm_data.json";
-            std::string offFile = "output/from_gen_config/manifold_final.off";
+            log("Start step #" + std::to_string(stepNumber));            
 
             log("Reconstruction step");
             execute(reconstructionExe + " " + mvgJson);
@@ -114,6 +114,18 @@ namespace cameval {
         cout.close();
 
         return newFile;
+    }
+
+    std::string SystemEvaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
+    {
+        std::string logfilename = alignedCloud.substr(0, alignedCloud.find_last_of("/")) + "/log_distance.txt";
+
+        // NOTE no need to remove cameras because assumed main_Structure... already output a structure without cameras and in ascii
+
+        std::string command = "CloudCompare -SILENT -LOG_FILE " + logfilename + " -O " + groundTruthFilename + " -O " + alignedCloud + " -c2c_dist";
+        execute(command);
+
+        return logfilename;
     }
 
 

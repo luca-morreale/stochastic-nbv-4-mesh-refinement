@@ -79,6 +79,9 @@ namespace cameval {
     typedef std::vector<AnglePose> AnglePoseList;
     typedef std::vector<Pose> PoseList;
 
+    typedef std::vector<GLMVec2List> GLMVec2ArrayList;
+    typedef std::vector<std::map<int, glm::vec2>> MapIntGLMVe2List;
+
     typedef std::map<Float6Array, std::string> FloatArrayStringMap;
     typedef std::map<std::string, Pose> StringPoseMap;
     typedef std::map<Float6Array, Pose> Float6ArrayPoseMap;

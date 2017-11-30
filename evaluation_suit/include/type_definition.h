@@ -26,6 +26,25 @@ namespace cameval {
     } Camera;
 
     typedef std::vector<Camera> CameraList;
+
+    struct CameraType {
+        long unsigned int idCam;
+        long int idReconstruction = -1;
+
+        GLMMat3 intrinsics;
+        GLMMat3 rotation;
+        GLMVec3 translation;
+        GLMMat4 cameraMatrix;
+        GLMVec3 center;
+        GLMMat4 mvp;
+
+        std::string pathImage;
+
+        int imageWidth;
+        int imageHeight;
+    };
+
+    typedef std::vector<CameraType> CameraTypeList;
     
 
 } // namesapce cameval

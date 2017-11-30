@@ -15,10 +15,8 @@ find_package(GSL REQUIRED)
 find_library(GMP_LIBRARY gmp /usr/lib)
 
 
-set(MANIFOLD_LIB realtimeManifoldReconstructor)
+set(MANIFOLD_LIB manifoldReconstructor)
 set(OPTIMAL_VIEW_LIB optimalView)
-set(MAXFLOW_LIB external-library-maxflow-shared)
-set(AD3_LIB external-library-ad3-shared)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
@@ -83,12 +81,10 @@ target_link_libraries(gm  ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+                                            
 target_link_libraries(mc ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -99,12 +95,10 @@ target_link_libraries(mc ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(gpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -115,9 +109,6 @@ target_link_libraries(gpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
@@ -131,9 +122,6 @@ target_link_libraries(lpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
@@ -149,9 +137,6 @@ target_link_libraries(bu_gm ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
@@ -172,6 +157,7 @@ target_link_libraries(bu_mc ${OpenCV_LIBS}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(bu_gpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -182,12 +168,10 @@ target_link_libraries(bu_gpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(bu_lpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -198,9 +182,6 @@ target_link_libraries(bu_lpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
@@ -215,12 +196,10 @@ target_link_libraries(for_gm ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(for_mc ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -231,12 +210,10 @@ target_link_libraries(for_mc ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(for_gpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -247,12 +224,10 @@ target_link_libraries(for_gpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(for_lpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -263,9 +238,6 @@ target_link_libraries(for_lpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
@@ -280,12 +252,11 @@ target_link_libraries(car_gm ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
+
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(car_mc ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -296,12 +267,10 @@ target_link_libraries(car_mc ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(car_gpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -312,12 +281,10 @@ target_link_libraries(car_gpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(car_lpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -328,9 +295,6 @@ target_link_libraries(car_lpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
@@ -345,12 +309,10 @@ target_link_libraries(city_gm ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(city_mc ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -361,12 +323,10 @@ target_link_libraries(city_mc ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(city_gpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -377,12 +337,10 @@ target_link_libraries(city_gpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
+
 target_link_libraries(city_lpso ${OpenCV_LIBS}
                                             ${OPENCV_BUILD_3RDPARTY_LIBS}
                                             ${GMPXX_LIBRARIES}
@@ -393,9 +351,6 @@ target_link_libraries(city_lpso ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )
@@ -410,9 +365,6 @@ target_link_libraries(middlebury_scorer ${OpenCV_LIBS}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
                                             ${OPTIMAL_VIEW_LIB}
-                                            ${AD3_LIB}
-                                            ${MANIFOLD_LIB} 
-                                            ${MAXFLOW_LIB}
                                             ${GSL_LIBRARIES}
                                             ${GSLCBLAS_LIBRARIES}
                                             )

@@ -3,10 +3,6 @@
 #include <OpenMvgParser.h>
 
 #include <opview/BruteForceSolverGenerator.hpp>
-#include <opview/FlipperSolverGenerator.hpp>
-#include <opview/HierarchicalDiscreteGraphicalModel.hpp>
-#include <opview/ICMSolverGenerator.hpp>
-#include <opview/LOCSolverGenerator.hpp>
 #include <opview/AutonomousMultipointHierarchicalGraphicalModel.hpp>
 #include <opview/SolverGenerator.hpp>
 #include <opview/type_definition.h>

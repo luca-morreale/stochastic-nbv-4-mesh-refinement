@@ -3,10 +3,6 @@
 #include <OpenMvgParser.h>
 
 #include <opview/BruteForceSolverGenerator.hpp>
-#include <opview/FlipperSolverGenerator.hpp>
-#include <opview/HierarchicalDiscreteGraphicalModel.hpp>
-#include <opview/ICMSolverGenerator.hpp>
-#include <opview/LOCSolverGenerator.hpp>
 #include <opview/AutonomousMultipointHierarchicalGraphicalModel.hpp>
 #include <opview/SolverGenerator.hpp>
 #include <opview/type_definition.h>
@@ -55,7 +51,7 @@ int main(int argc, char **argv) {
     // opview::SolverGeneratorPtr solver = new opview::LOCSolverGenerator();
     opview::SolverGeneratorPtr solver = new opview::BruteForceSolverGenerator();
 
-    opview::SpaceBounds bounds(glm::vec3(-190, 0, -160), glm::vec3(0, 60, 0)); // city
+    opview::SpaceBounds bounds(glm::vec3(-190, 0, -160), glm::vec3(-100, 60, -100)); // city
     opview::OrientationHierarchicalConfiguration config(DEPTH, DISCRETE_LABELS, bounds, {30, 30, 20, 20, 10});
 
     opview::CameraGeneralConfiguration camConfig(1920, 1080, 959.9965); // building fort

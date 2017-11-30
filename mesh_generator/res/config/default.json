@@ -15,8 +15,8 @@
 	"maxPointsPerCamera": 1000000,
 	"minDistancePointPositionUpdate": 0.0,
 	
-	"maxDistanceCamFeature": 200.0,
-	"steinerGridStepLength": 200.0,
+	"maxDistanceCamFeature": 40.0,
+	"steinerGridStepLength": 20.0,
 	
 	"manifold_update_every": 4,
 	"initial_manifold_update_skip": 2,

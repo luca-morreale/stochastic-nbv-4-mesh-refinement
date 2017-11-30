@@ -8,13 +8,18 @@
 #ifndef CAM_PARSERS_OPENMVGPARSER_H_
 #define CAM_PARSERS_OPENMVGPARSER_H_
 
-#include <realtimeMR/SfMData.h>
+#include <manifoldReconstructor/Exceptions.hpp>
+#include <manifoldReconstructor/SfMData.h>
+#include <manifoldReconstructor/types_reconstructor.hpp>
+#include <manifoldReconstructor/utilities.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <map>
+
 #include <rapidjson/document.h>
-#include <realtimeMR/types_reconstructor.hpp>
+#include <rapidjson/reader.h>
 
 
 class OpenMvgParser {

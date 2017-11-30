@@ -13,6 +13,8 @@ find_package(OpenCV REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+set(MANIFOLD_LIBS manifoldReconstructor)
+
 # ----------------------- INCLUDES ----------------------------
 include_directories(  ${EIGEN3_INCLUDE_DIR}
                       ${GMPXX_INCLUDE_DIR}
@@ -29,36 +31,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 # ------------------------ BUILD -------------------------------
 
-#file(GLOB_RECURSE meshRec_SOURCE 
-#                   src/Delaunay3DCellInfo.cpp
-#                   src/Delaunay3DVertexInfo.cpp
-#                   src/ManifoldManager.cpp
-#                   src/TriangulationManager.cpp
-#                   src/OutputCreator.cpp
-#                   src/OutputManager.cpp
-#                   src/utilities/*.cpp
-#                   src/cam_parsers/ORBIncrementalParser.cpp
-#                   src/cam_parsers/ORBIncrementalParser.cpp
-#                   src/cam_parsers/ConfigParser.cpp
-#                   test/ReconstructFromSLAMData.cpp
-#                   test/CameraPointsCollection.cpp
-#                   test/Main.cpp
-#
-#                 src/*.cpp
-#                 src/cam_parsers/*.cpp
-#                 src/utilities/*.cpp
-#                 test/*.cpp
-#)
 
+file(GLOB_RECURSE reconstructor_SOURCE  src/Main.cpp src/OpenMvgParser.cpp )
 
+add_executable(meshReconstructor ${reconstructor_SOURCE})
 
-
-
-set(MANIFOLD_LIBS realtimeManifoldReconstructor)
-file(GLOB_RECURSE reconstructor_SOURCE  src/*.cpp )
-
-add_executable(manifoldReconstructor ${reconstructor_SOURCE})
-target_link_libraries(manifoldReconstructor ${OpenCV_LIBS} 
+target_link_libraries(meshReconstructor ${OpenCV_LIBS} 
                                     ${GMPXX_LIBRARIES}
                                     ${GMP_LIBRARIES}
                                     ${LAPACK_LIBRARIES}

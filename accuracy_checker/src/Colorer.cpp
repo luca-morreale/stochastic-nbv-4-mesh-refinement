@@ -73,7 +73,7 @@ namespace meshac {
 
     Color Colorer::buildColor(const rapidjson::Value& color)
     {
-        return {(byte)color["r"].GetInt(), (byte)color["g"].GetInt(), (byte)color["b"].GetInt(), color["a"].GetFloat()};
+        return {(byte)color["r"].GetInt(), (byte)color["g"].GetInt(), (byte)color["b"].GetInt(), color["a"].GetDouble()};
     }
 
     std::string Colorer::getConfigFileName()

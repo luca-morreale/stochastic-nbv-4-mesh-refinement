@@ -11,7 +11,7 @@ find_package(PCL REQUIRED)
 
 find_library(GMP_LIBRARY gmp /usr/lib)
 
-set(MANIFOLD_LIB realtimeManifoldReconstructor)
+set(MANIFOLD_LIB manifoldReconstructor)
 set(MESH_ACCURACY_LIB meshac)
 
 find_package(OpenMP)
@@ -40,21 +40,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fpermissive")
 
 # ------------------------ BUILD -------------------------------
 
-file(GLOB_RECURSE main_SOURCE )
+file(GLOB main_SOURCE src/OpenMvgParser.cpp src/ReportGenerator.cpp src/filter_points.cpp src/convertSfM.cpp )
 
-add_executable(residualColorer src/main_residual.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(inverseColorer src/main_inverted.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(photoColorer src/main_photo.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(pointColorer src/main_point.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(ssdColorer src/main_ssd.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(nccColorer src/main_ncc.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(residualColorer src/main_residual.cpp ${main_SOURCE} )
+add_executable(inverseColorer src/main_inverted.cpp ${main_SOURCE} )
+add_executable(photoColorer src/main_photo.cpp ${main_SOURCE} )
+add_executable(pointColorer src/main_point.cpp ${main_SOURCE} )
+add_executable(ssdColorer src/main_ssd.cpp ${main_SOURCE} )
+add_executable(nccColorer src/main_ncc.cpp ${main_SOURCE} )
 
-add_executable(residualReport src/fast_residual.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(inverseReport src/fast_inverted.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(photoReport src/fast_photo.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(pointReport src/fast_point.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(ssdReport src/fast_ssd.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
-add_executable(nccReport src/fast_ncc.cpp src/OpenMvgParser.cpp src/ReportGenerator.cpp )
+add_executable(residualReport src/fast_residual.cpp ${main_SOURCE} )
+add_executable(inverseReport src/fast_inverted.cpp ${main_SOURCE} )
+add_executable(photoReport src/fast_photo.cpp ${main_SOURCE} )
+add_executable(pointReport src/fast_point.cpp ${main_SOURCE} )
+add_executable(ssdReport src/fast_ssd.cpp ${main_SOURCE} )
+add_executable(nccReport src/fast_ncc.cpp ${main_SOURCE} )
 
 
 target_link_libraries(residualColorer ${OpenCV_LIBS} 

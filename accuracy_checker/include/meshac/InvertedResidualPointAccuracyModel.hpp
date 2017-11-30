@@ -1,10 +1,10 @@
 #ifndef MESH_ACCURACY_INVERTED_RESIDUAL_ACCURACY_MODEL_H
 #define MESH_ACCURACY_INVERTED_RESIDUAL_ACCURACY_MODEL_H
 
-#include <realtimeMR/SfMData.h>
 
-#include <meshac/ResidualPointAccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
+#include <meshac/ResidualPointAccuracyModel.hpp>
+#include <meshac/SfMData.h>
 
 
 namespace meshac {

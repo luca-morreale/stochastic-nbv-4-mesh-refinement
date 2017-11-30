@@ -1,8 +1,6 @@
 #ifndef MESH_ACCURACY_INVARIANT_ACCURACY_MODEL_H_
 #define MESH_ACCURACY_INVARIANT_ACCURACY_MODEL_H_
 
-#include <realtimeMR/SfMData.h>
-
 #include <meshac/ResidualPointAccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
 #include <meshac/ImagePointVarianceEstimator.hpp>

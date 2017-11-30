@@ -25,7 +25,6 @@
 #include <set>
 #include <vector>
 
-#include <realtimeMR/types_reconstructor.hpp>
 
 namespace meshac {
 
@@ -92,11 +91,7 @@ namespace meshac {
     inline EigMatrix EigOnes(int rows, int cols) { return Eigen::MatrixXd::Ones(rows, cols); };
 
 
-    /* Shortcut for manifoldReconstructor types */
-    typedef std::vector<CameraType> CameraList;
-    typedef glm::mat4 CameraMatrix;
-    typedef std::vector<CameraMatrix> CameraMatrixList;
-
+    /* Shortcuts for CGAL types */
     typedef CGAL::Simple_cartesian<double> TreeKernel;
     // typedef CGAL::Cartesian<double> TreeKernel;
     typedef TreeKernel::Point_3 Point;
@@ -114,9 +109,9 @@ namespace meshac {
     typedef CGAL::AABB_traits<TreeKernel, Primitive> Traits;
 
     typedef CGAL::AABB_tree<Traits> Tree;
-    typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
-
     typedef Tree* TreePtr;
+
+    typedef boost::optional< Tree::Intersection_and_primitive_id<Segment>::Type > Segment_intersection;
 
     typedef std::map<int, Point> IntPointMap;
     typedef std::map<Point, int> PointIntMap;

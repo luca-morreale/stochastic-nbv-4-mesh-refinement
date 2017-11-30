@@ -6,10 +6,9 @@
 #include <ctime>
 #include <iostream>
 
-#include <realtimeMR/SfMData.h>
-
 #include <meshac/camera_utilities.hpp>
 #include <meshac/FaceAccuracyModel.hpp>
+#include <meshac/SfMData.h>
 #include <meshac/type_definition.hpp>
 #include <meshac/UndefinedFaceIndexException.hpp>
 #include <meshac/UnexpectedPointException.hpp>

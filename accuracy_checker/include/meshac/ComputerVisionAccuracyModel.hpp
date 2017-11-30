@@ -1,8 +1,6 @@
 #ifndef MESH_ACCURACY_COMPUTER_VISION_ACCURACY_MODEL_H
 #define MESH_ACCURACY_COMPUTER_VISION_ACCURACY_MODEL_H
 
-#include <realtimeMR/SfMData.h>
-
 #include <meshac/alias_definition.hpp>
 #include <meshac/InvariantAccuracyModel.hpp>
 

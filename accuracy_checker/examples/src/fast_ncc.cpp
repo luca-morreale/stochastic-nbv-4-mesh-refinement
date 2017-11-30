@@ -3,8 +3,9 @@
 #include <OpenMvgParser.h>
 
 #include <meshac/FaceAccuracyModel.hpp>
-#include <meshac/NCCFaceAccuracyModel.hpp>
 #include <meshac/FacetColorer.hpp>
+#include <meshac/NCCFaceAccuracyModel.hpp>
+#include <meshac/SfMData.h>
 
 #include <iostream>
 #include <fstream>
@@ -32,7 +33,7 @@ int main(int argc, char **argv) {
     op_openmvg.parse();
     std::cout << "sfm: " << op_openmvg.getSfmData().numCameras_ << " cams; " << op_openmvg.getSfmData().numPoints_ << " points" << std::endl << std::endl;
 
-    SfMData sfm_data_ = op_openmvg.getSfmData();
+    meshac::SfMData sfm_data_ = op_openmvg.getSfmData();
 
     std::string pathPrefix = jsonFile.substr(0, jsonFile.find_last_of("/"));
     pathPrefix = pathPrefix.substr(0, pathPrefix.find_last_of("/")+1);

@@ -35,6 +35,30 @@ namespace meshac {
     } FaceIndex;
 
     typedef std::vector<FaceIndex> FaceIndexList;
+
+    /*
+     * struct from manifoldReconstructor, repo of Andrea Romanoni
+     */
+    struct CameraType {
+        long unsigned int idCam;
+        long int idReconstruction = -1;
+
+        glm::mat3 intrinsics;
+        glm::mat3 rotation;
+        glm::vec3 translation;
+        glm::mat4 cameraMatrix;
+        glm::vec3 center;
+        glm::mat4 mvp;
+
+        std::string pathImage;
+
+        int imageWidth;
+        int imageHeight;
+    };
+
+    typedef std::vector<CameraType> CameraList;
+    typedef glm::mat4 CameraMatrix;
+    typedef std::vector<CameraMatrix> CameraMatrixList;
     
 } // namesace meshac
 

@@ -18,18 +18,20 @@ void ReportGenerator::generateReport(std::string outputFile)
 {
     std::ofstream out(outputFile);
 
+    DoubleList accs(points.size());
     #pragma omp parallel for
     for (int i = 0; i < points.size(); i++) {
-        std::cout << i << "/" << points.size() << std::endl;
+        
         double acc = estimator->computeSingleVarianceForPoint(points[i]);
-
-        #pragma omp critical
-        {
-            out << points[i].x << " " << points[i].y << " " << points[i].z << " ";
-            out << normals[i].x << " " << normals[i].y << " " << normals[i].z << " ";
-            out << acc << std::endl;
-        }
+        accs[i] = acc;
     }
+
+    for (int i = 0; i < points.size(); i++) {
+        out << points[i].x << " " << points[i].y << " " << points[i].z << " ";
+        out << normals[i].x << " " << normals[i].y << " " << normals[i].z << " ";
+        out << accs[i] << std::endl;
+    }
+
     out.close();
 }
 

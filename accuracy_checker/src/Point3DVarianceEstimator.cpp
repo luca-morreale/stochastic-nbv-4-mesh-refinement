@@ -49,7 +49,6 @@ namespace meshac {
     {
         EigMatrixList varianceList = this->getAccuracyModel()->getAccuracyForPointByImage(pointIndex);
         EigMatrix variance = this->selectVarianceMatrix(varianceList);
-        std::cout << "variance matrix " << variance << std::endl;
         return this->computeVarianceFromMatrix(variance);
     }
 

@@ -9,6 +9,8 @@
 
 #include <meshac/Point3DVarianceEstimator.hpp>
 
+#include <aliases.hpp>
+
 class ReportGenerator {
 public:
     ReportGenerator(meshac::Point3DVarianceEstimatorPtr estimator, std::vector<glm::vec3> points);

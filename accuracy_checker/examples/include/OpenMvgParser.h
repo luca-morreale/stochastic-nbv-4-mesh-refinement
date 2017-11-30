@@ -2,43 +2,50 @@
  * OpenMvgParser.h
  *
  *  Created on: 16 mar 2016
- *      Author: andrea
+ *      Author: Andrea Romanoni
  */
 
 #ifndef CAM_PARSERS_OPENMVGPARSER_H_
 #define CAM_PARSERS_OPENMVGPARSER_H_
 
-#include <realtimeMR/SfMData.h>
-#include <iostream>
 #include <fstream>
-#include <vector>
+#include <iostream>
 #include <map>
+#include <stdexcept>
+#include <vector>
+
 #include <rapidjson/document.h>
-#include <realtimeMR/types_reconstructor.hpp>
+#include <rapidjson/reader.h>
+
+#include <glm/glm.hpp>
+
+#include <meshac/SfMData.h>
+#include <meshac/type_definition.hpp>
+
+#include <JsonException.hpp>
 
 
 class OpenMvgParser {
 public:
-  OpenMvgParser(std::string path);
-  virtual ~OpenMvgParser();
-  virtual void parse();
+    OpenMvgParser(std::string path);
+    virtual ~OpenMvgParser();
+    virtual void parse();
 
-  const SfMData& getSfmData() const {
-    return sfm_data_;
-  }
+    const meshac::SfMData& getSfmData() const {
+      return sfm_data_;
+    }
 
 private:
-  void parseViews(const std::map<int,glm::mat3> & intrinsics, const std::map<int,CameraType> & extrinsics);
-  void parseIntrinsics(std::map<int,glm::mat3> & intrinsics);
-  void parseExtrinsics(std::map<int,CameraType> & extrinsics);
-  void parsePoints();
+    void parseViews(const std::map<int, glm::mat3>& intrinsics, const std::map<int, meshac::CameraType>& extrinsics);
+    void parseIntrinsics(std::map<int, glm::mat3>& intrinsics);
+    void parseExtrinsics(std::map<int, meshac::CameraType>& extrinsics);
+    void parsePoints();
 
 
-  rapidjson::Document document_;
-  std::string fileName_;
-  std::ifstream fileStream_;
-  SfMData sfm_data_;
-
+    rapidjson::Document document_;
+    std::string fileName_;
+    std::ifstream fileStream_;
+    meshac::SfMData sfm_data_;
 };
 
 #endif /* CAM_PARSERS_OPENMVGPARSER_H_ */

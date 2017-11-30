@@ -12,9 +12,6 @@ find_package(PCL REQUIRED)
 
 find_library(GMP_LIBRARY gmp /usr/lib)
 
-#set(MANIFOLD_LIB manifoldReconstructor)
-set(MANIFOLD_LIB realtimeManifoldReconstructor)
-
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -53,7 +50,6 @@ target_link_libraries(meshac ${OpenCV_LIBS}
                                             ${CGAL_LIBRARY}
                                             ${Boost_LIBRARIES}
                                             ${ASSIMP_LIBRARIES}
-                                            ${MANIFOLD_LIB} 
                                             ${MESH_ACCURACY_LIB}
                                             ${GMP_LIBRARY}
                                             ${PCL_LIBRARIES}

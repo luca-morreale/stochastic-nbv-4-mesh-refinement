@@ -1,11 +1,10 @@
 #ifndef MESH_ACCURACY_RESIDUAL_ACCURACY_MODEL_H
 #define MESH_ACCURACY_RESIDUAL_ACCURACY_MODEL_H
 
-#include <realtimeMR/SfMData.h>
-
-#include <meshac/PointAccuracyModel.hpp>
-#include <meshac/InvalidUpdateException.hpp>
 #include <meshac/camera_utilities.hpp>
+#include <meshac/InvalidUpdateException.hpp>
+#include <meshac/PointAccuracyModel.hpp>
+#include <meshac/SfMData.h>
 
 
 namespace meshac {

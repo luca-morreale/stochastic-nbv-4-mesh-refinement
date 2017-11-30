@@ -50,7 +50,7 @@ namespace meshac {
         for (rapidjson::SizeType i = 0; i < colors.Size(); i++) {  // Uses SizeType instead of size_t
             if (this->hasCorrectMembers(colors[i])) {
                 Color c = this->buildColor(colors[i]);
-                this->colors->addColor(colors[i]["threshold"].GetFloat(), c);
+                this->colors->addColor(colors[i]["threshold"].GetDouble(), c);
             }
         }
     }

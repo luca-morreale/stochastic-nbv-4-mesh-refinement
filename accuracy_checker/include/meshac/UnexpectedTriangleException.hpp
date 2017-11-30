@@ -10,7 +10,7 @@ namespace meshac {
         UnexpectedTriangleException(std::string msg) : std::runtime_error(msg)
         { /*    */ }
 
-        UnexpectedTriangleException(Point &a, Point &b, Point &c) : std::runtime_error("There is no triangle composed by " 
+        UnexpectedTriangleException(Point &a, Point &b, Point &c) : std::runtime_error("There is no triangle composed of "
                         "("+ std::to_string(a[0]) + "; " + std::to_string(a[1]) + "; " + std::to_string(a[2]) + ")" 
                         "("+ std::to_string(b[0]) + "; " + std::to_string(b[1]) + "; " + std::to_string(b[2]) + ")" 
                         "("+ std::to_string(c[0]) + "; " + std::to_string(c[1]) + "; " + std::to_string(c[2]) + ").")

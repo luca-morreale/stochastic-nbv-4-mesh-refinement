@@ -8,6 +8,7 @@
 #include <glm/gtx/norm.hpp>
 
 #include <meshac/alias_definition.hpp>
+#include <meshac/type_definition.hpp>
 #include <meshac/UnprojectablePointThroughCamException.hpp>
 
 namespace meshac {

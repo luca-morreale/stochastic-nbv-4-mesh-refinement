@@ -1,10 +1,8 @@
 #ifndef MESH_ACCURACY_BASIC_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 #define MESH_ACCURACY_BASIC_PHOTOGRAMMETRIST_ACCURACY_MODEL_H
 
-#include <realtimeMR/SfMData.h>
-
-#include <meshac/ResidualPointAccuracyModel.hpp>
 #include <meshac/alias_definition.hpp>
+#include <meshac/ResidualPointAccuracyModel.hpp>
 #include <meshac/utilities.hpp>
 
 namespace meshac {

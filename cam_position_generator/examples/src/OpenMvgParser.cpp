@@ -174,9 +174,9 @@ void OpenMvgParser::parsePoints() {
       if (!X[2].IsDouble())
         throw JsonAccessException("JsonAccessException--> error while querying X2.IsDouble()");
 
-      float x0 = X[0].GetFloat();
-      float x1 = X[1].GetFloat();
-      float x2 = X[2].GetFloat();
+      float x0 = X[0].GetDouble();
+      float x1 = X[1].GetDouble();
+      float x2 = X[2].GetDouble();
 
       sfm_data_.points_[curPoint] = glm::vec3(x0, x1, x2);
 
@@ -233,10 +233,10 @@ void OpenMvgParser::parseIntrinsics(std::map<int, glm::mat3> & intrinsics) {
     for (rapidjson::SizeType curInt = 0; curInt < intrinsicsJson.Size(); curInt++) {
       int key = intrinsicsJson[curInt]["key"].GetInt();
       glm::mat3 temp(0.0);
-      temp[0][0] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["focal_length"].GetFloat();
-      temp[1][1] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["focal_length"].GetFloat();
-      temp[0][2] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["principal_point"][0].GetFloat();
-      temp[1][2] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["principal_point"][1].GetFloat();
+      temp[0][0] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["focal_length"].GetDouble();
+      temp[1][1] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["focal_length"].GetDouble();
+      temp[0][2] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["principal_point"][0].GetDouble();
+      temp[1][2] = intrinsicsJson[curInt]["value"]["ptr_wrapper"]["data"]["principal_point"][1].GetDouble();
       temp[2][2] = 1.0;
 
       intrinsics.insert(std::pair<int, glm::mat3>(key, temp));
@@ -263,12 +263,12 @@ void OpenMvgParser::parseExtrinsics(std::map<int, CameraType> & extrinsics) {
 
       for (int curR = 0; curR < 3; curR++) {
         for (int curC = 0; curC < 3; curC++) {
-          temp.rotation[curR][curC] = extrinsicsJson[curInt]["value"]["rotation"][curR][curC].GetFloat();
+          temp.rotation[curR][curC] = extrinsicsJson[curInt]["value"]["rotation"][curR][curC].GetDouble();
         }
       }
 
       for (int curR = 0; curR < 3; curR++) {
-        temp.center[curR] = extrinsicsJson[curInt]["value"]["center"][curR].GetFloat();
+        temp.center[curR] = extrinsicsJson[curInt]["value"]["center"][curR].GetDouble();
       }
       temp.translation = -temp.center * temp.rotation;
 

@@ -77,22 +77,9 @@ namespace cameval {
 
     std::string MiddleburyDatasetEvaluator::computeStructure(std::string &jsonFile, int imgId)
     {
-        //std::string folder = OpenMvgSysCall::computeIncrementalStructure(imgId);
-        //// folder += "/sfm_data.bin";
-        //std::string command = "openMVG_main_ConvertSfM_DataFormat -i " + folder + "/sfm_data.bin -o " + folder + "/sfm_data.json";
-        //execute(command);
-        //command = "openMVG_main_ConvertSfM_DataFormat -i " + folder + "/sfm_data.bin -o " + folder + "/sfm_data.ply";
-        //execute(command);
-        //std::cerr << folder << std::endl << std::endl;
-        //return folder;
-        // return OpenMvgSysCall::computeStructureFromPoses(folder, imgId);
         return OpenMvgSysCall::computeStructureFromPoses(jsonFile, imgId);
     }
 
-    //void MiddleburyDatasetEvaluator::setPositionOfCameras(std::string &sfmFile, AnglePose &pose, size_t imgId) 
-    //{ }
-    //void MiddleburyDatasetEvaluator::setDefaultCameraPoses()
-    //{ }
 
     std::string MiddleburyDatasetEvaluator::computeDistance(std::string &alignedCloud, std::string &groundTruthFilename)
     {

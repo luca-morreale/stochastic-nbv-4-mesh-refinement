@@ -13,7 +13,7 @@ find_package(Eigen3 REQUIRED)
 
 find_library(GMP_LIBRARY gmp /usr/lib)
 
-set(MANIFOLD_LIB realtimeManifoldReconstructor)
+set(MANIFOLD_LIB manifoldReconstructor)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)

@@ -46,6 +46,8 @@ namespace meshac {
         std::stringstream stream;
         std::ofstream out(output);
 
+        facetsComputed = 0;
+
         PointList points = uncertantyEstimator->getPoints();
         FaceIndexList facets = uncertantyEstimator->getFacetsIndex();
         
@@ -75,6 +77,8 @@ namespace meshac {
     double FacetColorer::computeAccuracyForFacet(int i)
     {
         if (!isSteinerFacet(i)) {
+            #pragma omp critical
+            this->facetsComputed++;
             try {
                 return uncertantyEstimator->getAccuracyForFace(i);
             } catch (UnexpectedPointException &ex) { }

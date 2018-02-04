@@ -46,6 +46,7 @@ namespace meshac {
 
     private:
         std::string configFileName;
+        int facetsComputed = 0;
 
         FaceAccuracyModelPtr uncertantyEstimator;
     };

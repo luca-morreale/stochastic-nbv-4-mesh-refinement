@@ -93,11 +93,12 @@ vector<glm::vec3> load(std::string &file)
 
     while (!ply.eof()) {
         double a, b, c, d;
+        int r, g, e;
         glm::vec3 point;
         ply >> point.x >> point.y >> point.z;
         ply >> a >> b >> c; // colors
         ply >> a >> b >> c; // normal vectors
-
+        
         if (point.x == 0.0f && point.y == 0.0f && point.z == 0.0f) continue;
 
         // if (point.x > 0.0f) continue;

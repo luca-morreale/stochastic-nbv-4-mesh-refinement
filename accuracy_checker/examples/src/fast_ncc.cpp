@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
     
     omp_set_num_threads(OMP_THREADS);
 
-    if (argc < 3) {
+    if (argc < 4) {
         std::cout << argv[0] << " mvg.json mesh.off outputlog" << std::endl;
         return 1;
     }

@@ -27,7 +27,7 @@
 	"fake_points_multiplier": 0,
 	"update_points_position": false,
 	
-	"output_folder": "res/output/",
+	"output_folder": "output/from_gen_config/",
 	"time_stats_folder": "res/stats/",
 	"count_stats_folder": "res/stats/",
 	"statsId": "default"

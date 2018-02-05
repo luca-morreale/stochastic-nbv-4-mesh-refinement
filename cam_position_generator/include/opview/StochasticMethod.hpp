@@ -11,7 +11,7 @@
 
 namespace opview {
 
-    #define orientationCycles(delta) for(int ptc = 0; ptc < 360; ptc+=delta) for(int yaw = 0; yaw < 360; yaw+=delta)
+    #define orientationCycles(delta) for(int yaw = 0; yaw < 360; yaw+=delta)
 
     
     class StochasticMethod {
@@ -56,7 +56,9 @@ namespace opview {
 
         float offsetX();
         float offsetY();
-        float offsetZ();        
+        float offsetZ();
+
+        float pitch;
         
     private:
         CameraGeneralConfiguration camConfig;

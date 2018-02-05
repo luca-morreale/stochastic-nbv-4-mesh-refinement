@@ -8,6 +8,7 @@ namespace opview {
                                                                 : BasicGraphicalModel(solver, cams, goalAngle, dispersion)
     {
         this->config = config;
+        this->Y = config.bounds.upper.y;
         this->initShapes();
         this->resetPosition();
     }
@@ -19,10 +20,10 @@ namespace opview {
     {
         this->resetPosition();
 
-        LabelList currentOptima = {config.bounds.lower.x, config.bounds.lower.y, config.bounds.lower.z, 0.0, 0.0};
+        LabelList currentOptima = {config.bounds.lower.x, this->Y, config.bounds.lower.y, 0.0, 0.0};
         
         for (int d = 0; d < this->getDepth(); d++) {
-            // std::cout << "Current depth: " << d << std::endl;
+            
             SimpleSpace space(shape.begin(), shape.end());
             GraphicalModelAdder model(space);
 
@@ -46,8 +47,6 @@ namespace opview {
     {
         VarIndexList x;
         algorithm->arg(x);
-
-        // std::cout << "Value obtained: " << algorithm->value() << std::endl;
 
         LabelList convertedOpt(x.size());
         GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
@@ -80,8 +79,8 @@ namespace opview {
         float tmpOffsetZ = currentOptimal[2] - halfNextSize.z;
 
         offsetX = [tmpOffsetX, this](){ return std::max(tmpOffsetX, lowerBounds().x); };
-        offsetY = [tmpOffsetY, this](){ return std::max(tmpOffsetY, lowerBounds().y); };
-        offsetZ = [tmpOffsetZ, this](){ return std::max(tmpOffsetZ, lowerBounds().z); };
+        // offsetY = [tmpOffsetY, this](){ return std::max(tmpOffsetY, lowerBounds().y); };
+        offsetY = [tmpOffsetZ, this](){ return std::max(tmpOffsetZ, lowerBounds().z); };
 
         scale = [nextScale](){ return nextScale; };
     }
@@ -107,11 +106,11 @@ namespace opview {
     void HierarchicalDiscreteGraphicalModel::resetPosition()
     {
         scale = [this](){ return GLMVec3(std::fabs(config.bounds.upper.x - config.bounds.lower.x),
-                                        std::fabs(config.bounds.upper.y - config.bounds.lower.y),
+                                        0, // std::fabs(config.bounds.upper.y - config.bounds.lower.y),
                                         std::fabs(config.bounds.upper.z - config.bounds.lower.z)) / (float)numLabels(); };
 
         offsetX = [this](){ return config.bounds.lower.x; };
-        offsetY = [this](){ return config.bounds.lower.y; };
+        // offsetY = [this](){ return config.bounds.lower.y; };
         offsetZ = [this](){ return config.bounds.lower.z; };
     }
 

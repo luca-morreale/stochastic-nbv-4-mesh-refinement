@@ -44,11 +44,15 @@ namespace opview {
         
         GLMVec3List normals = worst.second;
         OrderedPose currentOptima = uniformSamplingStep(centroids, normals, 0);
+
+        // std::cout << "done uniform" << std::endl;
         
         convertSamplesToParticles(currentOptima);
 
         for (int d = 0; d < getResamplingSteps(); d++) {
+            // std::cout << "done step " << d << std::endl;
             updateParticles(centroids, normals);
+            // std::cout << "logging" << std::endl;
             logParticles(d);
             c1 = c1 * 0.75f;
             c2 = c2 * 0.75f;
@@ -74,9 +78,13 @@ namespace opview {
         #pragma omp parallel for
         for (int p = 0; p < particles.size(); p++) {
             updateVelocityParticle(p);
+            // std::cout << "updated velocity" << std::endl;
             updatePositionParticle(p);
+            // std::cout << "updated position" << std::endl;
         }
+        // std::cout << "done cycle" << std::endl;
         evaluateSwarm(centroids, normVectors);
+        // std::cout << "done evaluation" << std::endl;
     }
 
     void AutonomousPSOCamGenerator::updateVelocityParticle(int p)
@@ -139,9 +147,11 @@ namespace opview {
         
         DoubleList values(orientedPoints.size());
 
+        auto formulation = getFormulation();
+
         #pragma omp parallel for
         for (int i = 0; i < orientedPoints.size(); i++) {
-            values[i] = getFormulation()->computeEnergy(orientedPoints[i], centroids, normVectors);
+            values[i] = formulation->computeEnergy(orientedPoints[i], centroids, normVectors);
         }
         
         updateSwarmValues(values);        
@@ -195,3 +205,12 @@ namespace opview {
     }
 
 } // namespace opview
+
+/*
+if (k.is_degenerate_3_object()(t)) {
+    std::cout << t << " is degenerate." << std::endl;
+    return interesection_return<typename K::Intersect_3, typename K::Segment_3, typename K::Triangle_3>();
+}
+
+*/
+

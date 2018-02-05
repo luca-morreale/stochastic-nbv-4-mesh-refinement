@@ -31,16 +31,10 @@ namespace opview {
         OrderedPose uniformSamplingStep(GLMVec3List &centroids, GLMVec3List &normals, int round);
         OrderedPose computeEnergyForPoses(GLMVec3List &centroids, GLMVec3List &normals, EigVector5List &orientedPoints);
 
-    
-
         virtual void setupWorstPoints();
         virtual void updateWorstPoints(int index, long double uncertainty);
         virtual void retainWorst();
         virtual GLMVec3ListPair getWorstPointsList();
-
-    
-
-        
         
     private:
         GLMVec3List points;

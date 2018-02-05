@@ -38,22 +38,22 @@ namespace opview {
 
     void BasicGraphicalModel::fillObjectiveFunction(GMExplicitFunction &vonMises, GLMVec3 &centroid, GLMVec3 &normVector)
     {
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
-            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+        #pragma omp parallel for collapse(2)
+        coordinatecycles(0, numLabels(), 0, numLabels()) {
+            GLMVec3 pos = scalePoint(GLMVec3(x, Y, z));
             LabelType val = Formulation::logVonMisesWrapper(pos, centroid, normVector, vonMisesConfig);
 
             #pragma omp critical
-            vonMises(x, y, z) = val;
+            vonMises(x, Ycoord, z) = val;
         }
     }
 
     void BasicGraphicalModel::fillConstraintFunction(GMExplicitFunction &constraints, GLMVec3 &centroid)
     {
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
-            size_t coords[] = {(size_t)x, (size_t)y, (size_t)z};
-            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+        #pragma omp parallel for collapse(2)
+        coordinatecycles(0, numLabels(), 0, numLabels()) {
+            size_t coords[] = {(size_t)x, Ycoord, (size_t)z};
+            GLMVec3 pos = scalePoint(GLMVec3(x, Ycoord, z));
             LabelType val = Formulation::computeBDConstraint(pos, centroid, cams);
 
             #pragma omp critical
@@ -65,6 +65,7 @@ namespace opview {
     GLMVec3 BasicGraphicalModel::scalePoint(GLMVec3 point)
     {
         GLMVec3 scaledPoint = point * scale();
+        scaledPoint.y = this->Y;
         GLMVec3 offset = GLMVec3(offsetX(), offsetY(), offsetZ());
         return scaledPoint + offset;
     }
@@ -73,6 +74,7 @@ namespace opview {
     GLMVec3 BasicGraphicalModel::unscalePoint(GLMVec3 point)
     {
         GLMVec3 offset = GLMVec3(offsetX(), offsetY(), offsetZ());
+        point.y = this->Ycoord;
         return (point - offset) / scale();
     }
     

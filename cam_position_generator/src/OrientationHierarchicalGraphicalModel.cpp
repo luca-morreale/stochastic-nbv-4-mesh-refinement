@@ -8,6 +8,7 @@ namespace opview {
                                             : HierarchicalDiscreteGraphicalModel(solver, config.config, cams, goalAngle, dispersion)
     {
         this->deltaAngle = config.deltaAngle;
+        this->PITCH = config.pitch;
         this->orientConfig = config;
         this->meshFilename = meshFile;
         this->camConfig = camConfig;
@@ -34,7 +35,7 @@ namespace opview {
             this->shape.push_back(numLabels());
         }
         this->variableIndices.push_back(3);
-        this->shape.push_back(orientationLabels());
+        this->shape.push_back(1);
         this->variableIndices.push_back(4);
         this->shape.push_back(orientationLabels());
     }
@@ -79,7 +80,6 @@ namespace opview {
         LabelList currentOptima = {lowerBounds().x, lowerBounds().y, lowerBounds().z, 0, 0};
         
         for (int d = 0; d < this->getDepth(); d++) {
-            // std::cout << "Current depth: " << d << std::endl;
             SimpleSpace space(shape.begin(), shape.end());
             GraphicalModelAdder model(space);
 
@@ -103,8 +103,6 @@ namespace opview {
     {
         VarIndexList x;
         algorithm->arg(x);
-
-        // std::cout << "Value obtained: " << algorithm->value() << std::endl;
 
         LabelList convertedOpt(x.size());
         GLMVec3 realOptima = scalePoint(GLMVec3(x[0], x[1], x[2]));
@@ -156,10 +154,10 @@ namespace opview {
 
     void OrientationHierarchicalGraphicalModel::fillExplicitOrientationFunction(GMExplicitFunction &modelFunction, BoostObjFunction evals, GLMVec3 &centroid, GLMVec3 &normVector) 
     {
-        #pragma omp parallel for collapse(5)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
-            orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
-                size_t coord[] = {(size_t)x, (size_t)y, (size_t)z, (size_t)ptc, (size_t)yaw};
+        #pragma omp parallel for collapse(VARS)
+        coordinatecycles(0, numLabels(), 0, numLabels()) { 
+            orientationcycles(0, orientationLabels()) {
+                size_t coord[] = {(size_t)x, this->Ycoord, (size_t)z, PTC, (size_t)yaw};
                 computeDistributionForFunction(modelFunction, evals, coord, centroid, normVector);
             }
         }
@@ -169,13 +167,13 @@ namespace opview {
     {
         VonMisesConfigurationPtr config = vonMisesConfiguration();
 
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
-            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+        #pragma omp parallel for collapse(2)
+        coordinatecycles(0, numLabels(), 0, numLabels()) {
+            GLMVec3 pos = scalePoint(GLMVec3(x, this->Ycoord, z));
             LabelType val = Formulation::logVonMisesWrapper(pos, centroid, normVector, *config);
-            orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+            orientationcycles(0, orientationLabels()) {
                 #pragma omp critical
-                vonMises(x, y, z, ptc, yaw) = val;
+                vonMises(x, this->Ycoord, z, PTC, yaw) = val;
             }
         }
     }
@@ -184,16 +182,16 @@ namespace opview {
     {
         GLMVec3List cams = getCams();
 
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
-            size_t coords[] = {(size_t)x, (size_t)y, (size_t)z};
-            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+        #pragma omp parallel for collapse(2)
+        coordinatecycles(0, numLabels(), 0, numLabels()) {
+            size_t coords[] = {(size_t)x, this->Ycoord, (size_t)z};
+            GLMVec3 pos = scalePoint(GLMVec3(x, this->Ycoord, z));
             LabelType val = Formulation::computeBDConstraint(pos, centroid, cams);
 
             // #pragma omp parallel for collapse(2) // is it thread safe?
-            orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+            orientationcycles(0, orientationLabels()) {
                 #pragma omp critical
-                constraints(coords[0], coords[1], coords[2], ptc, yaw) = val;
+                constraints(coords[0], coords[1], coords[2], PTC, yaw) = val;
             }
         }
     }
@@ -232,12 +230,16 @@ namespace opview {
 
     GLMVec2 OrientationHierarchicalGraphicalModel::scaleOrientation(GLMVec2 orientation)
     {
-        return orientation * getDeltaAngle();
+        orientation.x = this->PITCH;
+        orientation.y *= getDeltaAngle(); // x: pitch y: yaw
+        return orientation;
     }
 
     GLMVec2 OrientationHierarchicalGraphicalModel::unscaleOrientation(GLMVec2 orientation)
     {
-        return orientation / getDeltaAngle();
+        orientation.x = PTC;
+        orientation.y /= getDeltaAngle(); // x: pitch y: yaw
+        return orientation;
     }
 
     size_t OrientationHierarchicalGraphicalModel::numVariables()

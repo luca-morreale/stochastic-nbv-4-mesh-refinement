@@ -14,7 +14,7 @@
 
 namespace opview {
 
-    #define coordinatecycles(X0, Xn, Y0, Yn, Z0, Zn) for(int x = X0; x < Xn; x++) for(int y = Y0; y < Yn; y++) for(int z = Z0; z < Zn; z++)
+    #define coordinatecycles(X0, Xn, Z0, Zn) for(int x = X0; x < Xn; x++) for(int z = Z0; z < Zn; z++)
 
     #define LABELS 100
     #define VARS 3
@@ -44,10 +44,13 @@ namespace opview {
         virtual void initShapes();
         
         
-        LambdaGLMVec3 scale = [this](){ return GLMVec3(1.0, 1.0, 1.0) / (float)numLabels(); };
+        LambdaGLMVec3 scale = [this](){ return GLMVec3(1.0, 1.0, 0.0) / (float)numLabels(); };
         LambdaFloat offsetX = [](){ return -1.0; };
-        LambdaFloat offsetY = [](){ return -1.0; };
+        LambdaFloat offsetY = [](){ return 0.0; };
         LambdaFloat offsetZ = [](){ return -1.0; };
+
+        float Y = 0;
+        unsigned int Ycoord = 0;
 
     private:
         GLMVec3List cams;

@@ -11,6 +11,7 @@ namespace opview {
         this->meshFile = meshFile;
         this->cams = cams;
         this->OFFSPRING = offspring;
+        this->pitch = stoConfig.particles.pitch;
         this->vonMisesConfig = {deg2rad(goalAngle), dispersion};
         this->log = new ExhaustiveReportWriter("stochastic.json");
 
@@ -46,11 +47,11 @@ namespace opview {
     {
         EigVector5List orientedPoints;
 
-        #pragma omp parallel for collapse(3)
+        #pragma omp parallel for collapse(2)
         for (int p = 0; p < points.size(); p++) {
             orientationCycles(stoConfig.particles.deltaDegree) {
                 EigVector5 pose;
-                pose << points[p].x, points[p].y, points[p].z, deg2rad((float)ptc), deg2rad((float)yaw);
+                pose << points[p].x, points[p].y, points[p].z, this->pitch, deg2rad((float)yaw);
                 #pragma omp critical
                 orientedPoints.push_back(pose);
             }
@@ -217,7 +218,7 @@ namespace opview {
 
     float StochasticMethod::offsetZ()
     {
-        return stoConfig.bounds.lower.z;
+        return 0.0f;
     }
 
     ExhaustiveReportWriterPtr StochasticMethod::getLogger()

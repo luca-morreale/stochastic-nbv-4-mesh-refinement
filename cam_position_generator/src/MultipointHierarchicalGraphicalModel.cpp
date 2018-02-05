@@ -21,18 +21,19 @@ namespace opview {
         }
 
         this->resetPosition();
+        auto solver = solverGenerator();
 
         LabelList currentOptima = {lowerBounds().x, lowerBounds().y, lowerBounds().z, 0.0, 0.0};
         
         for (int d = 0; d < this->getDepth(); d++) {
-            std::cout << "Current depth: " << d << std::endl;
             SimpleSpace space(shape.begin(), shape.end());
+            
             GraphicalModelAdder model(space);
-
+            
             this->fillModel(model, centroids, normVectors);
-
+            
             auto discreteOptima = getOptimaForDiscreteSpace(currentOptima);
-            AdderInferencePtr algorithm = solverGenerator()->getOptimizerAlgorithm(model, discreteOptima, numVariables());
+            AdderInferencePtr algorithm = solver->getOptimizerAlgorithm(model, discreteOptima, numVariables());
             algorithm->infer();
 
             currentOptima = this->extractResults(algorithm);
@@ -62,7 +63,7 @@ namespace opview {
             #pragma omp section
             fillConstraintFunction(constraints, centroids);
         }
-
+        
         addFunctionTo(vonMises, model, variableIndices);
         addFunctionTo(visibility, model, variableIndices);
         addFunctionTo(projectionWeight, model, variableIndices);
@@ -71,10 +72,10 @@ namespace opview {
 
     void MultipointHierarchicalGraphicalModel::fillExplicitOrientationFunction(GMExplicitFunction &modelFunction, BoostObjFunction evals, GLMVec3List &centroids, GLMVec3List &normVectors) 
     {
-        #pragma omp parallel for collapse(5)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
-            orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
-                size_t coord[] = {(size_t)x, (size_t)y, (size_t)z, (size_t)ptc, (size_t)yaw};
+        #pragma omp parallel for collapse(VARS)
+        coordinatecycles(0, numLabels(), 0, numLabels()) { 
+            orientationcycles(0, orientationLabels()) {
+                size_t coord[] = {(size_t)x, this->Ycoord, (size_t)z, PTC, (size_t)yaw};
                 computeDistribution(modelFunction, evals, coord, centroids, normVectors);
             }
         }
@@ -83,19 +84,20 @@ namespace opview {
     void MultipointHierarchicalGraphicalModel::fillObjectiveFunction(GMExplicitFunction &objFunction, GLMVec3List &centroids, GLMVec3List &normVectors)
     {
         VonMisesConfigurationPtr vmConfig = vonMisesConfiguration();
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) { 
 
-            GLMVec3 scaledPos = scalePoint(GLMVec3(x, y, z));
+        #pragma omp parallel for collapse(2)
+        coordinatecycles(0, numLabels(), 0, numLabels()) { 
 
+            GLMVec3 scaledPos = scalePoint(GLMVec3(x, this->Ycoord, z));
+            
             LabelType val = 0.0;
 
             #pragma omp parallel for reduction(+:val)
             for (int p = 0; p < centroids.size(); p++) {
                 val += Formulation::logVonMisesWrapper(scaledPos, centroids[p], normVectors[p], *vmConfig);
             }
-
-            fillExplicitFunction(objFunction, val, x, y, z);
+            
+            fillExplicitFunction(objFunction, val, x, this->Ycoord, z);
         }
     }
 
@@ -122,10 +124,10 @@ namespace opview {
     {
         GLMVec3List cams = getCams();
 
-        #pragma omp parallel for collapse(3)
-        coordinatecycles(0, numLabels(), 0, numLabels(), 0, numLabels()) {
-            size_t coords[] = {(size_t)x, (size_t)y, (size_t)z};
-            GLMVec3 pos = scalePoint(GLMVec3(x, y, z));
+        #pragma omp parallel for collapse(2)
+        coordinatecycles(0, numLabels(), 0, numLabels()) {
+            size_t coords[] = {(size_t)x, this->Ycoord, (size_t)z};
+            GLMVec3 pos = scalePoint(GLMVec3(x, this->Ycoord, z));
             
             LabelType val = 0.0;
 
@@ -134,15 +136,15 @@ namespace opview {
                 val += Formulation::computeBDConstraint(pos, centroids[i], cams);
             }
 
-            fillExplicitFunction(constraints, val, x, y, z);
+            fillExplicitFunction(constraints, val, x, this->Ycoord, z);
         }
     }
 
     void MultipointHierarchicalGraphicalModel::fillExplicitFunction(GMExplicitFunction &function, LabelType val, size_t x, size_t y, size_t z)
     {
-        orientationcycles(0, orientationLabels(), 0, orientationLabels()) {
+        orientationcycles(0, orientationLabels()) {
             #pragma omp critical
-            function(x, y, z, ptc, yaw) = val;
+            function(x, y, z, PTC, yaw) = val;
         }
     }
 

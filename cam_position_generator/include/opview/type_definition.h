@@ -27,7 +27,7 @@ namespace opview {
         SpaceBounds(GLMVec3 lowerBounds, GLMVec3 upperBounds) : lower(lowerBounds), upper(upperBounds)
         { /*    */ }
 
-        SpaceBounds() : lower(GLMVec3(-10, -10, -10)), upper(GLMVec3(10, 10, 10))
+        SpaceBounds() : lower(GLMVec3(-10, -10, 0)), upper(GLMVec3(10, 10, 0))
         { /*    */ }
 
     } SpaceBounds;
@@ -51,19 +51,20 @@ namespace opview {
     typedef struct OrientationHierarchicalConfiguration {
         HierarchicalDiscretizationConfiguration config;
         float deltaAngle;
+        float pitch;
         FloatList deltaAngles;
 
     public:
-        OrientationHierarchicalConfiguration(size_t depth, size_t labels, SpaceBounds &bounds, FloatList deltaAngles) : deltaAngles(deltaAngles)
+        OrientationHierarchicalConfiguration(size_t depth, size_t labels, SpaceBounds &bounds, FloatList deltaAngles, float pitch=1.5708) : deltaAngles(deltaAngles), pitch(pitch)
         {
             config = {depth, labels, bounds};
             deltaAngle = deltaAngles[deltaAngles.size() - 1];
         }
-        OrientationHierarchicalConfiguration(HierarchicalDiscretizationConfiguration &hconfig, FloatList deltaAngles) : config(hconfig), deltaAngles(deltaAngles)
+        OrientationHierarchicalConfiguration(HierarchicalDiscretizationConfiguration &hconfig, FloatList deltaAngles, float pitch=1.5708) : config(hconfig), deltaAngles(deltaAngles), pitch(pitch)
         {
             deltaAngle = deltaAngles[deltaAngles.size() - 1];
         }
-        OrientationHierarchicalConfiguration() : deltaAngle(10)
+        OrientationHierarchicalConfiguration() : deltaAngle(10), pitch(1.5708)
         {
             config = HierarchicalDiscretizationConfiguration();
         }
@@ -76,11 +77,12 @@ namespace opview {
         size_t num;
         size_t uniform;
         int deltaDegree;
+        float pitch;
 
-        ParticlesInformation(size_t particles, size_t particleUniform, int deltaDegree) 
-                    : num(particles), uniform(particleUniform), deltaDegree(deltaDegree)
+        ParticlesInformation(size_t particles, size_t particleUniform, int deltaDegree, float pitch=1.5708) 
+                    : num(particles), uniform(particleUniform), deltaDegree(deltaDegree), pitch(pitch)
         { /*    */ }
-        ParticlesInformation() : num(1000), uniform(10), deltaDegree(45)
+        ParticlesInformation() : num(1000), uniform(10), deltaDegree(45), pitch(1.5708)
         { /*    */ }
 
     } ParticlesInformation;

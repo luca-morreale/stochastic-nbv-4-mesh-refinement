@@ -23,11 +23,15 @@ namespace opview {
         double stepy = std::fabs(limits[1].second - limits[1].first) / qt;
         double stepz = std::fabs(limits[2].second - limits[2].first) / qt;
 
-        #pragma omp parallel for
-        for (int i = 0; i < qt; i++) {
-            GLMVec3 point = GLMVec3(limits[0].first + i * stepx, limits[1].first + i * stepy, limits[2].first + i * stepz);
-            #pragma omp critical
-            pointList.push_back(point);
+        #pragma omp parallel for collapse(3)
+        for (int x = 0; x < qt; x++) {
+            for (int y = 0; y < qt; y++) {
+                for (int z = 0; z < qt; z++) {
+                    GLMVec3 point = GLMVec3(limits[0].first + x * stepx, limits[1].first + y * stepy, limits[2].first + z * stepz);
+                    #pragma omp critical
+                    pointList.push_back(point);
+                }
+            }
         }
 
         return pointList;
@@ -97,11 +101,6 @@ namespace opview {
     }
 
 
-
-
-
-
-
     GLMVec3List GaussianSampleGenerator::getSamples(GLMVec3 &center, int qt)
     {
         GLMVec3List points;
@@ -156,18 +155,18 @@ namespace opview {
 
     EigVector5 GaussianSampleGenerator::getSample(EigVector5 &center)
     {
-        gsl_vector *mus     = gsl_vector_alloc(5);
-        gsl_matrix *var     = gsl_matrix_alloc(5, 5);
-        gsl_vector *results = gsl_vector_alloc(5);
+        gsl_vector *mus     = gsl_vector_alloc(3);
+        gsl_matrix *var     = gsl_matrix_alloc(3, 3);
+        gsl_vector *results = gsl_vector_alloc(3);
         
-        setupOrientationVarianceMatrix(var, ORIENTATION_SIZE);
+        setupOrientationVarianceMatrix(var, 3);
         setupMusVector(mus, center);
         
-        randomMultivariateSample(mus, var, results, ORIENTATION_SIZE);
+        randomMultivariateSample(mus, var, results, 3);
 
         EigVector5 point;
-        point << gsl_vector_get(results, 0), gsl_vector_get(results, 1), gsl_vector_get(results, 2), 
-                    gsl_vector_get(results, 3), gsl_vector_get(results, 4);
+        point << gsl_vector_get(results, 0), gsl_vector_get(results, 1), center(2), // z constant 
+                    center(3), gsl_vector_get(results, 2);  // pitch constant
 
         GSLVectorList vecs = {mus, results};
         GSLMatrixList mats = {var};
@@ -217,11 +216,9 @@ namespace opview {
 
     void GaussianSampleGenerator::setupOrientationVarianceMatrix(gsl_matrix *var, size_t size)
     {
-        setupCoordinatesVarianceMatrix(var, size);
+        setupCoordinatesVarianceMatrix(var, 3);
 
-        for (size_t i = COORDINATE_SIZE; i < ORIENTATION_SIZE; i++) {
-            gsl_matrix_set(var, i, i, std::pow(orientStd, 2));
-        }
+        gsl_matrix_set(var, 2, 2, std::pow(orientStd, 2));
     }
 
     void GaussianSampleGenerator::setupMusVector(gsl_vector *mus, GLMVec3 &center)
@@ -235,9 +232,9 @@ namespace opview {
     void GaussianSampleGenerator::setupMusVector(gsl_vector *mus, EigVector5 &center)
     {
         //set up the mean vector
-        for (int i = 0; i < 5; i++) {
-            gsl_vector_set(mus, i, center[i]);
-        }
+        gsl_vector_set(mus, 0, center[0]);
+        gsl_vector_set(mus, 1, center[1]);
+        gsl_vector_set(mus, 2, center[4]);
     }
 
     void GaussianSampleGenerator::freeDataStructure(GSLVectorList &vecs, GSLMatrixList &mats)

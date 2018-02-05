@@ -15,7 +15,8 @@
 
 namespace opview {
 
-    #define orientationcycles(P0, Pn, YAW0, YAWn) for(int ptc = P0; ptc < Pn; ptc++) for(int yaw = YAW0; yaw < YAWn; yaw++)
+    #define PTC 0 // TODO must be 90 deg to look forward
+    #define orientationcycles(YAW0, YAWn) for(int yaw = YAW0; yaw < YAWn; yaw++)
     #define ORIENTATION_VARS 5
     
     class OrientationHierarchicalGraphicalModel : public HierarchicalDiscreteGraphicalModel {
@@ -70,6 +71,7 @@ namespace opview {
     private:
 
         float deltaAngle;
+        float PITCH;
         
         std::string meshFilename;
         TreePtr tree;
